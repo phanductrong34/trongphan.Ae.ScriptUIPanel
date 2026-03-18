@@ -1,35 +1,70 @@
 (function (thisObj) {
     function buildUI(thisObj) {
-        var panel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Clone With Rotation", undefined, {resizeable: true});
+        var panel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Cloooner", undefined, {resizeable: true});
         panel.orientation = "column";
         panel.alignChildren = ["fill", "top"];
         panel.spacing = 10;
         panel.margins = 16;
 
-        var angleGroup = panel.add("group");
+        // --- TẠO TAB PANEL ---
+        var tpanel = panel.add("tabbedpanel");
+        tpanel.alignChildren = ["fill", "top"];
+
+// === TAB 1: TRÒN ===
+        var tabTron = tpanel.add("tab", undefined, "Tròn");
+        tabTron.orientation = "column";
+        // Căn giữa tất cả mọi thứ trong tab Tròn
+        tabTron.alignChildren = ["center", "top"]; 
+        tabTron.spacing = 12;
+        tabTron.margins = 10;
+
+        // 1. Cụm Góc xoay
+        var angleGroup = tabTron.add("group");
         angleGroup.orientation = "row";
         angleGroup.add("statictext", undefined, "Góc xoay:");
         var angleInput = angleGroup.add("edittext", undefined, "30");
-        angleInput.characters = 5;
+        angleInput.preferredSize = [40, 25]; // Chiều cao 25px
 
-        var cloneGroup = panel.add("group");
+        // Separator 1 (Dưới cụm góc xoay)
+        var sepTron1 = tabTron.add("panel");
+        sepTron1.alignment = "fill";
+        sepTron1.minimumSize.height = 2;
+
+        // 2. Cụm Số layer đúp (Tạo 1 group cha xếp dọc để ngắt dòng)
+        var cloneMasterGroup = tabTron.add("group");
+        cloneMasterGroup.orientation = "column";
+        cloneMasterGroup.alignChildren = ["center", "top"];
+        cloneMasterGroup.spacing = 6;
+        cloneMasterGroup.add("statictext", undefined, "Số layer đúp:");
+
+        var cloneGroup = cloneMasterGroup.add("group");
         cloneGroup.orientation = "row";
-        cloneGroup.add("statictext", undefined, "Số layer đúp:");
+        var clonePlus = cloneGroup.add("button", undefined, "+");
+        clonePlus.preferredSize = [25, 25]; // Nút hình vuông 25x25
         var cloneInput = cloneGroup.add("edittext", undefined, "5");
-        cloneInput.characters = 5;
+        cloneInput.preferredSize = [40, 25]; // Input cũng cao 25px
+        var cloneMinus = cloneGroup.add("button", undefined, "-");
+        cloneMinus.preferredSize = [25, 25];
 
-        var normalizeGroup = panel.add("group");
+        // Separator 2 (Dưới cụm số layer đúp)
+        var sepTron2 = tabTron.add("panel");
+        sepTron2.alignment = "fill";
+        sepTron2.minimumSize.height = 2;
+
+        // 3. Không xoay
+        var normalizeGroup = tabTron.add("group");
         normalizeGroup.orientation = "row";
-        var normalizeCheckbox = normalizeGroup.add("checkbox", undefined, "Normalize");
+        var normalizeCheckbox = normalizeGroup.add("checkbox", undefined, "Không xoay");
 
-        var mode3DGroup = panel.add("group");
+        // 4. Mode 3D & Trục
+        var mode3DGroup = tabTron.add("group");
         mode3DGroup.orientation = "row";
-        var mode3DCheckbox = mode3DGroup.add("checkbox", undefined, "3D");
+        var mode3DCheckbox = mode3DGroup.add("checkbox", undefined, "3D Mode");
 
-        var axisGroup = panel.add("group");
+        var axisGroup = tabTron.add("group");
         axisGroup.orientation = "row";
-        axisGroup.alignChildren = "left";
-        axisGroup.add("statictext", undefined, "Trục:");
+        axisGroup.alignChildren = "center";
+        axisGroup.add("statictext", undefined, "Trục:"); // Đổi chữ thành Trục
         var axisX = axisGroup.add("radiobutton", undefined, "X");
         var axisY = axisGroup.add("radiobutton", undefined, "Y");
         var axisZ = axisGroup.add("radiobutton", undefined, "Z");
@@ -39,46 +74,70 @@
         mode3DCheckbox.onClick = function () {
             axisGroup.visible = mode3DCheckbox.value;
         };
+        
 
-        var btnGroup = panel.add("group");
+// === TAB 2: PATH ===
+        var tabPath = tpanel.add("tab", undefined, "Path");
+        tabPath.orientation = "column";
+        tabPath.alignChildren = ["center", "top"];
+        tabPath.add("statictext", undefined, "Tính năng sắp ra mắt...");
+
+        // === PHẦN CHUNG (LUÔN HIỂN THỊ BÊN DƯỚI CÁC TAB) ===
+        // Group bọc phần dưới để quản lý căn giữa
+        var bottomGroup = panel.add("group");
+        bottomGroup.orientation = "column";
+        bottomGroup.alignChildren = ["center", "top"]; 
+        bottomGroup.alignment = ["fill", "top"];
+        bottomGroup.spacing = 10;
+
+        // 5. Cụm Clone thêm (Gộp hết lên 1 hàng)
+        var cloneMoreGroup = bottomGroup.add("group");
+        cloneMoreGroup.orientation = "row";
+        var cloneMorePlus = cloneMoreGroup.add("button", undefined, "+");
+        cloneMorePlus.preferredSize = [25, 25];
+        var cloneMoreInput = cloneMoreGroup.add("edittext", undefined, "3");
+        cloneMoreInput.preferredSize = [40, 25];
+        var cloneMoreMinus = cloneMoreGroup.add("button", undefined, "-");
+        cloneMoreMinus.preferredSize = [25, 25];
+        var cloneMoreBtn = cloneMoreGroup.add("button", undefined, "Clooon thêm");
+        cloneMoreBtn.preferredSize.height = 25;
+
+        // Separator 3
+        var sep3 = bottomGroup.add("panel");
+        sep3.alignment = "fill";
+        sep3.minimumSize.height = 2;
+
+        // 6. Cụm nút bấm chính (Cloooner & Thùng rác)
+        var btnGroup = bottomGroup.add("group");
         btnGroup.orientation = "row";
-        btnGroup.alignment = "left";
+        btnGroup.alignment = "fill"; // Kéo giãn hết chiều ngang
 
-        var cloneBtn = btnGroup.add("button", undefined, "Clone");
-        cloneBtn.preferredSize.width = 90;
-        try {
-            var g = cloneBtn.graphics;
-            g.backgroundColor = g.newBrush(g.BrushType.SOLID_COLOR, [0.88, 0.88, 0.88]);
-        } catch (e) {}
+        var cloneBtn = btnGroup.add("button", undefined, "Cloooner");
+        cloneBtn.alignment = ["fill", "center"]; // Kéo giãn hết khoảng trống còn lại
+        cloneBtn.preferredSize.height = 30;
 
-        var clearBtn = btnGroup.add("button", undefined, "Clear");
-        clearBtn.preferredSize.width = 60;
-        clearBtn.helpTip = "chọn pivot null và ấn Clear để Un-clone";
+        var clearBtn = btnGroup.add("button", undefined, "🗑");
+        clearBtn.preferredSize = [30, 30]; // Nút thùng rác hình vuông 30x30
+        clearBtn.helpTip = "Chọn Pivot Null và ấn Clear để Un-clone";
 
-        // --- BẮT ĐẦU ĐOẠN MỚI THÊM VÀO ---
-        var cloneMoreBtn = btnGroup.add("button", undefined, "+ Clone");
-        cloneMoreBtn.preferredSize.width = 60;
-        cloneMoreBtn.helpTip = "Chọn Pivot Null và ấn để thêm clone nối tiếp";
-        var cloneMoreInput = btnGroup.add("edittext", undefined, "3");
-        cloneMoreInput.characters = 2;
+        // --- LOGIC CHO CÁC NÚT + / - ---
+        function setupPlusMinus(btnP, btnM, inp, minV) {
+            btnP.onClick = function() {
+                var v = parseInt(inp.text) || 0;
+                inp.text = (v + 1).toString();
+            };
+            btnM.onClick = function() {
+                var v = parseInt(inp.text) || 0;
+                if (v - 1 >= minV) inp.text = (v - 1).toString();
+                else inp.text = minV.toString();
+            };
+        }
 
-        // --- KẾT THÚC ĐOẠN MỚI THÊM VÀO ---
+        // Apply logic (Bỏ setup cho góc xoay)
+        setupPlusMinus(clonePlus, cloneMinus, cloneInput, 1);
+        setupPlusMinus(cloneMorePlus, cloneMoreMinus, cloneMoreInput, 1);
 
-        var helpBtn = btnGroup.add("button", undefined, "?");
-        helpBtn.maximumSize.width = 25;
-        helpBtn.onClick = function () {
-            alert(
-                "HƯỚNG DẪN SỬ DỤNG:\n" +
-                "- Clone: Chọn Null Layer (tâm xoay) và Layer muốn đúp. Nhập góc và số lượng.\n" +
-                "- Clear: Chọn Pivot Null đã tạo và bấm Clear để trả lại Layer gốc và giữ lại Pivot.\n\n" +
-                "TUỲ CHỌN:\n" +
-                "- Normalize: Layer clone giữ nguyên góc vói mặt đất (hiệu ứng đu quay).\n" +
-                "- 3D: Dùng cho không gian 3D, cho phép chọn trục xoay."
-            );
-        };
-
-        var footerGroup = panel.add("group");
-        footerGroup.add("statictext", undefined, "Một plugin bởi trongph.animation");
+/////////////////////////////////////// DONE UI LAYOUT
 
         function uniqueName(comp, base) {
             var name = base, i = 1;
@@ -493,7 +552,7 @@
 
                 // Lấy ra Tên gốc của layer để đặt tên cho layer mới
                 var baseLayerName = sampleKid.name.replace(/^\d+\.\s/, "").replace(/\s-\sClone$/, "");
-                
+
 
                 // Tìm Rotator và Clone Layer CUỐI CÙNG (có index lớn nhất) làm mẫu và làm mốc vị trí
                 var sampleRot = null;
