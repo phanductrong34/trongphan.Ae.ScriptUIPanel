@@ -18,8 +18,6 @@
         var cloneInput = cloneGroup.add("edittext", undefined, "5");
         cloneInput.characters = 5;
 
-        // Đã bỏ Controller Checkbox theo yêu cầu
-
         var normalizeGroup = panel.add("group");
         normalizeGroup.orientation = "row";
         var normalizeCheckbox = normalizeGroup.add("checkbox", undefined, "Normalize");
@@ -42,7 +40,6 @@
             axisGroup.visible = mode3DCheckbox.value;
         };
 
-        // Clone and Help button on same row
         var btnGroup = panel.add("group");
         btnGroup.orientation = "row";
         btnGroup.alignment = "left";
@@ -73,7 +70,6 @@
         var footerGroup = panel.add("group");
         footerGroup.add("statictext", undefined, "Một plugin bởi trongph.animation");
 
-        // Helpers
         function uniqueName(comp, base) {
             var name = base, i = 1;
             while (comp.layer(name)) {
@@ -106,7 +102,6 @@
             }
         }
         
-        // Helper mới: Gán Slider Control và dùng Expression khoá cứng giá trị index
         function setLockedIndex(layer, idx) {
             var fx = layer.property("Effects");
             var ctrl = fx.property("Clone Index");
@@ -114,11 +109,9 @@
                 ctrl = fx.addProperty("ADBE Slider Control");
                 ctrl.name = "Clone Index";
             }
-            // Khoá cứng giá trị bằng cách set expression thẳng vào Slider
             ctrl.property("Slider").expression = idx.toString();
         }
 
-        // Clone logic
         cloneBtn.onClick = function () {
             var angle = parseFloat(angleInput.text);
             var totalClones = parseInt(cloneInput.text);
@@ -149,6 +142,9 @@
                 return;
             }
 
+            // Lưu tên gốc của layer trước khi đổi tên
+            var baseLayerName = child.name;
+
             var axis = "Z";
             if (make3D) {
                 if (axisX.value) axis = "X";
@@ -167,7 +163,6 @@
             pivot.threeDLayer = make3D;
             pivot.transform.position.setValue(parent.transform.position.value);
 
-            // Luôn luôn tạo Controller
             ensureControl(pivot, "Angle", "ADBE Angle Control", angle);
             ensureControl(pivot, "Radius Ratio", "ADBE Slider Control", 100);
             ensureControl(pivot, "Stagger", "ADBE Slider Control", 100);
@@ -179,16 +174,18 @@
                 var rot = (i === 0) ? parent : parent.duplicate();
                 var kid = (i === 0) ? child : child.duplicate();
 
+                // Đổi tên Null phụ và Layer clone theo format yêu cầu
+                rot.name = (i + 1) + ". Null " + baseLayerName;
+                kid.name = (i + 1) + ". " + baseLayerName + " - Clone";
+
                 rot.parent = pivot;
                 kid.parent = rot;
 
                 rot.threeDLayer = kid.threeDLayer = make3D;
                 
-                // Cài đặt Locked Index cho Null phụ và Layer Clone
                 setLockedIndex(rot, i);
                 setLockedIndex(kid, i);
 
-                // Expression mới cho Rotation (Lấy từ Clone Index Slider)
                 rot["rotation" + axis].expression =
                     'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")("Angle");\n' +
                     'idx = effect("Clone Index")("Slider");\n' +
@@ -200,7 +197,6 @@
                         '-parent.rotation' + axis + ' - thisComp.layer("' + pivot.name + '").transform.' + axisProp + ';';
                 }
 
-                // Cập nhật Expression Position (Lấy index từ Slider)
                 var nullPos = rot.transform.position.value;
                 var clonePos = kid.transform.position.value;
                 var dir = [
@@ -209,13 +205,12 @@
                     make3D ? (clonePos[2] - nullPos[2]) : 0
                 ];
                 var len = Math.sqrt(Math.pow(dir[0], 2) + Math.pow(dir[1], 2) + Math.pow(dir[2], 2));
-                // Đề phòng trường hợp Pivot và layer trùng vị trí (len = 0) gây lỗi chia cho 0
                 var norm = (len === 0) ? [0,0,0] : [dir[0] / len, dir[1] / len, dir[2] / len];
 
                 var expr = ''
                     + 'ratio = thisComp.layer("' + pivot.name + '").effect("Radius Ratio")("Slider") / 100;\n'
                     + 'stagger = thisComp.layer("' + pivot.name + '").effect("Stagger")("Slider") / 100;\n'
-                    + 'idx = effect("Clone Index")("Slider") + 1;\n' // Lấy idx và cộng 1 như code cũ
+                    + 'idx = effect("Clone Index")("Slider") + 1;\n'
                     + 'scale = Math.max(0, 1 - (1 - stagger) * idx);\n'
                     + 'dir = [' + norm[0] + ',' + norm[1] + ',' + norm[2] + '];\n'
                     + 'parent.position + [dir[0] * ' + len.toFixed(4) + ' * ratio * scale, dir[1] * ' + len.toFixed(4) + ' * ratio * scale, dir[2] * ' + len.toFixed(4) + ' * ratio * scale];';
