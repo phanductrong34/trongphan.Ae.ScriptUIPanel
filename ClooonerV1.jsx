@@ -45,25 +45,26 @@
         btnGroup.alignment = "left";
 
         var cloneBtn = btnGroup.add("button", undefined, "Clone");
-        cloneBtn.preferredSize.width = 120;
+        cloneBtn.preferredSize.width = 90;
         try {
             var g = cloneBtn.graphics;
             g.backgroundColor = g.newBrush(g.BrushType.SOLID_COLOR, [0.88, 0.88, 0.88]);
         } catch (e) {}
 
+        var clearBtn = btnGroup.add("button", undefined, "Clear");
+        clearBtn.preferredSize.width = 60;
+        clearBtn.helpTip = "chọn pivot null và ấn Clear để Un-clone"; // Thêm dòng này để hiện tooltip
+
         var helpBtn = btnGroup.add("button", undefined, "?");
         helpBtn.maximumSize.width = 25;
         helpBtn.onClick = function () {
             alert(
-                "Để bắt đầu clone, chọn 2 layer:\n" +
-                "- Cái đầu tiên là Null Layer (dùng như tâm xoay)\n" +
-                "- Cái thứ hai là Layer muốn đúp (Nên có anchor Point ở chính giữa)\n\n" +
-                "Nhập Góc xoay ở độ, và Số layer đúp.\n" +
-                "Tool sẽ clone đúng số layer đúp và mỗi layer sẽ cách nhau đúng bằng Góc xoay.\n\n" +
-                "Các tuỳ chọn bao gồm:\n" +
-                "- Normalize: Layer clone không xoay cùng với pivot, tạo hiệu ứng như đu quay mặt trời\n" +
-                "- 3D: Bật khi bạn sử dụng layer 3D, chọn thêm trục muốn đúp\n\n" +
-                "Lưu ý: Controller điều khiển Pivot luôn được tạo tự động. Khi xoá, bạn phải tắt chế độ Shy và xoá cả các Null ẩn để không bị lỗi."
+                "HƯỚNG DẪN SỬ DỤNG:\n" +
+                "- Clone: Chọn Null Layer (tâm xoay) và Layer muốn đúp. Nhập góc và số lượng.\n" +
+                "- Clear: Chọn Pivot Null đã tạo và bấm Clear để trả lại Layer gốc và giữ lại Pivot.\n\n" +
+                "TUỲ CHỌN:\n" +
+                "- Normalize: Layer clone giữ nguyên góc vói mặt đất (hiệu ứng đu quay).\n" +
+                "- 3D: Dùng cho không gian 3D, cho phép chọn trục xoay."
             );
         };
 
@@ -112,6 +113,144 @@
             ctrl.property("Slider").expression = idx.toString();
         }
 
+        // --- CLEAR BUTTON LOGIC ---
+        clearBtn.onClick = function () {
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) {
+                alert("Hãy chọn một Composition.");
+                return;
+            }
+
+            var sel = comp.selectedLayers;
+            if (sel.length === 0) {
+                alert("Vui lòng chọn Pivot Null để Clear hệ thống.");
+                return;
+            }
+
+            // --- BẮT ĐẦU ĐOẠN MỚI THÊM VÀO ---
+            // Kiểm tra xem trong các layer đang chọn có chứa string "Pivot Null" không
+            var isPivotNull = true;
+            for (var m = 0; m < sel.length; m++) {
+                if (sel[m].name.indexOf("Pivot Null") === -1) {
+                    isPivotNull = false;
+                    break;
+                }
+            }
+
+            // Nếu phát hiện layer lạ, hiện bảng confirm
+            if (!isPivotNull) {
+                var proceed = confirm("Bạn đang chọn layer không phải pivot null tổng, bạn vẫn muốn tiếp tục thao tác?");
+                if (!proceed) return; // Nếu người dùng chọn Cancel/No, dừng hàm tại đây
+            }
+            // --- KẾT THÚC ĐOẠN MỚI THÊM VÀO ---
+
+            app.beginUndoGroup("Clear Cloooner");
+
+            try {
+                for (var k = 0; k < sel.length; k++) {
+                    var pivot = sel[k];
+                    var rotators = [];
+                    var kidsToRemove = [];
+                    var keptKid = null;
+
+                    // 1. Tìm các Null phụ đang link vào Pivot
+                    for (var i = 1; i <= comp.numLayers; i++) {
+                        var layer = comp.layer(i);
+                        if (layer.parent === pivot) {
+                            rotators.push(layer);
+                        }
+                    }
+
+                    // 2. Phân loại layer gốc và clone
+                    for (var i = 0; i < rotators.length; i++) {
+                        var rot = rotators[i];
+                        for (var j = 1; j <= comp.numLayers; j++) {
+                            var layer = comp.layer(j);
+                            if (layer.parent === rot) {
+                                if (!keptKid && layer.name.indexOf("1. ") === 0) {
+                                    keptKid = layer;
+                                } else {
+                                    kidsToRemove.push(layer);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!keptKid && rotators.length > 0) {
+                        for (var i = 0; i < rotators.length; i++) {
+                            var rot = rotators[i];
+                            for (var j = 1; j <= comp.numLayers; j++) {
+                                if (comp.layer(j).parent === rot) {
+                                    keptKid = comp.layer(j);
+                                    break;
+                                }
+                            }
+                            if (keptKid) break;
+                        }
+                    }
+
+                    // 3. Phục hồi layer gốc (Sử dụng try-catch bảo vệ 100%)
+                    if (keptKid) {
+                        keptKid.parent = null; 
+
+                        // Gỡ Expression an toàn
+                        var propsToClear = ["Position", "Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+                        for(var p = 0; p < propsToClear.length; p++) {
+                            try {
+                                var prop = keptKid.property("Transform").property(propsToClear[p]);
+                                if (prop && prop.canSetExpression) {
+                                    prop.expression = "";
+                                }
+                            } catch(e) {} // Lỗi ngầm sẽ bị bỏ qua
+                        }
+
+                        // Xoá Effect
+                        try {
+                            var fx = keptKid.property("Effects").property("Clone Index");
+                            if (fx) fx.remove();
+                        } catch(e) {}
+
+                        // Sửa lại tên
+                        keptKid.name = keptKid.name.replace(/^\d+\.\s/, "").replace(/\s-\sClone$/, "");
+                    }
+
+// 4. Xoá tàn dư an toàn
+                    for (var i = 0; i < kidsToRemove.length; i++) {
+                        try { kidsToRemove[i].remove(); } catch(e) {}
+                    }
+                    for (var i = 0; i < rotators.length; i++) {
+                        try { rotators[i].remove(); } catch(e) {}
+                    }
+
+                    // --- BẮT ĐẦU ĐOẠN MỚI THÊM VÀO ---
+                    // 5. Xoá toàn bộ Effect trên Pivot Null
+                    try {
+                        var pivotFx = pivot.property("Effects");
+                        if (pivotFx) {
+                            // Chạy vòng lặp ngược từ cuối lên để xoá effect không bị lệch index
+                            for (var e = pivotFx.numProperties; e > 0; e--) {
+                                pivotFx.property(e).remove();
+                            }
+                        }
+                        // Xoá luôn expression ở trục xoay của Pivot Null (nếu có)
+                        var propsToClearPivot = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+                        for(var p = 0; p < propsToClearPivot.length; p++) {
+                            var prop = pivot.property("Transform").property(propsToClearPivot[p]);
+                            if (prop && prop.canSetExpression) {
+                                prop.expression = "";
+                            }
+                        }
+                    } catch(e) {}
+                    // --- KẾT THÚC ĐOẠN MỚI THÊM VÀO ---
+                }
+            } catch (error) {
+                alert("Đã xảy ra lỗi khi Clear: " + error.toString());
+            }
+
+            app.endUndoGroup();
+        };
+
+        // --- CLONE BUTTON LOGIC ---
         cloneBtn.onClick = function () {
             var angle = parseFloat(angleInput.text);
             var totalClones = parseInt(cloneInput.text);
@@ -142,7 +281,16 @@
                 return;
             }
 
-            // Lưu tên gốc của layer trước khi đổi tên
+            // --- BẮT ĐẦU ĐOẠN MỚI THÊM VÀO ---
+            // Ràng buộc kiểm tra 3D Layer
+            if (make3D) {
+                if (!parent.threeDLayer || !child.threeDLayer) {
+                    alert("Cả hai layer pivot null và layer clone phải là 3D Layer.");
+                    return;
+                }
+            }
+            // --- KẾT THÚC ĐOẠN MỚI THÊM VÀO ---
+
             var baseLayerName = child.name;
 
             var axis = "Z";
@@ -166,6 +314,13 @@
             ensureControl(pivot, "Angle", "ADBE Angle Control", angle);
             ensureControl(pivot, "Radius Ratio", "ADBE Slider Control", 100);
             ensureControl(pivot, "Stagger", "ADBE Slider Control", 100);
+            ensureControl(pivot, "Offset", "ADBE Angle Control", 0); // Thêm biến Offset
+
+            // Gán expression cho thuộc tính Rotation của Pivot Null dựa theo trục đã chọn
+            var pivotRotProp = make3D ? (axis + " Rotation") : "Rotation";
+            if (pivot.property("Transform").property(pivotRotProp).canSetExpression) {
+                pivot.property("Transform").property(pivotRotProp).expression = 'value + effect("Offset")("Angle");';
+            }
 
             var rotators = [], children = [];
             var originalKid = null;
@@ -174,7 +329,6 @@
                 var rot = (i === 0) ? parent : parent.duplicate();
                 var kid = (i === 0) ? child : child.duplicate();
 
-                // Đổi tên Null phụ và Layer clone theo format yêu cầu
                 rot.name = (i + 1) + ". Null " + baseLayerName;
                 kid.name = (i + 1) + ". " + baseLayerName + " - Clone";
 
@@ -186,15 +340,17 @@
                 setLockedIndex(rot, i);
                 setLockedIndex(kid, i);
 
-                rot["rotation" + axis].expression =
+                // Gán thuộc tính góc xoay an toàn không sợ lỗi ngầm
+                var rotPropName = make3D ? (axis + " Rotation") : "Rotation";
+                rot.property("Transform").property(rotPropName).expression =
                     'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")("Angle");\n' +
                     'idx = effect("Clone Index")("Slider");\n' +
                     'ctrl * idx;';
 
                 if (normalize) {
-                    var axisProp = (axis === "Z") ? "rotation" : axis.toLowerCase() + "Rotation";
-                    kid["rotation" + axis].expression =
-                        '-parent.rotation' + axis + ' - thisComp.layer("' + pivot.name + '").transform.' + axisProp + ';';
+                    var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation";
+                    kid.property("Transform").property(rotPropName).expression =
+                        '-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ';';
                 }
 
                 var nullPos = rot.transform.position.value;
