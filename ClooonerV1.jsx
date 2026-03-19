@@ -110,7 +110,42 @@
         var tabPath = tpanel.add("tab", undefined, "Path");
         tabPath.orientation = "column";
         tabPath.alignChildren = ["center", "top"];
-        tabPath.add("statictext", undefined, "Tính năng sắp ra mắt...");
+        tabPath.spacing = 12;
+        tabPath.margins = 10;
+
+        var pathCloneMasterGroup = tabPath.add("group");
+        pathCloneMasterGroup.orientation = "column";
+        pathCloneMasterGroup.alignChildren = ["center", "top"];
+        pathCloneMasterGroup.spacing = 6;
+        pathCloneMasterGroup.add("statictext", undefined, "Số layer đúp:");
+
+        var pathCloneGroup = pathCloneMasterGroup.add("group");
+        pathCloneGroup.orientation = "row";
+        var pathCloneMinus = pathCloneGroup.add("button", undefined, "-");
+        pathCloneMinus.preferredSize = [25, 25];
+        var pathCloneInput = pathCloneGroup.add("edittext", undefined, "5");
+        pathCloneInput.preferredSize = [40, 25];
+        var pathClonePlus = pathCloneGroup.add("button", undefined, "+");
+        pathClonePlus.preferredSize = [25, 25];
+
+        var sepPath1 = tabPath.add("panel");
+        sepPath1.alignment = "fill";
+        sepPath1.minimumSize.height = 2;
+
+        var pathDistMasterGroup = tabPath.add("group");
+        pathDistMasterGroup.orientation = "column";
+        pathDistMasterGroup.alignChildren = ["center", "top"];
+        pathDistMasterGroup.spacing = 6;
+        pathDistMasterGroup.add("statictext", undefined, "Khoảng cách (%):");
+
+        var pathDistGroup = pathDistMasterGroup.add("group");
+        pathDistGroup.orientation = "row";
+        var pathDistMinus = pathDistGroup.add("button", undefined, "-");
+        pathDistMinus.preferredSize = [25, 25];
+        var pathDistInput = pathDistGroup.add("edittext", undefined, "5");
+        pathDistInput.preferredSize = [40, 25];
+        var pathDistPlus = pathDistGroup.add("button", undefined, "+");
+        pathDistPlus.preferredSize = [25, 25];
 
         // === PHẦN CHUNG (LUÔN HIỂN THỊ BÊN DƯỚI CÁC TAB) ===
         var bottomGroup = panel.add("group");
@@ -169,6 +204,8 @@
         setupPlusMinus(tinhPlus, tinhMinus, tinhInput, 1);
         setupPlusMinus(clonePlus, cloneMinus, cloneInput, 1);
         setupPlusMinus(cloneMorePlus, cloneMoreMinus, cloneMoreInput, 1);
+        setupPlusMinus(pathClonePlus, pathCloneMinus, pathCloneInput, 1);
+        setupPlusMinus(pathDistPlus, pathDistMinus, pathDistInput, -100);
 
 /////////////////////////////////////// DONE UI LAYOUT
 // Helpers
@@ -353,7 +390,8 @@
             // ==========================================
             // LOGIC CHO TAB: TRÒN (CLEAR RIG CŨ)
             // ==========================================
-            if (activeTab === "Tròn") {
+            // Áp dụng chung logic tháo Rig cho cả Tab Tròn và Tab Path
+            if (activeTab === "Tròn" || activeTab === "Path") {
                 if (sel.length === 0) {
                     alert("Vui lòng chọn Pivot Null để Clear hệ thống.");
                     return;
@@ -420,6 +458,8 @@
                             try {
                                 var fx = keptKid.property("Effects").property("Clone Index");
                                 if (fx) fx.remove();
+                                var fxPath = keptKid.property("Effects").property("Path Position");
+                                if (fxPath) fxPath.remove();
                             } catch(e) {}
                             keptKid.name = keptKid.name.replace(/^\d+\.\s/, "").replace(/\s-\sClone$/, "");
                         }
@@ -601,12 +641,12 @@
                     rot.property("Transform").property(rotPropName).expression =
                         'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")("Angle");\n' +
                         'idx = effect("Clone Index")("Slider");\n' +
-                        'ctrl * idx;';
+                        'value + (ctrl * idx);'; // Đã thêm value +
 
                     if (normalize) {
                         var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation";
                         kid.property("Transform").property(rotPropName).expression =
-                            '-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ';';
+                            'value + (-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ');'; // Đã thêm value + và gom cụm toán học vào ngoặc đơn
                     }
 
                     var nullPos = rot.transform.position.value;
@@ -646,6 +686,144 @@
 
                 app.endUndoGroup();
             }
+
+
+            // ==========================================
+            // LOGIC CHO TAB: PATH
+            // ==========================================
+            if (activeTab === "Path") {
+                var totalClones = parseInt(pathCloneInput.text);
+                var distance = parseFloat(pathDistInput.text);
+
+                if (isNaN(totalClones) || totalClones < 1 || isNaN(distance)) {
+                    alert("Vui lòng nhập thông số hợp lệ.");
+                    return;
+                }
+
+                var sel = comp.selectedLayers;
+                if (sel.length !== 2) {
+                    alert("Vui lòng CHỌN ĐÚNG 2 LAYER: 1 Shape Layer (chứa đường Path) và 1 Layer muốn đúp.");
+                    return;
+                }
+
+                var shapeLayer = null;
+                var child = null;
+
+                // Tự động nhận diện đâu là Shape Layer để lấy đường dẫn
+                if (sel[0] instanceof ShapeLayer) {
+                    shapeLayer = sel[0];
+                    child = sel[1];
+                } else if (sel[1] instanceof ShapeLayer) {
+                    shapeLayer = sel[1];
+                    child = sel[0];
+                } else {
+                    alert("Ít nhất 1 trong 2 layer được chọn phải là Shape Layer (chứa đường Path).");
+                    return;
+                }
+
+                if (isTrueClone) {
+                    var proceed = confirm("Bạn sắp Clone tận gốc " + totalClones + " lần dọc theo Path của \"" + shapeLayer.name + "\".\n\nBạn có chắc chắn muốn tiếp tục?");
+                    if (!proceed) return;
+                }
+
+                app.beginUndoGroup("Path Cloooner");
+
+                try {
+                    var baseLayerName = child.name;
+
+                    var pivot = comp.layers.addNull();
+                    // Đổi tên thành Clone on Path Control
+                    pivot.name = uniqueName(comp, "Clone on Path Control");
+                    pivot.label = 10;
+                    pivot.moveBefore(shapeLayer);
+
+                    // --- TẠO LAYER CONTROL CHO PATH ---
+                    // Sử dụng "ADBE Layer Control" để tạo menu trỏ đến Layer
+                    var pathLayerCtrl = pivot.property("Effects").addProperty("ADBE Layer Control");
+                    pathLayerCtrl.name = "Path";
+                    // Tự động set giá trị mặc định trỏ vào Shape Layer vừa chọn
+                    pathLayerCtrl.property("Layer").setValue(shapeLayer.index); 
+
+                    // Add Slider điều khiển tổng vào Pivot
+                    ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
+                    pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
+                    ensureControl(pivot, "Distance", "ADBE Slider Control", distance);
+                    ensureControl(pivot, "Offset", "ADBE Slider Control", 0);
+
+                    var rotators = [], children = [];
+                    var originalKid = null;
+
+                    for (var i = 0; i < totalClones; i++) {
+                        var rot = comp.layers.addNull(); 
+                        var kid = (i === 0) ? child : child.duplicate();
+
+                        if (isTrueClone) applyTrueClone(kid);
+
+                        rot.name = (i + 1) + ". Null " + baseLayerName;
+                        kid.name = (i + 1) + ". " + baseLayerName + " - Clone";
+
+                        rot.parent = pivot;
+                        kid.parent = rot;
+
+                        // Null phụ được thả về trung tâm của Null tổng
+                        rot.transform.position.setValue([0, 0, 0]);
+                        kid.transform.position.setValue([0, 0, 0]);
+
+                        setLockedIndex(rot, i);
+                        setLockedIndex(kid, i);
+
+                        ensureControl(rot, "Path Position", "ADBE Slider Control", 0);
+                        ensureControl(kid, "Path Position", "ADBE Slider Control", 0);
+
+                        // Xử lý toán học vòng lặp (0-100%) cho Path Position
+                        var posExpr =
+                            'offset = thisComp.layer("' + pivot.name + '").effect("Offset")("Slider");\n' +
+                            'dist = thisComp.layer("' + pivot.name + '").effect("Distance")("Slider");\n' +
+                            'idx = effect("Clone Index")("Slider");\n' +
+                            'val = offset + (idx * dist);\n' +
+                            'mod = val % 100;\n' +
+                            'if (mod < 0) mod += 100;\n' +
+                            'mod;';
+
+                        rot.property("Effects").property("Path Position").property("Slider").expression = posExpr;
+                        // Clone layer chỉ cần đọc theo % của Null mẹ nó
+                        kid.property("Effects").property("Path Position").property("Slider").expression = 'thisComp.layer("' + rot.name + '").effect("Path Position")("Slider");';
+
+                        // Gán Expression toạ độ vào Null phụ
+                        // Đọc Layer Control "Path" từ Null tổng để linh hoạt thay đổi đường dẫn
+                        var pathPositionExpr =
+                            'try {\n' +
+                            '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
+                            '  duongpath = targetLayer.content(1).content(1).path;\n' +
+                            '  pct = effect("Path Position")("Slider") / 100;\n' +
+                            '  pos = targetLayer.toComp(duongpath.pointOnPath(pct));\n' +
+                            '  value + parent.fromComp(pos);\n' +
+                            '} catch(e) { value; }';
+
+                        rot.property("Transform").property("Position").expression = pathPositionExpr;
+
+                        if (i !== 0) centerAnchorPoint(kid, comp.time);
+                        else originalKid = kid;
+
+                        rotators.push(rot);
+                        children.push(kid);
+                    }
+
+                    if (children.length > 1 && originalKid) {
+                        originalKid.moveBefore(children[1]);
+                    }
+
+                    rotators.forEach(function (r) { r.shy = true; });
+                    pivot.shy = false;
+                    comp.hideShyLayers = true;
+
+                } catch (e) {
+                    alert("Lỗi khi tạo Path Cloooner: " + e.toString());
+                }
+
+                app.endUndoGroup();
+            }
+
         };
 
         if (panel instanceof Window) {
