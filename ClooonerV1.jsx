@@ -189,10 +189,15 @@
         bottomGroup.spacing = 10;
         bottomGroup.margins = [0, 5, 0, 0];
 
-        // Thêm Checkbox True Clone
-        var trueCloneGroup = bottomGroup.add("group");
-        trueCloneGroup.alignment = "left";
-        var trueCloneCheckbox = trueCloneGroup.add("checkbox", undefined, "True Clone (Đúp comp tận gốc)");
+        // Thêm Checkbox True Clone và Twisted
+        var extraBottomGroup = bottomGroup.add("group");
+        extraBottomGroup.orientation = "column";
+        extraBottomGroup.alignChildren = ["left", "center"];
+        extraBottomGroup.alignment = "left";
+        extraBottomGroup.spacing = 8;
+
+        var trueCloneCheckbox = extraBottomGroup.add("checkbox", undefined, "True Clone (Đúp comp tận gốc)");
+        var twistedCheckbox = extraBottomGroup.add("checkbox", undefined, "Twisted (Xoắn ốc)");
 
         var sepBottom = bottomGroup.add("panel");
         sepBottom.alignment = "fill";
@@ -645,12 +650,19 @@
                 pivot.threeDLayer = make3D;
                 pivot.transform.position.setValue(parent.transform.position.value);
 
+                var isTwisted = twistedCheckbox.value;
+
                 ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
                 pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
                 ensureControl(pivot, "Angle", "ADBE Angle Control", angle);
                 ensureControl(pivot, "Radius Ratio", "ADBE Slider Control", 100);
                 ensureControl(pivot, "Stagger", "ADBE Slider Control", 100);
                 ensureControl(pivot, "Offset", "ADBE Angle Control", 0);
+                
+                if (isTwisted) {
+                    ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
+                    ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1);
+                }
 
                 var pivotRotProp = make3D ? (axis + " Rotation") : "Rotation";
                 if (pivot.property("Transform").property(pivotRotProp).canSetExpression) {
@@ -682,12 +694,28 @@
                     rot.property("Transform").property(rotPropName).expression =
                         'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")("Angle");\n' +
                         'idx = effect("Clone Index")("Slider");\n' +
-                        'value + (ctrl * idx);'; // Đã thêm value +
+                        'value + (ctrl * idx);'; 
 
-                    if (normalize) {
+                    // --- Xử lý Expression cho Clone Layer (Kết hợp Twisted & Không xoay) ---
+                    var kidExpr = "";
+                    var twistStr = isTwisted ? 
+                        'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")("Angle");\n' +
+                        'tRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")("Slider");\n' +
+                        'tIdx = effect("Clone Index")("Slider");\n' +
+                        'twistVal = tAngle * tRate * tIdx;\n' : '';
+
+                    if (normalize && isTwisted) {
                         var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation";
-                        kid.property("Transform").property(rotPropName).expression =
-                            'value + (-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ');'; // Đã thêm value + và gom cụm toán học vào ngoặc đơn
+                        kidExpr = twistStr + 'value + (-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ') + twistVal;';
+                    } else if (normalize) {
+                        var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation";
+                        kidExpr = 'value + (-parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName + ');';
+                    } else if (isTwisted) {
+                        kidExpr = twistStr + 'value + twistVal;';
+                    }
+
+                    if (kidExpr !== "") {
+                        kid.property("Transform").property(rotPropName).expression = kidExpr;
                     }
 
                     var nullPos = rot.transform.position.value;
@@ -807,7 +835,8 @@
                     // Khởi tạo các biến nếu được kích hoạt
                     var useTaper = pathTaperCheckbox.value;
                     var useOrient = pathOrientCheckbox.value; 
-                    var useTrim = pathTrimCheckbox.value; // Đọc giá trị Trim
+                    var useTrim = pathTrimCheckbox.value; 
+                    var isTwisted = twistedCheckbox.value; // Đọc giá trị Twisted
                     
                     if (useTaper) {
                         ensureControl(pivot, "Start Range", "ADBE Slider Control", 20);
@@ -820,6 +849,10 @@
                         ensureControl(pivot, "Trim End", "ADBE Slider Control", 100);
                         ensureControl(pivot, "Limit Start", "ADBE Slider Control", 0);
                         ensureControl(pivot, "Limit End", "ADBE Slider Control", 100);
+                    }
+                    if (isTwisted) {
+                        ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
+                        ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1);
                     }
 
                     var rotators = [], children = [];
@@ -936,6 +969,19 @@
                                 '  (pct >= lS && pct <= lE) ? value : 0;\n' +
                                 '} catch(e) { value; }';
                             kid.property("Transform").property("Opacity").expression = opacityExpr;
+                        }
+                        // --- Áp dụng biểu thức Twisted cho Clone Layer ---
+                        if (isTwisted) {
+                            var kidRotProp = kid.threeDLayer ? "Z Rotation" : "Rotation";
+                            var twistExpr =
+                                'try {\n' +
+                                '  tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")("Angle");\n' +
+                                '  tRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")("Slider");\n' +
+                                '  tIdx = effect("Clone Index")("Slider");\n' +
+                                '  twistVal = tAngle * tRate * tIdx;\n' +
+                                '  value + twistVal;\n' +
+                                '} catch(e) { value; }';
+                            kid.property("Transform").property(kidRotProp).expression = twistExpr;
                         }
 
                         if (i !== 0) centerAnchorPoint(kid, comp.time);
