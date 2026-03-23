@@ -25,12 +25,31 @@
 
         var tinhGroup = tinhMasterGroup.add("group");
         tinhGroup.orientation = "row";
-        var tinhMinus = tinhGroup.add("button", undefined, "-"); // Nút Trừ lên trước
+        var tinhMinus = tinhGroup.add("button", undefined, "-");
         tinhMinus.preferredSize = [25, 25];
         var tinhInput = tinhGroup.add("edittext", undefined, "1");
         tinhInput.preferredSize = [40, 25];
-        var tinhPlus = tinhGroup.add("button", undefined, "+"); // Nút Cộng xuống sau
+        var tinhPlus = tinhGroup.add("button", undefined, "+");
         tinhPlus.preferredSize = [25, 25];
+
+        var sepTinh1 = tabTinh.add("panel");
+        sepTinh1.alignment = "fill";
+        sepTinh1.minimumSize.height = 2;
+
+        // Thêm hướng dẫn cho Tab Tĩnh
+        var helpTinhGroup = tabTinh.add("group");
+        helpTinhGroup.orientation = "row";
+        helpTinhGroup.add("statictext", undefined, "Hướng dẫn Clone Tĩnh");
+        var helpTinhBtn = helpTinhGroup.add("button", undefined, "?");
+        helpTinhBtn.preferredSize = [20, 20];
+        helpTinhBtn.onClick = function() {
+            alert("💡 HƯỚNG DẪN CLONE TĨNH\n\n" +
+                  "Chế độ này giúp bạn đúp nhanh layer tại chỗ.\n\n" +
+                  "• Số Layer Đúp: Số lượng bản sao bạn muốn tạo ra.\n" +
+                  "• Nút Cloooner: Bắt đầu đúp layer hiện tại.\n" +
+                  "• True Clone (ở dưới cùng): Nếu tích, sẽ đúp sâu vào tận trong các Comp con, tạo ra các bản sao độc lập hoàn toàn!\n" +
+                  "• Nút 🗑 (Clear): Chọn các layer Comp đã đúp (hoặc Comp gốc) và ấn xoá. Ở tab này, nó sẽ xoá TẬN GỐC Comp đó khỏi Project (hãy cẩn thận!).");
+        };
 
         // === TAB 2: TRÒN ===
         var tabTron = tpanel.add("tab", undefined, "Tròn");
@@ -76,6 +95,11 @@
         mode3DGroup.orientation = "row";
         var mode3DCheckbox = mode3DGroup.add("checkbox", undefined, "3D Mode");
 
+        // Thêm Checkbox Twisted vào Tab Tròn
+        var tronTwistedGroup = tabTron.add("group");
+        tronTwistedGroup.orientation = "row";
+        var tronTwistedCheckbox = tronTwistedGroup.add("checkbox", undefined, "Kích hoạt Twisted");
+
         var axisGroup = tabTron.add("group");
         axisGroup.orientation = "row";
         axisGroup.alignChildren = "center";
@@ -94,7 +118,6 @@
         sepTron3.alignment = "fill";
         sepTron3.minimumSize.height = 2;
 
-        // Cụm Clone thêm (Đã được chuyển vào tab Tròn)
         var cloneMoreGroup = tabTron.add("group");
         cloneMoreGroup.orientation = "row";
         var cloneMoreMinus = cloneMoreGroup.add("button", undefined, "-");
@@ -105,6 +128,29 @@
         cloneMorePlus.preferredSize = [25, 25];
         var cloneMoreBtn = cloneMoreGroup.add("button", undefined, "Clooon thêm");
         cloneMoreBtn.preferredSize.height = 25;
+
+        var sepTron4 = tabTron.add("panel");
+        sepTron4.alignment = "fill";
+        sepTron4.minimumSize.height = 2;
+
+        // Thêm hướng dẫn cho Tab Tròn
+        var helpTronGroup = tabTron.add("group");
+        helpTronGroup.orientation = "row";
+        helpTronGroup.add("statictext", undefined, "Hướng dẫn Clone Tròn");
+        var helpTronBtn = helpTronGroup.add("button", undefined, "?");
+        helpTronBtn.preferredSize = [20, 20];
+        helpTronBtn.onClick = function() {
+            alert("💡 HƯỚNG DẪN CLONE TRÒN\n\n" +
+                  "Tạo ra các bản sao xoay quanh một tâm (Null).\n\n" +
+                  "• Chuẩn bị: Chọn 1 Null Layer TRƯỚC (làm tâm), sau đó chọn Layer cần đúp SAU.\n" +
+                  "• Góc xoay: Khoảng cách góc giữa các bản sao.\n" +
+                  "• Không xoay: Bản sao luôn giữ nguyên hướng hiển thị (như vòng đu quay).\n" +
+                  "• 3D Mode & Trục: Bật nếu làm việc với layer 3D.\n" +
+                  "• Twisted: Tạo hiệu ứng xoắn ốc bằng cách xoay luỹ tiến các bản sao.\n" +
+                  "• Clooon thêm: Chọn Null Pivot tâm hiện tại, nhập số và đúp thêm bản sao nối tiếp.\n" +
+                  "• Nút 🗑 (Clear): Chọn Pivot Null rồi ấn để dọn sạch Rig.\n" +
+                  "• MẸO NHỎ: Mở bảng Effect Controls (F3) ở Pivot Null để tuỳ chỉnh Radius, Stagger, Offset... animate cực đã!");
+        };
 
         // === TAB 3: PATH ===
         var tabPath = tpanel.add("tab", undefined, "Path");
@@ -151,12 +197,10 @@
         sepPath2.alignment = "fill";
         sepPath2.minimumSize.height = 2;
 
-        // Đưa Xoay theo Path lên dòng trên
         var pathOrientGroup = tabPath.add("group");
         pathOrientGroup.orientation = "row";
         var pathOrientCheckbox = pathOrientGroup.add("checkbox", undefined, "Xoay theo Path");
 
-        // Tách Taper và Trim Path thành 2 dòng riêng biệt
         var pathTaperGroup = tabPath.add("group");
         pathTaperGroup.orientation = "row";
         var pathTaperCheckbox = pathTaperGroup.add("checkbox", undefined, "Kích hoạt Taper");
@@ -165,7 +209,11 @@
         pathTrimGroup.orientation = "row";
         var pathTrimCheckbox = pathTrimGroup.add("checkbox", undefined, "Kích hoạt Trim Path");
 
-        // --- Cụm phân cách và Clone thêm cho Tab Path ---
+        // Thêm Checkbox Twisted vào Tab Path
+        var pathTwistedGroup = tabPath.add("group");
+        pathTwistedGroup.orientation = "row";
+        var pathTwistedCheckbox = pathTwistedGroup.add("checkbox", undefined, "Kích hoạt Twisted");
+
         var sepPath3 = tabPath.add("panel");
         sepPath3.alignment = "fill";
         sepPath3.minimumSize.height = 2;
@@ -181,7 +229,30 @@
         var pathCloneMoreBtn = pathCloneMoreGroup.add("button", undefined, "Clooon thêm");
         pathCloneMoreBtn.preferredSize.height = 25;
 
-        // === PHẦN CHUNG (LUÔN HIỂN THỊ BÊN DƯỚI CÁC TAB) ===
+        var sepPath4 = tabPath.add("panel");
+        sepPath4.alignment = "fill";
+        sepPath4.minimumSize.height = 2;
+
+        // Thêm hướng dẫn cho Tab Path
+        var helpPathGroup = tabPath.add("group");
+        helpPathGroup.orientation = "row";
+        helpPathGroup.add("statictext", undefined, "Hướng dẫn Clone Path");
+        var helpPathBtn = helpPathGroup.add("button", undefined, "?");
+        helpPathBtn.preferredSize = [20, 20];
+        helpPathBtn.onClick = function() {
+            alert("💡 HƯỚNG DẪN CLONE PATH\n\n" +
+                  "Phân bố các bản sao chạy dọc theo đường Path.\n\n" +
+                  "• Chuẩn bị: Chọn 1 Shape Layer (chứa đường Path) và 1 Layer cần đúp.\n" +
+                  "• Khoảng cách (%): Khoảng cách giữa các bản sao trên đường.\n" +
+                  "• Xoay theo Path: Mũi bản sao luôn hướng dọc theo đường cong.\n" +
+                  "• Taper: Làm bản sao thu nhỏ dần ở hai đầu đường Path.\n" +
+                  "• Trim Path: Giới hạn hiển thị trên Path (những bản sao nằm ngoài vùng Limit sẽ bị mờ đi).\n" +
+                  "• Twisted: Xoay luỹ tiến tạo hiệu ứng xoắn ốc quanh path.\n" +
+                  "• Clooon thêm: Chọn Null Control hiện tại và đúp thêm bản sao.\n" +
+                  "• MẸO NHỎ: Vào Effect Controls của Null, đổi mục 'Path' sang Shape Layer khác để đổi đường ray ngay lập tức!");
+        };
+
+        // === PHẦN CHUNG (DƯỚI CÙNG) ===
         var bottomGroup = panel.add("group");
         bottomGroup.orientation = "column";
         bottomGroup.alignChildren = ["center", "top"]; 
@@ -189,15 +260,10 @@
         bottomGroup.spacing = 10;
         bottomGroup.margins = [0, 5, 0, 0];
 
-        // Thêm Checkbox True Clone và Twisted
-        var extraBottomGroup = bottomGroup.add("group");
-        extraBottomGroup.orientation = "column";
-        extraBottomGroup.alignChildren = ["left", "center"];
-        extraBottomGroup.alignment = "left";
-        extraBottomGroup.spacing = 8;
-
-        var trueCloneCheckbox = extraBottomGroup.add("checkbox", undefined, "True Clone (Đúp comp tận gốc)");
-        var twistedCheckbox = extraBottomGroup.add("checkbox", undefined, "Twisted (Xoắn ốc)");
+        // Trả True Clone về 1 dòng độc lập
+        var trueCloneGroup = bottomGroup.add("group");
+        trueCloneGroup.alignment = "left";
+        var trueCloneCheckbox = trueCloneGroup.add("checkbox", undefined, "True Clone (Đúp comp tận gốc)");
 
         var sepBottom = bottomGroup.add("panel");
         sepBottom.alignment = "fill";
@@ -221,11 +287,17 @@
         footerGroup.margins = [0, 5, 0, 0]; 
         footerGroup.add("statictext", undefined, "Một chiếc plugin bởi Trọng");
         
-        var helpBtn = footerGroup.add("button", undefined, "?");
-        helpBtn.preferredSize = [20, 20]; 
-        helpBtn.helpTip = "Xem hướng dẫn sử dụng";
-        helpBtn.onClick = function () {
-            alert("Hướng dẫn đã được rút gọn để code ngắn lại..."); // Giữ nguyên hàm alert cũ của bạn ở đây
+        // Nút Trái tim và link Facebook
+        var fbBtn = footerGroup.add("button", undefined, "♥︎");
+        fbBtn.preferredSize = [25, 20]; 
+        fbBtn.helpTip = "Ghé thăm Facebook của tôi!";
+        fbBtn.onClick = function () {
+            var url = "https://www.facebook.com/phanductrong34/";
+            if ($.os.indexOf("Windows") !== -1) {
+                system.callSystem("cmd /c \"start " + url + "\"");
+            } else {
+                system.callSystem("open \"" + url + "\"");
+            }
         };
 
         function setupPlusMinus(btnP, btnM, inp, minV) {
@@ -650,7 +722,8 @@
                 pivot.threeDLayer = make3D;
                 pivot.transform.position.setValue(parent.transform.position.value);
 
-                var isTwisted = twistedCheckbox.value;
+                // Đọc biến từ Tab Tròn
+                var isTwisted = tronTwistedCheckbox.value;
 
                 ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
                 pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
@@ -836,7 +909,8 @@
                     var useTaper = pathTaperCheckbox.value;
                     var useOrient = pathOrientCheckbox.value; 
                     var useTrim = pathTrimCheckbox.value; 
-                    var isTwisted = twistedCheckbox.value; // Đọc giá trị Twisted
+                    // Đọc biến từ Tab Path
+                    var isTwisted = pathTwistedCheckbox.value;
                     
                     if (useTaper) {
                         ensureControl(pivot, "Start Range", "ADBE Slider Control", 20);
