@@ -7,10 +7,26 @@
         panel.margins = 16;
 
 // --- TẠO TAB PANEL ---
-        var tpanel = panel.add("tabbedpanel");
-        tpanel.alignChildren = ["fill", "top"];
+        // === LAYOUT NATIVE: CĂN GIỮA & STICKY BOTTOM (KHÔNG SCROLLBAR) ===
+        panel.orientation = "column";
+        panel.alignChildren = ["fill", "fill"]; 
+        panel.spacing = 10;
+        panel.margins = 16;
 
-        // === TAB 1: TĨNH ===
+        // 1. Nhóm Top chứa Tabs (Sẽ dãn ra đẩy nhóm Bottom xuống đáy)
+        var topGroup = panel.add("group");
+        topGroup.orientation = "column";
+        topGroup.alignment = ["fill", "fill"];
+        topGroup.alignChildren = ["fill", "fill"]; // QUAN TRỌNG: Ép thẻ Tab bên trong phải dãn
+        topGroup.margins = 0;
+
+        // 2. Tab Panel bung tràn toàn bộ không gian của Nhóm Top
+        var tpanel = topGroup.add("tabbedpanel");
+        tpanel.alignment = ["fill", "fill"];
+        tpanel.alignChildren = ["fill", "fill"]; // QUAN TRỌNG: Ép các tab con (Tĩnh, Tròn...) dãn theo
+        tpanel.margins = 0;
+
+// === TAB 1: TĨNH ===
         var tabTinh = tpanel.add("tab", undefined, "Tĩnh");
         tabTinh.orientation = "column";
         tabTinh.alignChildren = ["center", "top"];
@@ -51,7 +67,7 @@
                   "• Nút 🗑 (Clear): Chọn các layer Comp đã đúp (hoặc Comp gốc) và ấn xoá. Ở tab này, nó sẽ xoá TẬN GỐC Comp đó khỏi Project (hãy cẩn thận!).");
         };
 
-        // === TAB 2: TRÒN ===
+// === TAB 2: TRÒN ===
         var tabTron = tpanel.add("tab", undefined, "Tròn");
         tabTron.orientation = "column";
         tabTron.alignChildren = ["center", "top"]; 
@@ -152,7 +168,7 @@
                   "• MẸO NHỎ: Mở bảng Effect Controls (F3) ở Pivot Null để tuỳ chỉnh Radius, Stagger, Offset... animate cực đã!");
         };
 
-        // === TAB 3: PATH ===
+// === TAB 3: PATH ===
         var tabPath = tpanel.add("tab", undefined, "Path");
         tabPath.orientation = "column";
         tabPath.alignChildren = ["center", "top"];
@@ -256,7 +272,7 @@
         // === TAB 4: TOOLS ===
         var tabTools = tpanel.add("tab", undefined, "Tools");
         tabTools.orientation = "column";
-        tabTools.alignChildren = ["fill", "top"];
+        tabTools.alignChildren = ["center", "top"];
         tabTools.spacing = 15;
         tabTools.margins = 10;
 
@@ -327,34 +343,35 @@
                   "3. Bấm Rig. Mọi Layer sẽ giữ nguyên kích thước (Scale) và bị hút vào hệ thống!");
         };
 
-        // === PHẦN CHUNG (DƯỚI CÙNG) ===
+        // === PHẦN CHUNG STICKY BOTTOM (DƯỚI CÙNG) ===
         var bottomGroup = panel.add("group");
         bottomGroup.orientation = "column";
-        bottomGroup.alignChildren = ["center", "top"]; 
-        bottomGroup.alignment = ["fill", "top"];
+        bottomGroup.alignment = ["fill", "bottom"]; // Gắn chặt dính vào đáy
+        bottomGroup.alignChildren = ["fill", "top"]; 
         bottomGroup.spacing = 10;
         bottomGroup.margins = [0, 5, 0, 0];
 
         // Trả True Clone về 1 dòng độc lập
         var trueCloneGroup = bottomGroup.add("group");
-        trueCloneGroup.alignment = "left";
+        trueCloneGroup.alignment = ["left", "top"];
         var trueCloneCheckbox = trueCloneGroup.add("checkbox", undefined, "True Clone (Đúp comp tận gốc)");
 
         var sepBottom = bottomGroup.add("panel");
-        sepBottom.alignment = "fill";
+        sepBottom.alignment = ["fill", "top"];
         sepBottom.minimumSize.height = 2;
 
         var btnGroup = bottomGroup.add("group");
         btnGroup.orientation = "row";
-        btnGroup.alignment = "fill"; 
+        btnGroup.alignment = ["fill", "top"]; 
 
         var cloneBtn = btnGroup.add("button", undefined, "Cloooner");
-        cloneBtn.alignment = ["fill", "center"]; 
+        cloneBtn.alignment = ["fill", "fill"]; // Ép nút giãn theo % ngang còn lại
         cloneBtn.preferredSize.height = 30;
 
         var clearBtn = btnGroup.add("button", undefined, "🗑");
-        clearBtn.preferredSize = [30, 30]; 
-        clearBtn.helpTip = "Chọn Pivot Null và ấn Clear để Un-clone";
+        clearBtn.preferredSize = [35, 30]; // Thùng rác luôn cố định tỷ lệ vuông 35px
+        clearBtn.alignment = ["right", "fill"]; 
+        clearBtn.helpTip = "Thùng rác thông minh: Chọn Null để tháo Rig";
 
         var footerGroup = bottomGroup.add("group");
         footerGroup.orientation = "row";
@@ -362,7 +379,6 @@
         footerGroup.margins = [0, 5, 0, 0]; 
         footerGroup.add("statictext", undefined, "Một chiếc plugin bởi Trọng");
         
-        // Nút Trái tim và link Facebook
         var fbBtn = footerGroup.add("button", undefined, "♥︎");
         fbBtn.preferredSize = [25, 20]; 
         fbBtn.helpTip = "Ghé thăm Facebook của tôi!";
@@ -394,6 +410,17 @@
         setupPlusMinus(pathDistPlus, pathDistMinus, pathDistInput, -100);
         setupPlusMinus(pathCloneMorePlus, pathCloneMoreMinus, pathCloneMoreInput, 1);
 
+        // ==========================================
+        // KÍCH HOẠT NATIVE LAYOUT CỦA AFTER EFFECTS
+        // ==========================================
+        // Dòng này bắt buộc phải có để AE tự tính toán lại UI mỗi khi bạn kéo dãn bảng
+        panel.onResizing = panel.onResize = function() {
+            panel.layout.resize();
+        };
+
+        // Kích nổ layout lần đầu tiên
+        panel.layout.layout(true);
+        panel.onResize();
 /////////////////////////////////////// DONE UI LAYOUT
 // Helpers
         // --- TRUE CLONE ENGINE ---
