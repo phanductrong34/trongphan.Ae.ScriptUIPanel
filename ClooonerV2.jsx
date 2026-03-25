@@ -301,7 +301,7 @@
         tinhMasterGroup.orientation = "column";
         tinhMasterGroup.alignChildren = ["center", "top"];
         tinhMasterGroup.spacing = 6;
-        tinhMasterGroup.add("statictext", undefined, "Số Layer Đúp");
+        tinhMasterGroup.add("statictext", undefined, "Số layer đúp");
 
         var tinhGroup = tinhMasterGroup.add("group");
         tinhGroup.orientation = "row";
@@ -371,10 +371,17 @@
         angleMasterGroup.orientation = "column";
         angleMasterGroup.alignChildren = ["center", "top"];
         angleMasterGroup.spacing = 6;
-        angleMasterGroup.add("statictext", undefined, "Góc xoay:");
+        angleMasterGroup.add("statictext", undefined, "Góc xoay (độ)");
         
-        var angleInput = angleMasterGroup.add("edittext", undefined, "30"); 
+        // Bọc input vào 1 group nằm ngang cùng 2 nút
+        var angleGroup = angleMasterGroup.add("group");
+        angleGroup.orientation = "row";
+        var angleMinus = angleGroup.add("button", undefined, "-");
+        angleMinus.preferredSize = [25, 25];
+        var angleInput = angleGroup.add("edittext", undefined, "30"); 
         angleInput.preferredSize = [40, 25];
+        var anglePlus = angleGroup.add("button", undefined, "+");
+        anglePlus.preferredSize = [25, 25];
 
         // --- ĐƯỜNG KẺ NGANG CHỐT HẠ BÊN DƯỚI ---
         var sepTron2 = tabTron.add("panel");
@@ -428,21 +435,6 @@
         var sepTron3 = tabTron.add("panel");
         sepTron3.alignment = "fill";
         sepTron3.minimumSize.height = 2;
-
-        var cloneMoreGroup = tabTron.add("group");
-        cloneMoreGroup.orientation = "row";
-        var cloneMoreMinus = cloneMoreGroup.add("button", undefined, "-");
-        cloneMoreMinus.preferredSize = [25, 25];
-        var cloneMoreInput = cloneMoreGroup.add("edittext", undefined, "3");
-        cloneMoreInput.preferredSize = [40, 25];
-        var cloneMorePlus = cloneMoreGroup.add("button", undefined, "+");
-        cloneMorePlus.preferredSize = [25, 25];
-        var cloneMoreBtn = cloneMoreGroup.add("button", undefined, "Clooon thêm");
-        cloneMoreBtn.preferredSize.height = 25;
-
-        var sepTron4 = tabTron.add("panel");
-        sepTron4.alignment = "fill";
-        sepTron4.minimumSize.height = 2;
 
         // Thêm hướng dẫn cho Tab Tròn
         var helpTronGroup = tabTron.add("group");
@@ -503,7 +495,7 @@
         pathDistMasterGroup.orientation = "column";
         pathDistMasterGroup.alignChildren = ["center", "top"];
         pathDistMasterGroup.spacing = 6;
-        pathDistMasterGroup.add("statictext", undefined, "Khoảng cách (%):");
+        pathDistMasterGroup.add("statictext", undefined, "Khoảng cách (%)");
 
         var pathDistGroup = pathDistMasterGroup.add("group");
         pathDistGroup.orientation = "row";
@@ -516,16 +508,16 @@
 
         // --- ĐƯỜNG KẺ NGANG CHỐT HẠ BÊN DƯỚI KHỐI 2 CỘT ---
 
+        
+        var sepPath2 = tabPath.add("panel");
+        sepPath2.alignment = "fill";
+        sepPath2.minimumSize.height = 2;
+        
         var pathModeGroup = tabPath.add("group");
         pathModeGroup.orientation = "column";
         pathModeGroup.alignChildren = ["center", "top"];
         pathModeGroup.spacing = 6;
         pathModeGroup.add("statictext", undefined, "Chế độ");
-
-        var sepPath2 = tabPath.add("panel");
-        sepPath2.alignment = "fill";
-        sepPath2.minimumSize.height = 2;
-
         // ==========================================
         // UI MỚI: CHECKBOX BINARY TAB PATH (CHIA 2 ROW)
         // ==========================================
@@ -553,23 +545,7 @@
         sepPath3.alignment = "fill";
         sepPath3.minimumSize.height = 2;
 
-        // ==========================================
-        // PHẦN "CLOOON THÊM" (GIỮ NGUYÊN HOÀN TOÀN)
-        // ==========================================
-        var pathCloneMoreGroup = tabPath.add("group");
-        pathCloneMoreGroup.orientation = "row";
-        var pathCloneMoreMinus = pathCloneMoreGroup.add("button", undefined, "-");
-        pathCloneMoreMinus.preferredSize = [25, 25];
-        var pathCloneMoreInput = pathCloneMoreGroup.add("edittext", undefined, "3");
-        pathCloneMoreInput.preferredSize = [40, 25];
-        var pathCloneMorePlus = pathCloneMoreGroup.add("button", undefined, "+");
-        pathCloneMorePlus.preferredSize = [25, 25];
-        var pathCloneMoreBtn = pathCloneMoreGroup.add("button", undefined, "Clooon thêm");
-        pathCloneMoreBtn.preferredSize.height = 25;
 
-        var sepPath4 = tabPath.add("panel");
-        sepPath4.alignment = "fill";
-        sepPath4.minimumSize.height = 2;
 
         // Thêm hướng dẫn cho Tab Path (Cập nhật Delayed Offset)
         var helpPathGroup = tabPath.add("group");
@@ -588,11 +564,87 @@
         };
 
         // === TAB 4: TOOLS ===
-        tabTools.spacing = 15;
+        tabTools.spacing = 12;
         tabTools.margins = 10;
+        tabTools.alignChildren = ["fill", "top"];
+
+        // ==========================================
+        // UI MỚI: CỤM CLONE THÊM (CHUNG CHO TRÒN & PATH)
+        // ==========================================
+
+
+        // Tạo Panel bao quanh có viền và tiêu đề tích hợp sẵn
+        var toolCloneMoreMaster = tabTools.add("panel", undefined, "Clooon thêm");
+        toolCloneMoreMaster.orientation = "column";
+        toolCloneMoreMaster.alignment = ["fill", "top"]; // Dãn chiều ngang cho bằng với các panel khác
+        toolCloneMoreMaster.alignChildren = ["center", "top"];
+        toolCloneMoreMaster.spacing = 15; // Giãn các nút cách xa viền hộp một chút
+        toolCloneMoreMaster.margins = 15; // Lùi lề bên trong để khung nhìn thoáng hơn
+
+        var toolCloneMoreGroup = toolCloneMoreMaster.add("group");
+        toolCloneMoreGroup.orientation = "row";
+        
+        var toolCloneMoreMinus = toolCloneMoreGroup.add("button", undefined, "-");
+        toolCloneMoreMinus.preferredSize = [25, 25];
+        var toolCloneMoreInput = toolCloneMoreGroup.add("edittext", undefined, "3");
+        toolCloneMoreInput.preferredSize = [40, 25];
+        var toolCloneMorePlus = toolCloneMoreGroup.add("button", undefined, "+");
+        toolCloneMorePlus.preferredSize = [25, 25];
+        
+        // Nút bấm Clooon thêm bọc trong Panel
+        var toolCloneMoreBtn = toolCloneMoreGroup.add("button", undefined, "Clooon thêm");
+        toolCloneMoreBtn.preferredSize.height = 25;
+
+        // ==========================================
+        // CÚ PATCH SỬA LỖI & TỰ ĐỘNG NHẬN DIỆN NULL
+        // ==========================================
+        
+        // 2. Gán lại biến cho thuật toán gốc (Cố tình bỏ chữ "var" để không làm đứt kết nối)
+        cloneMoreInput = toolCloneMoreInput;
+        pathCloneMoreInput = toolCloneMoreInput;
+
+        // 3. SỰ KIỆN CLICK THÔNG MINH (Auto-Detect Tròn hay Path)
+        toolCloneMoreBtn.onClick = function() {
+            // Chốt hạ dữ liệu để thuật toán dưới cùng không bao giờ báo lỗi rỗng
+            cloneMoreInput.text = toolCloneMoreInput.text;
+            pathCloneMoreInput.text = toolCloneMoreInput.text;
+
+            var comp = app.project.activeItem;
+            if (!comp || comp.selectedLayers.length === 0) {
+                alert("Vui lòng chọn 1 Null (Pivot) để clone thêm!");
+                return;
+            }
+
+            var pivot = comp.selectedLayers[0];
+            var isPathMode = false;
+
+            // Thuật toán nhận diện: Nếu Null có Effect "Path Position" thì chắc chắn là clone Path
+            try {
+                if (pivot.property("Effects").property("Path Position") !== null) {
+                    isPathMode = true;
+                }
+            } catch (e) {}
+
+            // Tráo đổi biến tpanel giả để bẻ lái thuật toán rẽ đúng nhánh
+            var oldTab = tpanel.selection.text;
+            tpanel.selection.text = isPathMode ? "Path" : "Tròn";
+
+            // Kích hoạt động cơ gốc
+            if (typeof cloneMoreLogic === "function") {
+                cloneMoreLogic();
+            } else {
+                alert("Lỗi: Không kết nối được với hệ thống Clone More!");
+            }
+
+            // Trả lại trạng thái tpanel
+            tpanel.selection.text = oldTab;
+        };
+
+        // ... (Bên dưới là các tính năng "Rig to Circular", "Rig to Path" cũ của Tab Tools) ...
 
         // --- RIG TO CIRCULAR ---
         var toolCircPanel = tabTools.add("panel", undefined, "Rig to Circular");
+        toolCircPanel.alignment = ["fill", "top"];
         toolCircPanel.orientation = "column";
         toolCircPanel.alignChildren = ["left", "top"];
         toolCircPanel.spacing = 8;
@@ -616,13 +668,10 @@
         var btnRigCirc = toolCircPanel.add("button", undefined, "Rig to Circular");
         btnRigCirc.alignment = ["fill", "top"];
 
-        // Phân cách 2 cụm Tools
-        var sepTool = tabTools.add("panel");
-        sepTool.alignment = "fill";
-        sepTool.minimumSize.height = 2;
 
         // --- RIG TO PATH ---
         var toolPathPanel = tabTools.add("panel", undefined, "Rig to Path");
+        toolPathPanel.alignment = ["fill", "top"];
         toolPathPanel.orientation = "column";
         toolPathPanel.alignChildren = ["left", "top"];
         toolPathPanel.spacing = 8;
@@ -718,12 +767,6 @@
             };
         }
 
-        setupPlusMinus(tinhPlus, tinhMinus, tinhInput, 1);
-        setupPlusMinus(clonePlus, cloneMinus, cloneInput, 1);
-        setupPlusMinus(cloneMorePlus, cloneMoreMinus, cloneMoreInput, 1);
-        setupPlusMinus(pathClonePlus, pathCloneMinus, pathCloneInput, 1);
-        setupPlusMinus(pathDistPlus, pathDistMinus, pathDistInput, -100);
-        setupPlusMinus(pathCloneMorePlus, pathCloneMoreMinus, pathCloneMoreInput, 1);
 
         // ==========================================
         // KÍCH HOẠT NATIVE LAYOUT CỦA AFTER EFFECTS
@@ -2018,9 +2061,80 @@
             app.endUndoGroup();
         };
 
-        // Gán hàm logic vừa tạo cho nút ở tab Tròn và nút ở tab Path
-        cloneMoreBtn.onClick = cloneMoreLogic;
-        pathCloneMoreBtn.onClick = cloneMoreLogic;
+        // ==========================================
+        // ĐỘNG CƠ SMART INPUT V2: HỖ TRỢ TOÁN HỌC, ÂM/DƯƠNG & ÉP KIỂU
+        // ==========================================
+        // Thêm tham số requireInt: Bắt buộc làm tròn thành số nguyên (dành cho đúp layer)
+        function setupMathInput(minusBtn, plusBtn, inputFld, stepValue, minLimit, requireInt) {
+            
+            // 1. Tính toán khi gõ Enter
+            inputFld.onChange = function() {
+                try {
+                    var result = eval(this.text); // Chạy phép tính (VD: 360/6 -> 60)
+                    if (isNaN(result)) throw "NaN";
+                    
+                    // Chặn giới hạn Min (nếu có truyền vào)
+                    if (minLimit !== undefined && result < minLimit) result = minLimit;
+                    
+                    // Nếu là đúp layer thì phải là số nguyên, ngược lại thì cho phép 2 số thập phân
+                    if (requireInt) {
+                        this.text = Math.round(result).toString();
+                    } else {
+                        this.text = (Math.round(result * 100) / 100).toString();
+                    }
+                } catch (e) {
+                    this.text = (minLimit !== undefined) ? minLimit.toString() : "0";
+                }
+            };
+
+            // 2. Nút Giảm (-)
+            minusBtn.onClick = function() {
+                try {
+                    var currentVal = eval(inputFld.text);
+                    var newVal = currentVal - stepValue;
+                    if (minLimit !== undefined && newVal < minLimit) newVal = minLimit; 
+                    
+                    if (requireInt) inputFld.text = Math.round(newVal).toString();
+                    else inputFld.text = (Math.round(newVal * 100) / 100).toString();
+                } catch(e){}
+            };
+
+            // 3. Nút Tăng (+)
+            plusBtn.onClick = function() {
+                try {
+                    var currentVal = eval(inputFld.text);
+                    var newVal = currentVal + stepValue;
+                    
+                    if (requireInt) inputFld.text = Math.round(newVal).toString();
+                    else inputFld.text = (Math.round(newVal * 100) / 100).toString();
+                } catch(e){}
+            };
+        }
+
+        // --- GỌI HÀM CHO TOÀN BỘ 6 Ô INPUT TRONG PLUGIN ---
+        
+        // 1. Góc Xoay (Tab Tròn): Bước nhảy 10, Không giới hạn Min (Cho phép Âm), Không ép số nguyên
+        setupMathInput(angleMinus, anglePlus, angleInput, 10, undefined, false);
+
+        // 2. Khoảng cách (Tab Path): Bước nhảy 5, Không giới hạn Min (Cho phép Âm), Không ép số nguyên
+        setupMathInput(pathDistMinus, pathDistPlus, pathDistInput, 5, undefined, false);
+
+        // 3. Số layer đúp (Tab Tĩnh): Bước nhảy 1, Min là 1, BẮT BUỘC số nguyên (true)
+        setupMathInput(tinhMinus, tinhPlus, tinhInput, 1, 1, true);
+
+        // 4. Số layer đúp (Tab Tròn): Bước nhảy 1, Min là 1, BẮT BUỘC số nguyên (true)
+        setupMathInput(cloneMinus, clonePlus, cloneInput, 1, 1, true);
+
+        // 5. Số layer đúp (Tab Path): Bước nhảy 1, Min là 1, BẮT BUỘC số nguyên (true)
+        setupMathInput(pathCloneMinus, pathClonePlus, pathCloneInput, 1, 1, true);
+
+        // 6. Clooon thêm (Tab Tools): Bước nhảy 1, Min là 1, BẮT BUỘC số nguyên (true)
+        setupMathInput(toolCloneMoreMinus, toolCloneMorePlus, toolCloneMoreInput, 1, 1, true);
+
+        // --- Áp dụng cho Góc Xoay (Bước nhảy 10, Không cho <= 0) ---
+        setupMathInput(angleMinus, anglePlus, angleInput, 10, 0);
+        setupMathInput(pathDistMinus, pathDistPlus, pathDistInput, 5, undefined);
+        
 
         return panel;
     }
