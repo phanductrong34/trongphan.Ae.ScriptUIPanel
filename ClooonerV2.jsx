@@ -1452,14 +1452,18 @@
                         kid.parent = pivot;
                     }
 
-                    // 2. Xoá Null Phụ tận gốc (Khỏi Project Bin)
+                    // 2. Xoá Null Phụ tận gốc an toàn (Khỏi Project Bin)
                     for (var n = 0; n < nullsToDelete.length; n++) {
-                        var isNullObj = nullsToDelete[n].nullLayer;
-                        var nullSrc = nullsToDelete[n].source;
-                        nullsToDelete[n].remove(); // Xoá khỏi timeline
-                        if (isNullObj && nullSrc) {
-                            try { nullSrc.remove(); } catch(e) {} // Xoá khỏi Project Bin
-                        }
+                        try {
+                            var isNullObj = nullsToDelete[n].nullLayer;
+                            var nullSrc = nullsToDelete[n].source;
+                            nullsToDelete[n].remove(); // Xoá khỏi timeline
+                            
+                            // Chỉ xoá Source nếu nó KHÁC với Source của Pivot Null (Tránh tự huỷ Pivot)
+                            if (isNullObj && nullSrc && nullSrc !== pivot.source) {
+                                nullSrc.remove(); 
+                            }
+                        } catch(e) {} // Dập tắt mọi cảnh báo "Object is invalid" của AE
                     }
 
                     // 3. Dọn dẹp Effect trên Pivot Null ban đầu
@@ -1542,14 +1546,18 @@
                     // 2. Tiêu diệt các bản Clone đúp
                     for (var d = 0; d < kidsToDelete.length; d++) kidsToDelete[d].remove();
 
-                    // 3. Tiêu diệt Null phụ tận gốc (Khỏi Project Bin)
+                    // 3. Tiêu diệt Null phụ tận gốc an toàn (Khỏi Project Bin)
                     for (var n = 0; n < nullsToDelete.length; n++) {
-                        var isNullObj = nullsToDelete[n].nullLayer;
-                        var nullSrc = nullsToDelete[n].source;
-                        nullsToDelete[n].remove();
-                        if (isNullObj && nullSrc) {
-                            try { nullSrc.remove(); } catch(e) {}
-                        }
+                        try {
+                            var isNullObj = nullsToDelete[n].nullLayer;
+                            var nullSrc = nullsToDelete[n].source;
+                            nullsToDelete[n].remove();
+                            
+                            // Chỉ xoá Source nếu nó KHÁC với Source của Pivot Null
+                            if (isNullObj && nullSrc && nullSrc !== pivot.source) {
+                                nullSrc.remove(); 
+                            }
+                        } catch(e) {} // Dập tắt mọi cảnh báo "Object is invalid" của AE
                     }
 
                     // 4. Giữ lại Pivot Null, dọn sạch sẽ Effect và Expression để tái sử dụng
