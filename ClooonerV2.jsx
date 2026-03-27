@@ -229,7 +229,7 @@
             // --- CẬP NHẬT DYNAMIC HELP ---
             if (typeof helpTextUI !== "undefined") {
                 if (activeGroup === tabTinh) {
-                    helpTextUI.text = "Hướng dẫn Clone Tĩnh";
+                    helpTextUI.text = "Clone Tĩnh Guide";
                     helpBtnUI.onClick = function() {
                         alert(
                             "💡 HƯỚNG DẪN CLONE TĨNH\n\n" +
@@ -241,7 +241,7 @@
                         );
                     };
                 } else if (activeGroup === tabTron) {
-                    helpTextUI.text = "Hướng dẫn Clone Tròn";
+                    helpTextUI.text = "Clone Tròn Guide";
                     helpBtnUI.onClick = function() {
                         alert(
                             "💡 HƯỚNG DẪN CLONE TRÒN\n\n" +
@@ -259,7 +259,7 @@
                         );
                     };
                 } else if (activeGroup === tabPath) {
-                    helpTextUI.text = "Hướng dẫn Clone Path";
+                    helpTextUI.text = "Clone Path Guide";
                     helpBtnUI.onClick = function() {
                         alert(
                             "💡 HƯỚNG DẪN CLONE PATH\n\n" +
@@ -279,10 +279,10 @@
                         );
                     };
                 } else if (activeGroup === tabTools) {
-                    helpTextUI.text = "Hướng dẫn Tools Rigging";
+                    helpTextUI.text = "Tools Guide";
                     helpBtnUI.onClick = function() {
                         alert(
-                            "💡 HƯỚNG DẪN TOOLS RIGGING\n\n" +
+                            "💡 HƯỚNG DẪN TOOLS PHỤ\n\n" +
                             "Công cụ hỗ trợ điều khiển và Rig các layer ĐÃ CÓ SẴN.\n\n" +
                             "🔸 CLOOON THÊM: Chọn Pivot/Control Null của hệ thống cũ, nhập số và bấm để đúp thêm bản sao nối tiếp.\n\n" +
                             "🔸 RIG TO CIRCULAR / PATH:\n" +
@@ -419,10 +419,6 @@
         tinhInput.preferredSize = [40, 25];
         var tinhPlus = tinhGroup.add("button", undefined, "+");
         tinhPlus.preferredSize = [25, 25];
-
-        var sepTinh1 = tabTinh.add("panel");
-        sepTinh1.alignment = "fill";
-        sepTinh1.minimumSize.height = 2;
 
 
 // === TAB 2: TRÒN ===
@@ -643,9 +639,6 @@
         };
         // ==========================================
 
-        var sepTron3 = tabTron.add("panel");
-        sepTron3.alignment = "fill";
-        sepTron3.minimumSize.height = 2;
 
 
 // === TAB 3: PATH ===
@@ -938,10 +931,6 @@
             app.endUndoGroup();
         };
 
-        var sepPath3 = tabPath.add("panel");
-        sepPath3.alignment = "fill";
-        sepPath3.minimumSize.height = 2;
-
 
 
         // === TAB 4: TOOLS ===
@@ -1159,7 +1148,7 @@
         // Biến toàn cục lưu trạng thái True Clone
         var isTrueCloneMode = false;
 
-        // === PHẦN CHUNG STICKY BOTTOM (DƯỚI CÙNG) ===
+// === PHẦN CHUNG STICKY BOTTOM (DƯỚI CÙNG) ===
         var bottomGroup = panel.add("group");
         bottomGroup.orientation = "column";
         bottomGroup.alignment = ["fill", "bottom"]; 
@@ -1167,37 +1156,22 @@
         bottomGroup.spacing = 10;
         bottomGroup.margins = [0, 5, 0, 0];
 
-        // 1. DYNAMIC HELP GROUP (Thay thế Checkbox cũ)
-        var dynamicHelpGroup = bottomGroup.add("group");
-        dynamicHelpGroup.orientation = "row";
-        dynamicHelpGroup.alignment = ["center", "top"];
-        dynamicHelpGroup.spacing = 5;
-        var helpTextUI = dynamicHelpGroup.add("statictext", undefined, "Hướng dẫn Clone Tĩnh");
-        var helpBtnUI = dynamicHelpGroup.add("button", undefined, "?");
-        helpBtnUI.preferredSize = [25, 25];
-
-        var sepBottom = bottomGroup.add("panel");
-        sepBottom.alignment = ["fill", "top"];
-        sepBottom.minimumSize.height = 2;
-
-        // 2. MAIN BUTTONS ROW
+        // 1. CỤM NÚT MAIN ACTION (Đưa lên trên)
         var btnGroup = bottomGroup.add("group");
         btnGroup.orientation = "row";
         btnGroup.alignment = ["fill", "top"]; 
         btnGroup.spacing = 5;
 
-        // Nhóm Cloooner + Tàu ngầm (Dính sát nhau)
         var actionGroup = btnGroup.add("group");
         actionGroup.orientation = "row";
         actionGroup.alignment = ["fill", "fill"];
         actionGroup.spacing = 0; 
-        actionGroup.margins = [0, 0, 10, 0]; // Thêm khoảng trống 20px ở bên phải để tách biệt cụm Xoá
+        actionGroup.margins = [0, 0, 10, 0]; 
 
         var cloneBtn = actionGroup.add("button", undefined, "Cloooner");
         cloneBtn.alignment = ["fill", "fill"];
         cloneBtn.preferredSize.height = 30;
 
-        // Nút Tàu Ngầm (True Clone Toggle)
         var subToggleGroup = actionGroup.add("group");
         subToggleGroup.orientation = "stack";
         subToggleGroup.alignment = ["right", "fill"];
@@ -1213,7 +1187,6 @@
         subOff.addEventListener("mousedown", toggleTrueClone);
         subOn.addEventListener("mousedown", toggleTrueClone);
 
-        // Nút Cây Chổi (Clean) & Thùng rác (Reset)
         var cleanBtn = btnGroup.add("button", undefined, "🧹");
         cleanBtn.preferredSize = [35, 30]; 
         cleanBtn.alignment = ["right", "fill"]; 
@@ -1222,16 +1195,38 @@
         var clearBtn = btnGroup.add("button", undefined, "🗑");
         clearBtn.preferredSize = [35, 30]; 
         clearBtn.alignment = ["right", "fill"]; 
-        clearBtn.helpTip = "Reset Clone: Xoá sạch sẽ hệ thống đúp, trả về nguyên bản ban đầu.";
+        clearBtn.helpTip = "Reset Clone: Xoá sạch hệ thống đúp, trả Null Pivot về nguyên bản ban đầu.";
 
-        // Footer
+        var sepBottom = bottomGroup.add("panel");
+        sepBottom.alignment = ["fill", "top"];
+        sepBottom.minimumSize.height = 2;
+
+        // 2. CỤM FOOTER (Guide bên trái, Credit bên phải)
         var footerGroup = bottomGroup.add("group");
         footerGroup.orientation = "row";
-        footerGroup.alignChildren = ["center", "center"];
-        footerGroup.margins = [0, 5, 0, 0]; 
-        footerGroup.add("statictext", undefined, "Một chiếc plugin bởi Trọng");
-        
-        var fbBtn = footerGroup.add("button", undefined, "♥︎");
+        footerGroup.alignment = ["fill", "center"];
+        footerGroup.margins = [0, 0, 0, 0]; 
+
+        // Nhóm Trái: Guide
+        var helpGroup = footerGroup.add("group");
+        helpGroup.orientation = "row";
+        helpGroup.alignment = ["left", "center"];
+        helpGroup.spacing = 5;
+        var helpTextUI = helpGroup.add("statictext", undefined, "Tĩnh Guide");
+        var helpBtnUI = helpGroup.add("button", undefined, "?");
+        helpBtnUI.preferredSize = [20, 20]; // Nút nhỏ lại cho tinh tế
+
+        // Spacer: Đẩy 2 cụm sang 2 mép
+        var spacer = footerGroup.add("group");
+        spacer.alignment = ["fill", "center"];
+
+        // Nhóm Phải: Credit
+        var creditGroup = footerGroup.add("group");
+        creditGroup.orientation = "row";
+        creditGroup.alignment = ["right", "center"];
+        creditGroup.spacing = 5;
+        creditGroup.add("statictext", undefined, "Plugin bởi Trọng");
+        var fbBtn = creditGroup.add("button", undefined, "♥︎");
         fbBtn.preferredSize = [25, 20]; 
         fbBtn.helpTip = "Ghé thăm Facebook của tôi!";
         fbBtn.onClick = function () {
@@ -1429,9 +1424,14 @@
                         kid.parent = pivot;
                     }
 
-                    // 2. Xoá Null Phụ
+                    // 2. Xoá Null Phụ tận gốc (Khỏi Project Bin)
                     for (var n = 0; n < nullsToDelete.length; n++) {
-                        nullsToDelete[n].remove();
+                        var isNullObj = nullsToDelete[n].nullLayer;
+                        var nullSrc = nullsToDelete[n].source;
+                        nullsToDelete[n].remove(); // Xoá khỏi timeline
+                        if (isNullObj && nullSrc) {
+                            try { nullSrc.remove(); } catch(e) {} // Xoá khỏi Project Bin
+                        }
                     }
 
                     // 3. Dọn dẹp Effect trên Pivot Null ban đầu
@@ -1514,11 +1514,28 @@
                     // 2. Tiêu diệt các bản Clone đúp
                     for (var d = 0; d < kidsToDelete.length; d++) kidsToDelete[d].remove();
 
-                    // 3. Tiêu diệt Null phụ
-                    for (var n = 0; n < nullsToDelete.length; n++) nullsToDelete[n].remove();
+                    // 3. Tiêu diệt Null phụ tận gốc (Khỏi Project Bin)
+                    for (var n = 0; n < nullsToDelete.length; n++) {
+                        var isNullObj = nullsToDelete[n].nullLayer;
+                        var nullSrc = nullsToDelete[n].source;
+                        nullsToDelete[n].remove();
+                        if (isNullObj && nullSrc) {
+                            try { nullSrc.remove(); } catch(e) {}
+                        }
+                    }
 
-                    // 4. Xoá luôn Pivot Null
-                    pivot.remove();
+                    // 4. Giữ lại Pivot Null, dọn sạch sẽ Effect và Expression để tái sử dụng
+                    var pivotFx = pivot.property("Effects");
+                    if (pivotFx) {
+                        for (var e = pivotFx.numProperties; e > 0; e--) {
+                            pivotFx.property(e).remove();
+                        }
+                    }
+                    var pivotProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+                    for(var p = 0; p < pivotProps.length; p++) {
+                        var prop = pivot.property("Transform").property(pivotProps[p]);
+                        if (prop && prop.canSetExpression) prop.expression = "";
+                    }
 
                 } else {
                     // Logic xoá tận gốc Comp (Tab Tĩnh)
@@ -2073,14 +2090,14 @@
             app.beginUndoGroup("Rig to Circular");
             try {
                 var totalClones = sel.length - 1;
-                var make3D = tc3D.value;
-                var normalize = tcNorm.value;
-                var isTwisted = tcTwist.value;
+                // Đã cập nhật đúng tên biến UI mới
+                var make3D = toolCirc3DChk.value;
+                var normalize = toolCircNoRotateChk.value;
+                var isTwisted = toolCircTwistedChk.value;
                 var axis = "Z";
                 if (make3D) {
-                    if (tcAxisX.value) axis = "X";
-                    else if (tcAxisY.value) axis = "Y";
-                    else axis = "Z";
+                    // Đọc trực tiếp từ value của cụm Radio
+                    axis = toolCircAxisGroup.value; 
                 }
 
                 pivot.threeDLayer = make3D; 
@@ -2218,11 +2235,12 @@
             var shapeLayer = sel[0];
             if (!(shapeLayer instanceof ShapeLayer)) return alert("LỖI: Layer đầu tiên được chọn bắt buộc phải là Shape Layer (chứa đường Path).");
 
-            var useOrient = tpOrient.value;
-            var useTaper = tpTaper.value;
-            var useTrim = tpTrim.value;
-            var isTwisted = tpTwist.value;
-            var isDelayed = tpDelay.value;
+            // Đã cập nhật đúng tên biến UI mới
+            var useOrient = toolOrientChk.value;
+            var useTaper = toolTaperChk.value;
+            var useTrim = toolTrimChk.value;
+            var isTwisted = toolTwistedChk_Path.value;
+            var isDelayed = toolDelayChk.value;
 
             app.beginUndoGroup("Rig to Path");
             try {
@@ -2487,18 +2505,24 @@
 
                 var sampleRot = null;
                 var sampleKid = null;
+                var maxIndex = -1;
 
+                // 1. Quét tìm Null phụ có Clone Index lớn nhất (Dù user có xoá layer cuối thì nó vẫn tìm được thằng to nhất còn lại)
                 for (var i = 1; i <= comp.numLayers; i++) {
                     var l = comp.layer(i);
                     if (l.parent === pivot) {
                         var fx = l.property("Effects").property("Clone Index");
-                        if (fx && parseInt(fx.property("Slider").value) === currentTotal - 1) {
-                            sampleRot = l;
-                            break;
+                        if (fx) {
+                            var idx = parseInt(fx.property("Slider").value);
+                            if (idx > maxIndex) {
+                                maxIndex = idx;
+                                sampleRot = l;
+                            }
                         }
                     }
                 }
 
+                // 2. Tìm Layer Clone con tương ứng với Null phụ đó
                 if (sampleRot) {
                     for (var j = 1; j <= comp.numLayers; j++) {
                         var l = comp.layer(j);
@@ -2510,9 +2534,16 @@
                 }
 
                 if (!sampleRot || !sampleKid) {
-                    alert("Lỗi: Không tìm thấy layer Clone cuối cùng trong Pivot này để nhân bản.");
+                    alert("Lỗi: Không tìm thấy bất kỳ layer Clone nào trong Pivot này để nhân bản.");
                     app.endUndoGroup();
                     return;
+                }
+
+                // 3. TỰ ĐỘNG CHỮA LỖI: Đồng bộ lại Total Clones nếu User đã xoá bớt layer bằng tay
+                var actualTotal = maxIndex + 1; // Vì index bắt đầu từ 0
+                if (actualTotal !== currentTotal) {
+                    totalClonesCtrl.property("Slider").setValue(actualTotal);
+                    currentTotal = actualTotal;
                 }
 
                 var baseLayerName = sampleKid.name.replace(/^\d+\.\s/, "").replace(/\s-\sClone$/, "");
