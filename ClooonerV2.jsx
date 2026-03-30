@@ -269,8 +269,8 @@
                             "Chế độ này giúp bạn nhân bản nhanh layer tại chỗ.\n\n" +
                             "🔸 SỐ LƯỢNG: Nhập số bản sao bạn muốn tạo.\n" +
                             "🔸 NÚT CLOOONER: Bấm để bắt đầu đúp.\n" +
-                            "🔸 🛅 TRUE CLONE (Tàu ngầm): Đúp sâu tận gốc vào các Comp con, tạo ra các bản sao hoàn toàn độc lập.\n" +
-                            "🔸 🗑️ NÚT RESET: Chọn layer/comp đã đúp và xoá TẬN GỐC khỏi Project."
+                            "🔸 🛅 TRUE CLONE (Tàu ngầm): Đúp sâu tận gốc vào các Comp con, tạo ra bản sao độc lập.\n" +
+                            "🔸 🗑️ NÚT RESET: Xoá tận gốc Layer và Comp khỏi Project."
                         );
                     };
                 } else if (activeGroup === tabTron) {
@@ -278,14 +278,14 @@
                     helpBtnUI.onClick = function() {
                         alert(
                             "💡 HƯỚNG DẪN CLONE TRÒN\n\n" +
-                            "📌 CHUẨN BỊ: Chọn Null Tâm và Layer cần đúp (Null có thể ở ĐẦU hoặc CUỐI đều được).\n\n" +
-                            "🔸 CÁC CHẾ ĐỘ HIỆU ỨNG:\n" +
-                            "   • Không xoay: Bản sao luôn hướng về một phía (đu quay).\n" +
-                            "   • 3D Mode & Twisted (Lốc xoáy).\n\n" +
-                            "🔸 🧹 NÚT CLEAN (Safe Clean):\n" +
-                            "   • Chọn Null Tổng: Clean toàn bộ (Giữ lại Clone, xoá Null phụ).\n" +
-                            "   • Chọn Null phụ: Xoá Null phụ đó, Tách Layer Clone con ra khỏi hệ thống an toàn.\n" +
-                            "   • Chọn Layer Clone: Xoá hoàn toàn Clone đó và Null phụ của nó khỏi Timeline."
+                            "📌 CÁCH DÙNG: Chọn 1 Null Tâm và 1 Layer cần đúp (Null ở ĐẦU hoặc CUỐI vùng chọn).\n" +
+                            "👉 Tool lấy toạ độ của Layer làm điểm gốc, tự tính toán góc bù trừ (Offset) để tạo vòng tròn chuẩn xác.\n\n" +
+                            "🔸 🧹 SAFE CLEAN (Xoá/Tách an toàn):\n" +
+                            "   • Chọn Null Tổng: Giữ lại toàn bộ Layer, nhả Parent, xoá bỏ hệ thống Rig.\n" +
+                            "   • Chọn Null Phụ: Tách Layer đó ra khỏi hệ thống (Bake toạ độ).\n" +
+                            "   • Chọn Layer Clone: Xoá vĩnh viễn Layer đó.\n" +
+                            "👉 Hệ thống sẽ TỰ ĐỘNG DỒN SỐ THỨ TỰ (Index) để lấp đầy khoảng trống!\n\n" +
+                            "🔸 🗑️ RESET: Xoá sạch hệ thống đúp, trả Layer về toạ độ gốc ban đầu."
                         );
                     };
                 } else if (activeGroup === tabPath) {
@@ -293,13 +293,13 @@
                     helpBtnUI.onClick = function() {
                         alert(
                             "💡 HƯỚNG DẪN CLONE PATH\n\n" +
-                            "📌 CHUẨN BỊ: Chọn Shape (chứa Path) và Layer cần đúp (Shape có thể ở ĐẦU hoặc CUỐI đều được).\n\n" +
-                            "🔸 CÁC CHẾ ĐỘ HIỆU ỨNG:\n" +
-                            "   • Auto Orient / Taper / TrimPath FX / Twisted / Delay Offset.\n\n" +
-                            "🔸 🧹 NÚT CLEAN (Safe Clean):\n" +
-                            "   • Chọn Null Tổng: Clean toàn bộ (Giữ lại Clone, xoá Null phụ).\n" +
-                            "   • Chọn Null phụ: Xoá Null phụ đó, Tách Layer Clone con ra khỏi hệ thống an toàn.\n" +
-                            "   • Chọn Layer Clone: Xoá hoàn toàn Clone đó và Null phụ của nó khỏi Timeline."
+                            "📌 CÁCH DÙNG: Chọn 1 Shape Layer (đường Path) và 1 Layer cần đúp.\n" +
+                            "👉 Tool tự động Convert Shape thành Bezier Path, dọn dẹp layer rác và link Shape vào Null Control.\n\n" +
+                            "🔸 CÁC CHẾ ĐỘ NÂNG CAO:\n" +
+                            "   • Auto Orient / Taper / TrimPath / Twisted / Delay Offset.\n\n" +
+                            "🔸 🧹 SAFE CLEAN (Xoá/Tách an toàn):\n" +
+                            "   Hoạt động thông minh giống Tab Tròn. Cho phép tách cục bộ hoặc xoá rác tự động dồn Index.\n\n" +
+                            "🔸 🗑️ RESET: Xoá sạch hệ thống đúp, trả Layer về toạ độ gốc ban đầu."
                         );
                     };
                 } else if (activeGroup === tabTools) {
@@ -308,20 +308,18 @@
                         alert(
                             "💡 HƯỚNG DẪN TOOLS RIGGING\n\n" +
                             "🔸 CLOOON THÊM:\n" +
-                            "   • Nhập số: Chọn Null Control để đúp thêm bản sao.\n" +
-                            "   • Nhập Layer: Chọn Null Control VÀ các Layer mới (Null ở đầu hoặc cuối) -> Bấm Clooon thêm để nhập chúng vào hệ thống cũ!\n\n" +
+                            "   • Đúp thêm: Chọn Null Control của hệ thống và nhập số lượng để đúp.\n" +
+                            "   • Nạp thêm: Chọn Null Control + Các Layer mới (Null ở đầu/cuối) -> Bấm nạp vào hệ thống cũ.\n\n" +
                             "🔸 RIG TO CIRCULAR / PATH:\n" +
-                            "   • Hút các layer vào hệ thống Cloooner.\n" +
-                            "   • Chọn Null/Path ĐẦU TIÊN hoặc CUỐI CÙNG, các layer kia ở giữa.\n" +
-                            "   • Tự động NHẬP THÊM nếu Null/Path đó là của hệ thống cũ.\n\n" +
-                            "🔸 ĐẢO ORDER LAYER:\n" +
-                            "   • Chọn nhiều layer để đảo ngược thứ tự (Z-index).\n" +
-                            "   • HOẶC chỉ cần chọn Null Pivot, Tool tự động đảo order toàn bộ."
+                            "   • Tạo mới: Chọn Null/Shape ở ĐẦU hoặc CUỐI, các layer kia ở giữa.\n" +
+                            "   • Nạp thêm: Chọn Null Control cũ ở ĐẦU/CUỐI, các layer mới ở giữa.\n\n" +
+                            "🔸 ĐẢO / XÁO TRỘN ORDER:\n" +
+                            "   • Reverse: Đảo ngược thứ tự hiển thị Z-index trên Timeline.\n" +
+                            "   • Shuffle: Đổi chỗ ngẫu nhiên vị trí các Clone trên quỹ đạo và trên Timeline."
                         );
                     };
                 }
             }
-
             // Ép AE tính toán lại layout và dãn Sticky Bottom
             panel.layout.layout(true);  
             panel.layout.resize(); 
@@ -858,17 +856,21 @@
                     rot.property("Effects").property("Path Position").property("Slider").expression = posExpr;
                     kid.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");';
 
+                    // --- CẬP NHẬT EXPRESSION BÙ TRỪ TOẠ ĐỘ VỚI GROUP TRANSFORM ---
                     var pathPositionExpr =
                         'try {\n' +
                         '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
-                        '  duongpath = targetLayer.content(1).content(1).path;\n' +
+                        '  shapeGroup = targetLayer.content(1);\n' +
+                        '  duongpath = shapeGroup.content(1).path;\n' +
                         '  logicalPct = effect("Path Position")("Slider");\n' +
                         (useTrim ? 
                         '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n' +
                         '  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' 
                         : '  tS = 0; tE = 100;\n') +
                         '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n' +
-                        '  pos = targetLayer.toComp(duongpath.pointOnPath(physicalPct));\n' +
+                        '  pt = duongpath.pointOnPath(physicalPct);\n' +
+                        '  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n' +
+                        '  pos = targetLayer.toComp(pt);\n' +
                         '  cPos = parent.fromComp(pos);\n' +
                         '  x = value[0] + cPos[0];\n' +
                         '  y = value[1] + cPos[1];\n' +
@@ -995,6 +997,7 @@
         // Nút bấm Clooon thêm bọc trong Panel
         var toolCloneMoreBtn = toolCloneMoreGroup.add("button", undefined, "Clooon thêm");
         toolCloneMoreBtn.preferredSize.height = 25;
+        toolCloneMoreBtn.helpTip = "Clone Thêm / Nạp Layer:\n- Chọn Null Control để đúp thêm các Clone mới.\n- HOẶC: Chọn Null Control + Các Layer mới (Null ở 2 đầu) để nạp các layer đó vào hệ thống cũ.";
 
         
 
@@ -1066,8 +1069,7 @@
         var btnRigCirc = toolCircPanel.add("button", undefined, "Rig to Circular");
         btnRigCirc.alignment = ["fill", "bottom"];
         btnRigCirc.preferredSize.height = 30;
-        btnRigCirc.helpTip = "Tạo mới: Chọn 1 Null Tâm + Các Layer thường.\nNhập thêm: Chọn 1 Null Control cũ + Các Layer mới.\n(Lưu ý: Null luôn phải nằm ở Đầu hoặc Cuối danh sách chọn)";
-
+        btnRigCirc.helpTip = "Rig to Circular:\n- Tạo mới: Bôi đen 1 Null + Các layer (Null ở Đầu/Cuối).\n- Nạp thêm: Bôi đen Null Control cũ + Các layer mới (Null ở Đầu/Cuối).\n👉 Mọi Anchor Point, Offset và Layer Order sẽ được Tool tự động căn chỉnh chuẩn xác.";
         // Logic ẩn/hiện trục 3D khi bấm nút 3D và ép layout dãn khung (Tr trị lỗi sticky bottom bar)
         toolCirc3DChk.onClick = function () {
             toolCircAxisGroup.visible = toolCirc3DChk.value;
@@ -1101,8 +1103,7 @@
         var btnRigPath = toolPathPanel.add("button", undefined, "Rig to Path");
         btnRigPath.alignment = ["fill", "bottom"];
         btnRigPath.preferredSize.height = 30;
-        btnRigPath.helpTip = "Tạo mới: Chọn 1 Shape Layer + Các Layer thường.\nNhập thêm: Chọn 1 Null Control cũ + Các Layer mới.\n(Lưu ý: Shape/Null luôn phải nằm ở Đầu hoặc Cuối danh sách chọn)";
-
+        btnRigPath.helpTip = "Rig to Path:\n- Tạo mới: Bôi đen 1 Shape + Các layer (Shape ở Đầu/Cuối).\n- Nạp thêm: Bôi đen Null Control cũ + Các layer mới (Null ở Đầu/Cuối).\n👉 Shape sẽ tự động Convert Bezier và ghim vào Null Control.";
         // ==========================================
         // 4. PANEL: SẮP XẾP ORDER LAYER (TAB TOOLS)
         // ==========================================
@@ -1336,12 +1337,12 @@
         var cleanBtn = btnGroup.add("button", undefined, "🧹");
         cleanBtn.preferredSize = [35, 30]; 
         cleanBtn.alignment = ["right", "fill"]; 
-        cleanBtn.helpTip = "Safe Clean: Chọn Null Tổng để Clean All (giữ lại Clone). Chọn Clone/Null Phụ để Safe Delete/Tách khỏi hệ thống.";
+        cleanBtn.helpTip = "Safe Clean: \n- Chọn Null Tổng: Tách hệ thống, giữ lại các Layer.\n- Chọn Null phụ: Tách cục bộ layer đó.\n- Chọn Layer Clone: Xoá vĩnh viễn layer đó.\n(Tool sẽ tự động dồn Index và Rename bù vào chỗ trống).";
 
         var clearBtn = btnGroup.add("button", undefined, "🗑");
         clearBtn.preferredSize = [35, 30]; 
         clearBtn.alignment = ["right", "fill"]; 
-        clearBtn.helpTip = "Reset Clone: Xoá sạch hệ thống đúp, trả Null Pivot về nguyên bản ban đầu.";
+        clearBtn.helpTip = "Reset Hệ thống:\nXoá sạch các layer đúp và Null phụ, nhả Parent, trả Layer nguyên bản về toạ độ gốc ban đầu.";
 
         var sepBottom = bottomGroup.add("panel");
         sepBottom.alignment = ["fill", "top"];
@@ -1526,6 +1527,73 @@
             ctrl.property("Slider").expression = idx.toString();
         }
 
+        // --- HÀM ÉP CONVERT BEZIER THÔNG MINH (PHIÊN BẢN CHUẨN) ---
+        function forceConvertToBezier(comp, shapeLayer) {
+            if (!(shapeLayer instanceof ShapeLayer)) return;
+
+            var contents = shapeLayer.property("ADBE Root Vectors Group");
+            if (!contents || contents.numProperties === 0) return;
+
+            // Lấy Group đầu tiên (vd: Rectangle 1)
+            var firstGroup = contents.property(1);
+            var parentGroup = (firstGroup && firstGroup.matchName === "ADBE Vector Group") ? firstGroup.property("ADBE Vectors Group") : contents;
+            var targetPath = null;
+
+            // 1. Tìm Parametric Path (Rectangle/Ellipse/Star)
+            for (var i = 1; i <= parentGroup.numProperties; i++) {
+                var prop = parentGroup.property(i);
+                var mName = prop.matchName;
+                if (mName === "ADBE Vector Shape - Rect" || 
+                    mName === "ADBE Vector Shape - Ellipse" || 
+                    mName === "ADBE Vector Shape - Star") {
+                    targetPath = prop;
+                    break;
+                }
+            }
+
+            if (targetPath) {
+                // 2. Tạm bỏ chọn layer, chỉ chọn chính xác cái Path để gọi lệnh
+                for (var i = 1; i <= comp.numLayers; i++) {
+                    comp.layer(i).selected = false;
+                }
+                shapeLayer.selected = true; // Phải select layer gốc trước
+                targetPath.selected = true;
+
+                // 3. Thực thi lệnh Convert to Bezier
+                var cmdID = app.findMenuCommandId("Convert To Bezier Path");
+                if (cmdID <= 0) cmdID = 3736; // Fallback ID mặc định của AE
+                try { app.executeCommand(cmdID); } catch(e){}
+
+                // 4. Kiểm tra xem Bezier Path mới đã được tạo chưa
+                var hasBezier = false;
+                for (var j = 1; j <= parentGroup.numProperties; j++) {
+                    if (parentGroup.property(j).matchName === "ADBE Vector Shape - Group") {
+                        hasBezier = true;
+                        break;
+                    }
+                }
+
+                // 5. Nếu đã có Path mới, tiến hành xóa sạch Path cũ
+                if (hasBezier) {
+                    // Quét ngược từ dưới lên để lệnh xóa không làm sai lệch index
+                    for (var k = parentGroup.numProperties; k >= 1; k--) {
+                        var p = parentGroup.property(k);
+                        var m = p.matchName;
+                        if (m === "ADBE Vector Shape - Rect" || 
+                            m === "ADBE Vector Shape - Ellipse" || 
+                            m === "ADBE Vector Shape - Star") {
+                            p.remove();
+                        }
+                    }
+                }
+                
+                // Thu dọn Shape Layer rỗng nếu Engine của AE giật lag tự đẻ ra
+                if (comp.layer(1) && comp.layer(1).name === "Shape Layer 1" && comp.layer(1).property("ADBE Root Vectors Group").numProperties === 0) {
+                    comp.layer(1).remove();
+                }
+            }
+        }
+
 // --- 🧹 CLEAN BUTTON LOGIC (SAFE CLEAN VÀ QUÉT MẢNG NGƯỢC CHỐNG LỖI) ---
         cleanBtn.onClick = function () {
             var comp = app.project.activeItem;
@@ -1571,6 +1639,12 @@
                     
                     if (!isSpecificClean) {
                         // ================= CLEAN ALL =================
+                        // Nhả Shape Path an toàn trước khi xoá Pivot
+                        if (isPathControl && pivotFx.property("Path")) {
+                            var pathIdx = Math.round(pivotFx.property("Path").property("Layer").value);
+                            if (pathIdx > 0 && comp.layer(pathIdx).parent === pivot) comp.layer(pathIdx).parent = null;
+                        }
+                        
                         for (var i = 1; i <= comp.numLayers; i++) {
                             var kid = comp.layer(i);
                             // Dùng .index thay vì === để AE không bao giờ nhận diện trượt
@@ -1722,6 +1796,13 @@
                 
                 if (isPathControl || isCircularControl) {
                     var pivot = firstSel;
+                    
+                    // Nhả Shape Path an toàn trước khi dọn dẹp
+                    if (isPathControl && pivotFx && pivotFx.property("Path")) {
+                        var pathIdx = Math.round(pivotFx.property("Path").property("Layer").value);
+                        if (pathIdx > 0 && comp.layer(pathIdx).parent === pivot) comp.layer(pathIdx).parent = null;
+                    }
+
                     var kidsToDelete = [];
                     var nullsToDelete = [];
                     var originalKid = null;
@@ -2121,22 +2202,8 @@
                     return;
                 }
                 
-                // --- TỰ ĐỘNG CHUYỂN PARAMETRIC SHAPE THÀNH BEZIER PATH (Chống đẻ layer rác) ---
-                var preLayerCount = comp.numLayers;
-                for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
-                shapeLayer.selected = true;
-                try {
-                    var contents = shapeLayer.property("ADBE Root Vectors Group");
-                    if (contents && contents.numProperties > 0) {
-                        contents.property(1).selected = true;
-                        app.executeCommand(3736); // ID Lệnh "Convert To Bezier Path"
-                    }
-                } catch(e) {}
-                
-                // Thu dọn Shape Layer rỗng nếu AE tự động đẻ ra
-                while (comp.numLayers > preLayerCount) {
-                    comp.layer(1).remove(); // AE luôn đẻ layer mới lên trên cùng
-                }
+                // --- ÉP CHUYỂN BEZIER THÔNG MINH ---
+                forceConvertToBezier(comp, shapeLayer);
                 child.selected = true;
 
                 if (isTrueClone) {
@@ -2150,39 +2217,27 @@
                     var baseLayerName = child.name;
 
                     var pivot = comp.layers.addNull();
-                    // Đổi tên thành Clone on Path Control
                     pivot.name = uniqueName(comp, "Clone on Path Control");
                     pivot.label = 10;
                     pivot.moveBefore(shapeLayer);
 
-                    // --- TẠO LAYER CONTROL CHO PATH ---
-                    // Sử dụng "ADBE Layer Control" để tạo menu trỏ đến Layer
-                    // Đóng dấu nhận diện hệ thống Path
                     if (!pivot.property("Effects").property("isClooonerPath")) {
                         pivot.property("Effects").addProperty("ADBE Checkbox Control").name = "isClooonerPath";
                     }
                     var pathLayerCtrl = pivot.property("Effects").addProperty("ADBE Layer Control");
                     pathLayerCtrl.name = "Path";
-                    // Tự động set giá trị mặc định trỏ vào Shape Layer vừa chọn
                     pathLayerCtrl.property("Layer").setValue(shapeLayer.index); 
 
-                    // Add Slider điều khiển tổng vào Pivot
                     ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
                     pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
-                    
-
-
-                    
-
                     ensureControl(pivot, "Distance", "ADBE Slider Control", distance);
                     ensureControl(pivot, "Offset", "ADBE Slider Control", 0);
 
-                    // Khởi tạo các biến nếu được kích hoạt
                     var useTaper = pathTaperCheckbox.value;
                     var useOrient = pathOrientCheckbox.value; 
                     var useTrim = pathTrimCheckbox.value; 
                     var isTwisted = pathTwistedCheckbox.value; 
-                    var isDelayed = pathDelayCheckbox.value; // Đọc biến Delayed
+                    var isDelayed = pathDelayCheckbox.value;
                     
                     if (useTaper) {
                         ensureControl(pivot, "Start Range", "ADBE Slider Control", 20);
@@ -2208,6 +2263,9 @@
                     ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
                     ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
+                    // --- GẮN SHAPE LAYER VÀO PIVOT THEO YÊU CẦU ---
+                    shapeLayer.parent = pivot;
+
                     var rotators = [], children = [];
                     var lastRot = pivot;
                     var lastKid = null;
@@ -2221,25 +2279,16 @@
                         rot.name = (i + 1) + " - Null " + baseLayerName;
                         kid.name = (i + 1) + " - " + baseLayerName + " - Clone";
 
-                        // GOM LAYER: Đưa toàn bộ Null phụ lên trên, Clone Layers dồn xuống dưới
-                        rot.moveAfter(lastRot);
-                        lastRot = rot;
-                        
-                        if (lastKid) kid.moveAfter(lastKid);
-                        lastKid = kid;
+                        rot.moveAfter(lastRot); lastRot = rot;
+                        if (lastKid) kid.moveAfter(lastKid); lastKid = kid;
 
                         rot.parent = pivot;
-                        
-                        // CHUẨN HOÁ TỌA ĐỘ VÀ ANCHOR POINT CHO NULL PHỤ [0,0,0]
                         rot.transform.position.setValue([0, 0, 0]);
-                        if (rot.property("Transform").property("Anchor Point")) {
-                            rot.property("Transform").property("Anchor Point").setValue([0,0,0]);
-                        }
+                        if (rot.property("Transform").property("Anchor Point")) rot.property("Transform").property("Anchor Point").setValue([0,0,0]);
 
                         kid.parent = rot;
                         kid.transform.position.setValue(kid.threeDLayer ? [0, 0, 0] : [0, 0]);
 
-                        // Chặn đứng lỗi AE tự kích hoạt Auto-Orient (Gây xoay 86 độ)
                         rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
                         kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
                         if (kid.threeDLayer) {
@@ -2251,7 +2300,6 @@
                             kid.transform.rotation.setValue(0);
                         }
 
-                        // Cấp thẻ căn cước cho Null phụ
                         ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1);
                         setLockedIndex(rot, i);
                         setLockedIndex(kid, i);
@@ -2259,7 +2307,6 @@
                         ensureControl(rot, "Path Position", "ADBE Slider Control", 0);
                         ensureControl(kid, "Path Position", "ADBE Slider Control", 0);
 
-                        // --- Xử lý Expression Path Position (Tích hợp Delayed Offset) ---
                         var delayBlock = isDelayed ? 
                             'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")("Slider");\n' +
                             'dTime = framesToTime(idx * dFrames);\n' +
@@ -2270,29 +2317,33 @@
                             'dist = thisComp.layer("' + pivot.name + '").effect("Distance")("Slider");\n' +
                             'idx = effect("Clone Index")("Slider");\n' +
                             delayBlock +
-                            'val = offset + (idx * dist) + dOffset;\n' + // Cộng gộp delayOffset vào giá trị gốc
+                            'val = offset + (idx * dist) + dOffset;\n' +
                             'mod = val % 100;\n' +
                             'if (mod < 0) mod += 100;\n' +
                             'mod;';
 
                         rot.property("Effects").property("Path Position").property("Slider").expression = posExpr;
-                        // Dùng biến parent để bất tử hoá Expression
                         kid.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");';
 
-
-                        // Gán Expression toạ độ (Nhận diện Trim Path để tái lập tỷ lệ 0-100%)
+                        // --- CẬP NHẬT EXPRESSION BÙ TRỪ TOẠ ĐỘ VỚI GROUP TRANSFORM ---
                         var pathPositionExpr =
                             'try {\n' +
                             '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
-                            '  duongpath = targetLayer.content(1).content(1).path;\n' +
+                            '  shapeGroup = targetLayer.content(1);\n' +
+                            '  duongpath = shapeGroup.content(1).path;\n' +
                             '  logicalPct = effect("Path Position")("Slider");\n' +
                             (useTrim ? 
                             '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n' +
                             '  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' 
                             : '  tS = 0; tE = 100;\n') +
                             '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n' +
-                            '  pos = targetLayer.toComp(duongpath.pointOnPath(physicalPct));\n' +
-                            '  value + parent.fromComp(pos);\n' +
+                            '  pt = duongpath.pointOnPath(physicalPct);\n' +
+                            '  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n' +
+                            '  pos = targetLayer.toComp(pt);\n' +
+                            '  cPos = parent.fromComp(pos);\n' +
+                            '  x = value[0] + cPos[0];\n' +
+                            '  y = value[1] + cPos[1];\n' +
+                            '  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n' +
                             '} catch(e) { value; }';
 
                         rot.property("Transform").property("Position").expression = pathPositionExpr;
@@ -2726,24 +2777,10 @@
                         }
                     }
                 }
-                // 3. NẾU LÀ TẠO MỚI -> ÉP BEZIER PATH VÀ RẢI EFFECT
+               // 3. NẾU LÀ TẠO MỚI -> ÉP BEZIER PATH VÀ RẢI EFFECT
                 else {
-                    // Ép Bezier Path (Chống đẻ layer rác)
-                    var preLayerCount = comp.numLayers;
-                    for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
-                    shapeLayer.selected = true;
-                    try {
-                        var contents = shapeLayer.property("ADBE Root Vectors Group");
-                        if (contents && contents.numProperties > 0) {
-                            contents.property(1).selected = true;
-                            app.executeCommand(3736); // ID Convert to Bezier Path
-                        }
-                    } catch(e) {}
-                    
-                    // Thu dọn rác
-                    while (comp.numLayers > preLayerCount) {
-                        comp.layer(1).remove();
-                    }
+                    // Ép Bezier Path (Chống đẻ layer rác) bằng hàm thông minh
+                    forceConvertToBezier(comp, shapeLayer);
 
                     var totalClones = targetLayers.length;
                     
@@ -2752,7 +2789,6 @@
                     pivot.label = 10;
                     pivot.moveBefore(shapeLayer);
 
-                    // Đóng dấu nhận diện hệ thống Path
                     if (!pivot.property("Effects").property("isClooonerPath")) {
                         pivot.property("Effects").addProperty("ADBE Checkbox Control").name = "isClooonerPath";
                     }
@@ -2789,7 +2825,10 @@
                     ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
                     ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                     
-                    lastRot = pivot; // FIX: CẬP NHẬT LẠI LAST-ROT SAU KHI NULL ĐÃ ĐƯỢC TẠO RA
+                    lastRot = pivot; 
+
+                    // --- GẮN SHAPE LAYER VÀO PIVOT THEO YÊU CẦU ---
+                    shapeLayer.parent = pivot;
                 }
 
                // 4. VÒNG LẶP DUYỆT CÁC LAYER MỤC TIÊU
@@ -2809,7 +2848,7 @@
                         rot.property("Transform").property("Anchor Point").setValue([0,0,0]);
                     }
                     
-                    var currentIndex = startIndex + i;
+                    var currentIndex = startIndex + i; 
                     
                     var baseName = kid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
                     
@@ -2867,17 +2906,21 @@
                     rot.property("Effects").property("Path Position").property("Slider").expression = posExpr;
                     kid.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");';
                     
+                    // --- CẬP NHẬT EXPRESSION BÙ TRỪ TOẠ ĐỘ VỚI GROUP TRANSFORM ---
                     var pathPositionExpr =
                         'try {\n' +
                         '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
-                        '  duongpath = targetLayer.content(1).content(1).path;\n' +
+                        '  shapeGroup = targetLayer.content(1);\n' +
+                        '  duongpath = shapeGroup.content(1).path;\n' +
                         '  logicalPct = effect("Path Position")("Slider");\n' +
                         (useTrim ? 
                         '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n' +
                         '  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' 
                         : '  tS = 0; tE = 100;\n') +
                         '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n' +
-                        '  pos = targetLayer.toComp(duongpath.pointOnPath(physicalPct));\n' +
+                        '  pt = duongpath.pointOnPath(physicalPct);\n' +
+                        '  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n' +
+                        '  pos = targetLayer.toComp(pt);\n' +
                         '  cPos = parent.fromComp(pos);\n' +
                         '  x = value[0] + cPos[0];\n' +
                         '  y = value[1] + cPos[1];\n' +
@@ -2911,7 +2954,8 @@
                         var orientExpr =
                             'try {\n' +
                             '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
-                            '  duongpath = targetLayer.content(1).content(1).path;\n' +
+                            '  shapeGroup = targetLayer.content(1);\n' +
+                            '  duongpath = shapeGroup.content(1).path;\n' +
                             '  logicalPct = effect("Path Position")("Slider");\n' +
                             (useTrim ? 
                             '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n' +
