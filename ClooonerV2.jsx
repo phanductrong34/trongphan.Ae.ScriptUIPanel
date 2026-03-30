@@ -1104,17 +1104,21 @@
         btnRigPath.helpTip = "Tạo mới: Chọn 1 Shape Layer + Các Layer thường.\nNhập thêm: Chọn 1 Null Control cũ + Các Layer mới.\n(Lưu ý: Shape/Null luôn phải nằm ở Đầu hoặc Cuối danh sách chọn)";
 
         // ==========================================
-        // 4. PANEL: ĐẢO ORDER LAYER (TAB TOOLS)
+        // 4. PANEL: SẮP XẾP ORDER LAYER (TAB TOOLS)
         // ==========================================
-        var toolReversePanel = tabTools.add("panel", undefined, "Đảo order Layer");
-        toolReversePanel.orientation = "column";
-        toolReversePanel.alignChildren = ["fill", "center"];
-        toolReversePanel.spacing = 15;
-        toolReversePanel.margins = 15;
+        var toolOrderPanel = tabTools.add("panel", undefined, "Sắp xếp Order Layer");
+        toolOrderPanel.orientation = "column";
+        toolOrderPanel.alignChildren = ["fill", "center"];
+        toolOrderPanel.spacing = 15;
+        toolOrderPanel.margins = 15;
 
-        var btnReverseOrder = toolReversePanel.add("button", undefined, "Reverse Layers Order");
+        var btnReverseOrder = toolOrderPanel.add("button", undefined, "Reverse Layers Order");
         btnReverseOrder.preferredSize.height = 30;
         btnReverseOrder.helpTip = "Chọn nhiều layer để đảo ngược, HOẶC chọn 1 Null Control để tự động đảo ngược toàn bộ Clone bên trong.";
+
+        var btnShuffleOrder = toolOrderPanel.add("button", undefined, "Random Shuffle Order");
+        btnShuffleOrder.preferredSize.height = 30;
+        btnShuffleOrder.helpTip = "Chọn Null Control để xáo trộn ngẫu nhiên (Shuffle) chỉ số Index, đổi Tên và xếp lại Order của các Layer Clone.";
 
         // --- LOGIC ĐẢO NGƯỢC THỨ TỰ LAYER ---
         btnReverseOrder.onClick = function() {
@@ -1174,6 +1178,115 @@
             } else {
                 alert("Vui lòng chọn nhiều layer, hoặc chọn 1 Null Control (Tròn/Path) để tự động đảo order toàn bộ Clone.");
             }
+        };
+
+        // --- LOGIC XÁO TRỘN NGẪU NHIÊN (SHUFFLE ORDER) ---
+        btnShuffleOrder.onClick = function() {
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) return alert("Hãy chọn một Composition.");
+            
+            var sel = comp.selectedLayers;
+            if (sel.length === 0) return alert("Vui lòng chọn 1 Null Control của hệ thống.");
+
+            var pivot = null;
+            // Nhận diện Pivot từ layer được chọn
+            for (var s = 0; s < sel.length; s++) {
+                var l = sel[s];
+                var fx = l.property("Effects");
+                if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null)) {
+                    pivot = l; break;
+                } else if (l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Clone on Path Control") !== -1) {
+                    pivot = l; break;
+                }
+            }
+
+            if (!pivot) return alert("Không tìm thấy hệ thống Cloooner. Vui lòng chọn Null Control (Tâm xoay/Path).");
+
+            app.beginUndoGroup("Shuffle Layers Order");
+            try {
+                var validPairs = [];
+                var indices = [];
+                
+                // 1. Tìm tất cả các cặp Helper - Clone hợp lệ
+                for (var i = 1; i <= comp.numLayers; i++) {
+                    var h = comp.layer(i);
+                    if (h.parent === pivot && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
+                        var kidFound = null;
+                        for (var j = 1; j <= comp.numLayers; j++) {
+                            if (comp.layer(j).parent === h) { kidFound = comp.layer(j); break; }
+                        }
+
+                        if (kidFound) {
+                            var idxProp = h.property("Effects").property("Clone Index");
+                            var curIdx = idxProp ? parseInt(idxProp.property("Slider").value) : validPairs.length;
+                            validPairs.push({
+                                helper: h,
+                                clone: kidFound,
+                                oldIndex: curIdx
+                            });
+                            // Chỉ thu thập các Index đang thực sự tồn tại trên Timeline (tránh lỗi nếu user đã xoá Safe Clean vài layer ở giữa)
+                            indices.push(curIdx);
+                        }
+                    }
+                }
+
+                if (validPairs.length < 2) {
+                    app.endUndoGroup();
+                    return alert("Hệ thống cần ít nhất 2 phần tử để có thể xáo trộn ngẫu nhiên.");
+                }
+
+                // 2. Thuật toán Fisher-Yates xáo trộn mảng indices
+                for (var i = indices.length - 1; i > 0; i--) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var temp = indices[i];
+                    indices[i] = indices[j];
+                    indices[j] = temp;
+                }
+
+                // 3. Gán index mới ngẫu nhiên cho các cặp
+                for (var i = 0; i < validPairs.length; i++) {
+                    validPairs[i].newIndex = indices[i];
+                }
+
+                // 4. Sắp xếp lại mảng validPairs theo newIndex từ nhỏ đến lớn
+                validPairs.sort(function(a, b) { return a.newIndex - b.newIndex; });
+
+                // 5. Thực thi đổi Index, Rename và Sắp xếp Timeline An Toàn
+                var lastRot = pivot;
+                var lastKid = null;
+
+                // Xếp Khối Null phụ lên trên cùng
+                for (var i = 0; i < validPairs.length; i++) {
+                    var r = validPairs[i].helper;
+                    r.moveAfter(lastRot);
+                    lastRot = r;
+                }
+
+                // Xếp Khối Clone xuống dưới (Bắt đầu từ Null phụ cuối cùng)
+                lastKid = lastRot; 
+                for (var i = 0; i < validPairs.length; i++) {
+                    var r = validPairs[i].helper;
+                    var k = validPairs[i].clone;
+                    var newIdx = validPairs[i].newIndex;
+
+                    // Cập nhật thanh Slider -> Expression tự động tính lại vị trí vòng tròn/path
+                    setLockedIndex(r, newIdx);
+                    setLockedIndex(k, newIdx);
+
+                    // Đổi tên theo Index mới
+                    var baseName = r.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
+                    r.name = (newIdx + 1) + " - Null " + baseName;
+                    var isRig = k.name.indexOf(" - Rig") !== -1;
+                    k.name = (newIdx + 1) + " - " + baseName + (isRig ? " - Rig" : " - Clone");
+
+                    // Move Timeline vào đúng block
+                    k.moveAfter(lastKid);
+                    lastKid = k;
+                }
+            } catch (e) {
+                alert("Lỗi khi Shuffle Order: " + e.toString());
+            }
+            app.endUndoGroup();
         };
 
     
@@ -1447,7 +1560,7 @@
                     }
                 }
 
-                if (!isSpecificClean) pivot = sel[0]; // Chế độ Clean All
+                if (!isSpecificClean) pivot = sel[0]; 
                 if (!pivot) { app.endUndoGroup(); return alert("Không tìm thấy hệ thống Cloooner hợp lệ."); }
 
                 var pivotFx = pivot.property("Effects");
@@ -1458,10 +1571,10 @@
                     
                     if (!isSpecificClean) {
                         // ================= CLEAN ALL =================
-                        // Tách toàn bộ Clone ra an toàn
                         for (var i = 1; i <= comp.numLayers; i++) {
                             var kid = comp.layer(i);
-                            if (kid.parent && kid.parent.parent === pivot && kid.property("Effects") && kid.property("Effects").property("Clone Index") !== null) {
+                            // Dùng .index thay vì === để AE không bao giờ nhận diện trượt
+                            if (kid.parent && kid.parent.parent && kid.parent.parent.index === pivot.index && kid.property("Effects") && kid.property("Effects").property("Clone Index") !== null) {
                                 var pProps = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
                                 var saved = {};
                                 for(var p=0; p<pProps.length; p++) { var pr = kid.property("Transform").property(pProps[p]); if(pr) saved[pProps[p]] = pr.value; }
@@ -1471,25 +1584,28 @@
                                 kid.parent = null;
                             }
                         }
-                        // Quét ngược để xoá sạch Null phụ (Không lo nhảy Index)
+                        // Quét ngược để xoá sạch Null phụ
                         for (var i = comp.numLayers; i >= 1; i--) {
                             var h = comp.layer(i);
-                            if (h.parent === pivot && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
+                            if (h.parent && h.parent.index === pivot.index && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
                                 try { h.remove(); } catch(e){}
                             }
                         }
                         // Reset Pivot
-                        if (pivotFx) { for (var e = pivotFx.numProperties; e > 0; e--) pivotFx.property(e).remove(); }
-                        var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
-                        for(var p=0; p<pProps.length; p++) { var pr = pivot.property("Transform").property(pProps[p]); if(pr && pr.canSetExpression) pr.expression = ""; }
+                        if (isPathControl) {
+                            try { pivot.remove(); } catch(e) {} // Path thì xoá luôn Pivot
+                        } else {
+                            if (pivotFx) { for (var e = pivotFx.numProperties; e > 0; e--) pivotFx.property(e).remove(); }
+                            var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+                            for(var p=0; p<pProps.length; p++) { var pr = pivot.property("Transform").property(pProps[p]); if(pr && pr.canSetExpression) pr.expression = ""; }
+                        }
 
                     } else {
-                        // ================= SAFE CLEAN CỤC BỘ (CHUẨN 5 BƯỚC) =================
+                        // ================= SAFE CLEAN CỤC BỘ =================
                         var clonesToRemove = [];
                         var helpersToRemove = [];
                         var clonesToBake = [];
 
-                        // Phân loại mục tiêu
                         for (var s = 0; s < sel.length; s++) {
                             var l = sel[s];
                             var fx = l.property("Effects");
@@ -1499,14 +1615,14 @@
                             var isClone = fx.property("Clone Index") !== null && !isHelper;
 
                             if (isClone) {
-                                clonesToRemove.push(l); // Chọn Clone -> Đưa vào danh sách trảm
+                                clonesToRemove.push(l); 
                                 if (l.parent && l.parent.property("Effects") && l.parent.property("Effects").property("isHelperNull") !== null) {
-                                    helpersToRemove.push(l.parent); // Trảm luôn Helper Null của nó
+                                    helpersToRemove.push(l.parent); 
                                 }
                             } else if (isHelper) {
-                                helpersToRemove.push(l); // Chọn Helper -> Trảm Helper
+                                helpersToRemove.push(l); 
                                 for (var j = 1; j <= comp.numLayers; j++) {
-                                    if (comp.layer(j).parent === l) { clonesToBake.push(comp.layer(j)); } // Giữ lại Clone con
+                                    if (comp.layer(j).parent && comp.layer(j).parent.index === l.index) { clonesToBake.push(comp.layer(j)); } 
                                 }
                             }
                         }
@@ -1524,24 +1640,24 @@
                             kid.name = kid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
                         }
 
-                        // 2. XOÁ CLONE TRƯỚC (Rất quan trọng, để tránh lỗi Expression Parent đứt gãy)
+                        // 2. XOÁ CLONE TRƯỚC
                         for (var i = 0; i < clonesToRemove.length; i++) {
                             try { clonesToRemove[i].remove(); } catch(e){}
                         }
 
-                        // 3. XOÁ HELPER NULL SAU KHI CON CỦA NÓ ĐÃ CHẾT
+                        // 3. XOÁ HELPER NULL SAU
                         for (var i = 0; i < helpersToRemove.length; i++) {
                             try { helpersToRemove[i].remove(); } catch(e){}
                         }
 
-                        // 4. QUÉT TÌM CẶP VALID (BẰNG VÒNG LẶP LÙI CHỐNG LỖI INDEX)
+                        // 4. QUÉT TÌM CẶP VALID
                         var validPairs = [];
                         for (var i = comp.numLayers; i >= 1; i--) {
                             var h = comp.layer(i);
-                            if (h.parent === pivot && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
+                            if (h.parent && h.parent.index === pivot.index && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
                                 var kidFound = null;
                                 for (var j = 1; j <= comp.numLayers; j++) {
-                                    if (comp.layer(j).parent === h) { kidFound = comp.layer(j); break; }
+                                    if (comp.layer(j).parent && comp.layer(j).parent.index === h.index) { kidFound = comp.layer(j); break; }
                                 }
 
                                 if (kidFound) {
@@ -1551,13 +1667,11 @@
                                         oldIndex: parseInt(h.property("Effects").property("Clone Index").property("Slider").value)
                                     });
                                 } else {
-                                    // Null rác không có con -> Tiêu diệt (An toàn vì đang loop ngược)
                                     try { h.remove(); } catch(e){}
                                 }
                             }
                         }
 
-                        // Sắp xếp các cặp hợp lệ theo Index cũ từ nhỏ tới lớn
                         validPairs.sort(function(a, b) { return a.oldIndex - b.oldIndex; });
 
                         // 5. RE-INDEX VÀ RENAME
@@ -1573,13 +1687,11 @@
                             var isRig = k.name.indexOf(" - Rig") !== -1;
                             k.name = (i + 1) + " - " + baseName + (isRig ? " - Rig" : " - Clone");
 
-                            // Nếu là Path, nạp lại lệnh parent để hồi sinh Expression nếu bị lỏng
                             if (isPathControl) {
                                 try { k.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");'; } catch(e){}
                             }
                         }
 
-                        // Cập nhật Total Clones
                         if (pivotFx && pivotFx.property("Total Clones")) {
                             pivotFx.property("Total Clones").property("Slider").expression = validPairs.length.toString();
                         }
@@ -1614,14 +1726,14 @@
                     var nullsToDelete = [];
                     var originalKid = null;
 
-                    // Quét hệ thống
+                    // Quét hệ thống (Dùng .index thay vì ===)
                     for (var i = 1; i <= comp.numLayers; i++) {
                         var l = comp.layer(i);
-                        if (l.parent === pivot) {
+                        if (l.parent && l.parent.index === pivot.index) {
                             nullsToDelete.push(l);
                             for (var j = 1; j <= comp.numLayers; j++) {
                                 var kid = comp.layer(j);
-                                if (kid.parent === l) {
+                                if (kid.parent && kid.parent.index === l.index) {
                                     var isOrig = false;
                                     try {
                                         var idxProp = kid.property("Effects").property("Clone Index");
@@ -1635,7 +1747,7 @@
                         }
                     }
 
-                    // 1. Phục hồi Layer gốc (Bỏ parent, xoá exp, xoá effect)
+                    // 1. Phục hồi Layer gốc
                     if (originalKid) {
                         originalKid.parent = null;
                         var propsToClear = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
@@ -1651,35 +1763,36 @@
                     // 2. Tiêu diệt các bản Clone đúp
                     for (var d = 0; d < kidsToDelete.length; d++) kidsToDelete[d].remove();
 
-                    // 3. Tiêu diệt Null phụ tận gốc an toàn (Khỏi Project Bin)
+                    // 3. Tiêu diệt Null phụ tận gốc
                     for (var n = 0; n < nullsToDelete.length; n++) {
                         try {
                             var isNullObj = nullsToDelete[n].nullLayer;
                             var nullSrc = nullsToDelete[n].source;
                             nullsToDelete[n].remove();
-                            
-                            // Chỉ xoá Source nếu nó KHÁC với Source của Pivot Null
                             if (isNullObj && nullSrc && nullSrc !== pivot.source) {
                                 nullSrc.remove(); 
                             }
-                        } catch(e) {} // Dập tắt mọi cảnh báo "Object is invalid" của AE
+                        } catch(e) {} 
                     }
 
-                    // 4. Giữ lại Pivot Null, dọn sạch sẽ Effect và Expression để tái sử dụng
-                    var pivotFx = pivot.property("Effects");
-                    if (pivotFx) {
-                        for (var e = pivotFx.numProperties; e > 0; e--) {
-                            pivotFx.property(e).remove();
+                    // 4. Giữ lại Pivot Null (Tròn) hoặc Xoá hoàn toàn (Path)
+                    if (isPathControl) {
+                        try { pivot.remove(); } catch(e) {}
+                    } else {
+                        var pivotFx = pivot.property("Effects");
+                        if (pivotFx) {
+                            for (var e = pivotFx.numProperties; e > 0; e--) {
+                                pivotFx.property(e).remove();
+                            }
                         }
-                    }
-                    var pivotProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
-                    for(var p = 0; p < pivotProps.length; p++) {
-                        var prop = pivot.property("Transform").property(pivotProps[p]);
-                        if (prop && prop.canSetExpression) prop.expression = "";
+                        var pivotProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+                        for(var p = 0; p < pivotProps.length; p++) {
+                            var prop = pivot.property("Transform").property(pivotProps[p]);
+                            if (prop && prop.canSetExpression) prop.expression = "";
+                        }
                     }
 
                 } else {
-                    // Logic xoá tận gốc Comp (Tab Tĩnh)
                     var proceed = confirm("⚠️ BẠN ĐANG CHỌN LAYER THƯỜNG / COMP\n\nNếu ấn OK, Tool sẽ XOÁ TẬN GỐC các layer này khỏi Timeline và CẢ COMPOSITION NGUỒN của chúng khỏi Project!\n\nBạn có chắc chắn muốn tiếp tục?");
                     if (!proceed) { app.endUndoGroup(); return; }
 
@@ -2008,7 +2121,8 @@
                     return;
                 }
                 
-                // --- TỰ ĐỘNG CHUYỂN PARAMETRIC SHAPE THÀNH BEZIER PATH ---
+                // --- TỰ ĐỘNG CHUYỂN PARAMETRIC SHAPE THÀNH BEZIER PATH (Chống đẻ layer rác) ---
+                var preLayerCount = comp.numLayers;
                 for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
                 shapeLayer.selected = true;
                 try {
@@ -2018,6 +2132,11 @@
                         app.executeCommand(3736); // ID Lệnh "Convert To Bezier Path"
                     }
                 } catch(e) {}
+                
+                // Thu dọn Shape Layer rỗng nếu AE tự động đẻ ra
+                while (comp.numLayers > preLayerCount) {
+                    comp.layer(1).remove(); // AE luôn đẻ layer mới lên trên cùng
+                }
                 child.selected = true;
 
                 if (isTrueClone) {
@@ -2609,7 +2728,8 @@
                 }
                 // 3. NẾU LÀ TẠO MỚI -> ÉP BEZIER PATH VÀ RẢI EFFECT
                 else {
-                    // Ép Bezier Path
+                    // Ép Bezier Path (Chống đẻ layer rác)
+                    var preLayerCount = comp.numLayers;
                     for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
                     shapeLayer.selected = true;
                     try {
@@ -2619,6 +2739,11 @@
                             app.executeCommand(3736); // ID Convert to Bezier Path
                         }
                     } catch(e) {}
+                    
+                    // Thu dọn rác
+                    while (comp.numLayers > preLayerCount) {
+                        comp.layer(1).remove();
+                    }
 
                     var totalClones = targetLayers.length;
                     
