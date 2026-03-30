@@ -1594,7 +1594,7 @@
             }
         }
 
-// --- 🧹 CLEAN BUTTON LOGIC (SAFE CLEAN VÀ QUÉT MẢNG NGƯỢC CHỐNG LỖI) ---
+// --- 🧹 CLEAN BUTTON LOGIC (SAFE CLEAN VÀ DỌN RÁC PROJECT PANEL) ---
         cleanBtn.onClick = function () {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Hãy chọn một Composition.");
@@ -1605,6 +1605,15 @@
             try {
                 var isSpecificClean = false;
                 var pivot = null;
+                var sourcesToClean = []; // Mảng gom các Source rác để chuẩn bị huỷ diệt
+
+                // Hàm thu thập Source an toàn
+                function collectSource(lyr) {
+                    if (lyr && lyr.source && lyr.nullLayer) {
+                        for(var i=0; i<sourcesToClean.length; i++) { if(sourcesToClean[i] === lyr.source) return; }
+                        sourcesToClean.push(lyr.source);
+                    }
+                }
 
                 // 1. NHẬN DIỆN MỤC TIÊU VÀ PIVOT TỔNG
                 for (var s = 0; s < sel.length; s++) {
@@ -1647,7 +1656,6 @@
                         
                         for (var i = 1; i <= comp.numLayers; i++) {
                             var kid = comp.layer(i);
-                            // Dùng .index thay vì === để AE không bao giờ nhận diện trượt
                             if (kid.parent && kid.parent.parent && kid.parent.parent.index === pivot.index && kid.property("Effects") && kid.property("Effects").property("Clone Index") !== null) {
                                 var pProps = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
                                 var saved = {};
@@ -1658,16 +1666,16 @@
                                 kid.parent = null;
                             }
                         }
-                        // Quét ngược để xoá sạch Null phụ
+                        // Quét ngược để xoá sạch Null phụ và gom Source
                         for (var i = comp.numLayers; i >= 1; i--) {
                             var h = comp.layer(i);
                             if (h.parent && h.parent.index === pivot.index && h.property("Effects") && h.property("Effects").property("isHelperNull") !== null) {
-                                try { h.remove(); } catch(e){}
+                                try { collectSource(h); h.remove(); } catch(e){}
                             }
                         }
                         // Reset Pivot
                         if (isPathControl) {
-                            try { pivot.remove(); } catch(e) {} // Path thì xoá luôn Pivot
+                            try { collectSource(pivot); pivot.remove(); } catch(e) {} // Path thì xoá luôn Pivot
                         } else {
                             if (pivotFx) { for (var e = pivotFx.numProperties; e > 0; e--) pivotFx.property(e).remove(); }
                             var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
@@ -1719,9 +1727,9 @@
                             try { clonesToRemove[i].remove(); } catch(e){}
                         }
 
-                        // 3. XOÁ HELPER NULL SAU
+                        // 3. XOÁ HELPER NULL SAU VÀ GOM SOURCE
                         for (var i = 0; i < helpersToRemove.length; i++) {
-                            try { helpersToRemove[i].remove(); } catch(e){}
+                            try { collectSource(helpersToRemove[i]); helpersToRemove[i].remove(); } catch(e){}
                         }
 
                         // 4. QUÉT TÌM CẶP VALID
@@ -1741,7 +1749,7 @@
                                         oldIndex: parseInt(h.property("Effects").property("Clone Index").property("Slider").value)
                                     });
                                 } else {
-                                    try { h.remove(); } catch(e){}
+                                    try { collectSource(h); h.remove(); } catch(e){}
                                 }
                             }
                         }
@@ -1771,6 +1779,15 @@
                         }
                     }
 
+                    // *** XOÁ SOURCE RÁC TRONG PROJECT PANEL NẾU KHÔNG CÒN AI DÙNG ***
+                    for (var s = 0; s < sourcesToClean.length; s++) {
+                        try {
+                            if (sourcesToClean[s].usedIn.length === 0) {
+                                sourcesToClean[s].remove();
+                            }
+                        } catch(e) {}
+                    }
+
                 } else {
                     alert("Chức năng Clean 🧹 chỉ hoạt động với các Pivot Null / Control Null của hệ thống Tròn hoặc Path.");
                 }
@@ -1780,7 +1797,7 @@
             app.endUndoGroup();
         };
 
-// --- 🗑️ RESET BUTTON LOGIC (XOÁ SẠCH SẼ HỆ THỐNG ĐÚP) ---
+// --- 🗑️ RESET BUTTON LOGIC (XOÁ SẠCH SẼ HỆ THỐNG VÀ SOURCE RÁC) ---
         clearBtn.onClick = function () {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Hãy chọn một Composition.");
@@ -1794,6 +1811,16 @@
                 var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || firstSel.name.indexOf("Clone on Path Control") !== -1;
                 var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (firstSel.name.indexOf("Pivot Null") !== -1 && !isPathControl);
                 
+                var sourcesToClean = []; // Mảng gom các Source rác để chuẩn bị huỷ diệt
+                
+                // Hàm thu thập Source an toàn
+                function collectSource(lyr) {
+                    if (lyr && lyr.source && lyr.nullLayer) {
+                        for(var i=0; i<sourcesToClean.length; i++) { if(sourcesToClean[i] === lyr.source) return; }
+                        sourcesToClean.push(lyr.source);
+                    }
+                }
+
                 if (isPathControl || isCircularControl) {
                     var pivot = firstSel;
                     
@@ -1844,23 +1871,18 @@
                     // 2. Tiêu diệt các bản Clone đúp
                     for (var d = 0; d < kidsToDelete.length; d++) kidsToDelete[d].remove();
 
-                    // 3. Tiêu diệt Null phụ tận gốc
+                    // 3. Tiêu diệt Null phụ tận gốc và Gom Source
                     for (var n = 0; n < nullsToDelete.length; n++) {
                         try {
-                            var isNullObj = nullsToDelete[n].nullLayer;
-                            var nullSrc = nullsToDelete[n].source;
+                            collectSource(nullsToDelete[n]);
                             nullsToDelete[n].remove();
-                            if (isNullObj && nullSrc && nullSrc !== pivot.source) {
-                                nullSrc.remove(); 
-                            }
                         } catch(e) {} 
                     }
 
                     // 4. Giữ lại Pivot Null (Tròn) hoặc Xoá hoàn toàn (Path)
                     if (isPathControl) {
-                        try { pivot.remove(); } catch(e) {}
+                        try { collectSource(pivot); pivot.remove(); } catch(e) {}
                     } else {
-                        var pivotFx = pivot.property("Effects");
                         if (pivotFx) {
                             for (var e = pivotFx.numProperties; e > 0; e--) {
                                 pivotFx.property(e).remove();
@@ -1871,6 +1893,16 @@
                             var prop = pivot.property("Transform").property(pivotProps[p]);
                             if (prop && prop.canSetExpression) prop.expression = "";
                         }
+                    }
+
+                    // *** XOÁ SOURCE RÁC TRONG PROJECT PANEL NẾU KHÔNG CÒN AI DÙNG ***
+                    for (var s = 0; s < sourcesToClean.length; s++) {
+                        try {
+                            // Chỉ xoá khỏi Project Panel nếu thật sự KHÔNG còn Timeline nào dùng Source này nữa!
+                            if (sourcesToClean[s].usedIn.length === 0) {
+                                sourcesToClean[s].remove();
+                            }
+                        } catch(e) {}
                     }
 
                 } else {
