@@ -100,8 +100,25 @@
         divider.alignment = "fill";
         divider.minimumSize.height = 2;
 
-        // --- OFFSET KEYFRAMES UI ---
-        var offsetMainGroup = overshootGroup.add("group");
+// --- OFFSETER PANEL ---
+        var offseterPanel = overshootGroup.add("panel", undefined, "Offseter");
+        offseterPanel.orientation = "column";
+        offseterPanel.alignChildren = ["center", "center"];
+        offseterPanel.spacing = 8;
+        offseterPanel.margins = 15; // Tạo khoảng đệm cho đẹp
+
+        // --- LAYER MODE CHECKBOX ---
+        var layerModeGroup = offseterPanel.add("group");
+        layerModeGroup.alignment = "left";
+        var chkLayerMode = layerModeGroup.add("checkbox", undefined, "Layer Mode");
+        chkLayerMode.value = false; // Mặc định tắt
+        chkLayerMode.helpTip = "Bật lên để offset tool tác động vào layer thay vì keyframe";
+
+        var offsetSpacer = offseterPanel.add("group");
+        offsetSpacer.preferredSize.height = 5;
+
+        // --- OFFSET UI ---
+        var offsetMainGroup = offseterPanel.add("group");
         offsetMainGroup.orientation = "column";
         offsetMainGroup.alignChildren = ["center", "center"];
         offsetMainGroup.spacing = 8;
@@ -114,13 +131,13 @@
         var inputOffset = offsetRow1.add("edittext", undefined, "3");
         inputOffset.characters = 3;
         inputOffset.onlyNumbers = true;
-        inputOffset.helpTip = "Số frame cách nhau giữa các thuộc tính";
+        inputOffset.helpTip = "Số frame cách nhau giữa các thuộc tính/layer";
         
         offsetRow1.add("statictext", undefined, "Step:");
         var inputStep = offsetRow1.add("edittext", undefined, "1");
         inputStep.characters = 3;
         inputStep.onlyNumbers = true;
-        inputStep.helpTip = "Số thuộc tính đi cùng nhau trong 1 nhịp (Step)";
+        inputStep.helpTip = "Số thuộc tính/layer đi cùng nhau trong 1 nhịp (Step)";
 
 // --- BINARY ICON STRINGS ---
         var binSeqFwd = "\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00\x1E\x00\x00\x00\x1E\b\x06\x00\x00\x00;0\u00AE\u00A2\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x00\x01sRGB\x00\u00AE\u00CE\x1C\u00E9\x00\x00\x00\x04gAMA\x00\x00\u00B1\u008F\x0B\u00FCa\x05\x00\x00\x00\x0EtEXtSoftware\x00Figma\u009E\u00B1\u0096c\x00\x00\x00~IDATx\x01\u00ED\u00D2A\n\u0080 \x10\u0085\u00E1\u00E7\u00B4\u00ECt\u00DD\u00A0\u009Bh'\u0092\u008E\u00D4\x19\u00D2\u00ADFH\u009BBa@\u00C4p>h\u0095\u00F0D~@\u0088\u00E1\u00D0\u00EE5Y\u00AF\u00D1R\x1Au1}u\u00C7\x15\n\u00A3\b\u00D1\u00BC\u008E\u009B\u00B0\u00CC\x1B*\u00A0\u00EC\u009F\x10>\u0097R\u0088\x07Z {\u009A\u00E7\u00A9'\u00EBV\u00B4t\u008F7\x1F-\u00F9m\u00ED\u008Ay\u00BEZ\u00ED\x04.\u00A9\u00BD\x17\u00DD\u00D7\u00CE\u00AE\u00BA4\u00CA\u00A9\u009D_u\u008E\u00D4.\u00C4p.\x16\u00A1s\x186c!r\x00\x00\x00\x00IEND\u00AEB`\u0082";
@@ -131,10 +148,17 @@
         var binCloneIcon  = "\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00P\x00\x00\x00\x1E\b\x06\x00\x00\x00\u00BBC\u0099\u00B1\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x00\x01sRGB\x00\u00AE\u00CE\x1C\u00E9\x00\x00\x00\x04gAMA\x00\x00\u00B1\u008F\x0B\u00FCa\x05\x00\x00\x00\x0EtEXtSoftware\x00Figma\u009E\u00B1\u0096c\x00\x00\x02vIDATx\x01\u00ED\u0098Qn\u00D3@\x10\u0086'.HH\u00F0`N\u00809\x01\u0081\x13\u0084\x13\u00D0\u009C\u00A0\u00E6\x04\u00C0\t\u00BA7H{\u0082\u0084\x03\u00A0%\u00EFH\u00EE\x05\u0090\u00C3\x13\u008FI_yI\u00A1\u00A9*@\u00CE2Cf\u00CBv\u00B1\u0093]\u00D6\u00B4U\u00BA\u009F4Zg\u00FCg\u00BD\u00F93;v\x02\x10\u0089D\"\u0091\u00C8MD\x01\x14\x18\n\u00A3\x07[J\x02\u0091 \u00A2\u00817\x1D\u00A5\u0094\u0080-&V` ^\x06b5e\x18\x05\u008D.\u00FA\u009D\u00F1\u00F9\u00DE\u0087/\u00D5\x13\u0088\\\u00987U+\u00A6\u009BL$\u00F3\x12\u00B9P\u00E2\u00F3w\u00B5#\x17Ch\x01^\u00C3\u0080\u00AF_b\f\u00F5:8\u009F\u00C1\x15\u00E3T\u0081\u00BC\u00B0\x02#\u00E3\u00D4\u00EF\u00D7M\x0B&\u00F3\u00D4\u00B2\x1A]\u00BC\x1F o\u00C9DZ\u00C3q\u00A7\u00D3y\u008C\u00F1\u0094\u008E1\u00F4\u00BC]\u00B8\x06Bz\u00E0\t\u00C7\u00DF\u0093.\u00ABO\u00F69\u00B5T\u00C7\x10\x00~Y9\x0EGh\u00DC\u0081\u00CE\u00E1\u00B1\u00A0\u00EB\u00E0\u00B9\u00AE\u00AD\u00C5\u0090V\u0085R\u00AE\u00C79\u00FA\u00F2w\r\u00FD+[\u00DF:\u00D6\x16\u00A6\u00ED\u0093\u00AE\u00D3\u00DF\u0095\u008B.n\u00E19m\u00E1\u00E4\u00DD\u00A9\u0080@\u00F0z\x07lb\u00D3\u00F9\u0082\u00D7\u00B8\u008F1\u00E2\u00E3]\u00BDV\u00CE\u0095\u009C\u00EF\u00F2gI-=\u0099\\\u00C2\u00FF\u0082/\"7\u0099\u00A7!\x13?~\u00AD\u00DA\u00EA\x7F#G\x03K\u00B3\u008A\u00B4\u00F1\u00FC\u00FE\u009E\u0091/\r\u00BD`M\u00CE\u00AF\u009D\u00DB\u00C1\x1D\u00F0\x00\u00B7\u00CC\f\u0087\u00BE\u00AB\u00FEg\u00FF\u00C1\u00E4\u0099\n\u00DB\u00BA\x06\x13\u00A8\u00E9sTA8\u008C\u008DT\u00CA\u00EB\u00D4\u00D4\u00B6\x19#\u00AF\u008B!\u00E3q\f\x1E\u00B4\u00F2\x1C\u00E8Z\u0091\u009AT\u00FA\u00E9\u0099\x11\u00C6\x0B\u00AB\u00BA\u00C8\u00D0\x1C\r\u009B\x18\u00BA\u0099\u00AE4^\u00D7\x1E\u00C6\u00D1\u009Ayg\u00B0\u00EA\u00AD\u0082{\u00EA#k\u00BE\u00B5\x04\x1B\u00C8\u008B\u00A4\u00ED\u00E3\u00B4U\u00EF\u00C9\u00F3\u00EC\x1B\u009C\u0095\u0089<\u00DB\x07\x0F\u00F0CQ\u00C5\u00F4\u00F9Z\x05\u00F7\u00AA\x01\u00C6sK\u00FA\x12cH\x1A\x1CIshU$4\u00E9\u00A9/\u00C2\u00EA\u00CE~5p\x13.\u00D5\x1F\u00865\x1A\u00A1\u008F\u00C9<\u00BC\u00B1L\u00E9\u00F9p\x15~&\x1Asf\u009B\u00EE\u0096\u00ACq\u00AEt_\u00BD&\u00B4\x02%\\\u00EEK\u00D4\u0084\x07\u00F5\u00CAy\u00FA\x03*\u00F3Y\x12Q\x02\u009F\x0Fs\u00F0\u0084*jCUi\u00CD\t\u00F8\u00CD\u00E9\u00AC\u00D7\u0084\x1A\u00F8\x06.7\u00E9\x19\u00C6a\u00AD\u00B2\u00FF\x10u\u00EA\u00AD\u0095\u009DTp\u00FF=\u00DCf\u00F8\u0099j\u00AE\x1A~\u00DE)\u00EB\u00DF\u0098D\u009E\n\u00DE\u00C2%\u00FC\u00DB\u00CDd\u00FB`\x13\u00B3\u0086s\u00C2\u00CE\u00A1y\u00AF\u00A3y\u0091H$\x12\u0089D\u00C2\u00F8\x05x\u00F9\x1Da$n\u00DC\u00BB\x00\x00\x00\x00IEND\u00AEB`\u0082";
         var binMirrorIcon = "\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00P\x00\x00\x00\x1E\b\x06\x00\x00\x00\u00BBC\u0099\u00B1\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x00\x01sRGB\x00\u00AE\u00CE\x1C\u00E9\x00\x00\x00\x04gAMA\x00\x00\u00B1\u008F\x0B\u00FCa\x05\x00\x00\x00\x0EtEXtSoftware\x00Figma\u009E\u00B1\u0096c\x00\x00\x02RIDATx\x01\u00ED\u0097Qn\u00D3@\x10\u0086\u00C7Iy@\u00A2\x12\u00DC\u00C0G\u00F0\r\u00C8\r\u00A8O\u00D0\u00E4\x04mO\u00D0\u00E5\u0095\x17\u0092\x13\u00C4=\x00\u0098\u009C\x00s\x02\u00E0\u0089\x07\x1E\b\u00E2\x00\x05\u0092\u00A8B\x10/\u00F3\u00C7\x13\u00D8Xi\u00EB\u00B5\u00D34\u00AD\u00E6\u0093~\u00AD<\u00BB\u00DE\u00AC\x7F\u00CF\u00AC7D\u008A\u00A2(\u008A\u00B2\u008BX\"\u00C3\u00B2h\u00E9\u009E\u00D2\"\u00A5\x11j\u00E0\u00AEc\u00AD5t\u008F\u00D1\fl\u0088\u0097\u0081\u009CM\u00A7\x105\u00A45\u009A\u009D\u00B6\u00D2Y\u00E3y\u00EE\x14b\u00DE\u0092\u00CA\x0F_.\u00E1\u00C2\u00BC\u00A9-4\u00F3\u0099'b\u00BDeuJ\u00F1\x03\u0089\u0087\u00AC\u00C7\u00B4e*e\u00A0\x18f\u009C\u0090\u00A9\u0093\u00890\u008Fr\u00D7Pk<L\u00849\x1D\u00D6A)~(q\u00D0\u0085\u00A1\u00B4E\u00F6*\u008E\x0B\u00D6\u00C4\u00BE\u0092/y\x1E\u0094\u00A7\n\u00C8\u00FA\u00CC\u00F3\u0086\n\u00C3\u008Eq!\x19\x17\u00B12\u00E9\u00FF\x0E9&>e\u00BD\u00A3\u00C2|>\u008E.\u008C\x1E\u00C9\u00F8#\u00B9\u00C6\u009CgA\x10\u00E0\u00BE\u00BE\u00F4=c\u009D v\u00CDz\u00AAe Od\u00B8y\u00EE\u0084z\x1CK\u00C8\u0093<\u00DE7\u00FC\x1C\u00FF\u00E6a+{\u00F3\u00F8QB\u00D5\u00C1\x03}p\u00CA\x18FeN?\u00E2!\x15\u00A6\"\u00B3?b\u00BC\u00C4\r\u00FD7\u00EF=\u00EB\x07\u00AB\u00C7z\u00C2\x1A\u00CA\u00FD0\x0E/hT\u00C5<o\u00B0\u009F\u00B1\u00BA\u00BE\u00F7\u0094c\u00ADtb\u00DA\u00E9\u00B4K\x1E\u00C04\u00D6P\u00F6\u00BC\u00BE\u00C4Rgo\u00C4\x1E\u0098`}\u00B2\u00CEc\u00E7\u00DEd\u00B9\u00EE\u00E5\u00F8\u00D2\u00DC_\u0090\u00CDh\u00C9\u0093\u00AA%\u00BC@2\u00B11E&\u00D6&c\u00BD\x14\x13#^\x132r\u00DD8\u009F\f\x1ASQ\u00E6\u00DEl\u00E4\x1C\u00B8\u00CD\u00AF\u009F\u0094\x16J\x11%: \x7F\u00C6,dk\u0088\x0BiC\u009EwL5hl /\x00{\x06J *\u00F7\u00B5G\x17\u0087/>\u00FF>z\u0090N#\u00DA,\u00D8\u00F8\u00BB\u00D2z!/\u00E0\u00845\u0094RNY1\u00DD\x060\u00CF9\x1B\u009E\u00BB&\u00C2<\u009C\u00F5\u00CC\u00A7_8\u00F3\u009D\u00DF\u0080\u0089\u008DYfa\x13jg\u00A0|\t\x13'\u00842^l\u00E6{\u00E9\u00A4c\u00F3\u00F9J\u00DF\u009C\u00FB(\u00BD\bi\u0087\u00A8[\u00B6.\u00B5\r\u00E4\x1F\u00CF\u00B89+\u0085\x07X\u00D4\u009Fx?\x0Bl\u00BE\u00DA\u0097\u00DB\x01\u00C5\x0F\u00C7\u00A4\u00AC\"G\x04\u00BB\u00EE\u00B8\u00D2~\u00FD3Y\u0094\u00F0\u00AB\u0089!\u00E5r\u00AE\u00FA\u00FB\u00F4m:\u00EF\u0093\u00A2(\u008A\u00A2(\u00CA\u00C6\u00F9\x0Bmvk\x05>\x04\x1D\u00E1\x00\x00\x00\x00IEND\u00AEB`\u0082";
 
+        // --- LAYER MODE BINARY PLACEHOLDERS ---
+        var binSeqFwdLayer = binSeqFwd; 
+        var binSeqRevLayer = binSeqRev; 
+        var binSeqRndLayer = binSeqRnd; 
+        var binAlignLayer  = binAlign;  
+        var binShiftLayer  = binShift;  
+
         // --- ROW: ALL 5 ICONS ---
         var iconGroupRow = offsetMainGroup.add("group");
         iconGroupRow.alignChildren = ["center", "center"];
-        iconGroupRow.spacing = 5; // Tightly packed in one row
+        iconGroupRow.spacing = 5; 
         
         var btnSeqForward = iconGroupRow.add("iconbutton", undefined, binSeqFwd, {style: "toolbutton"});
         var btnSeqReverse = iconGroupRow.add("iconbutton", undefined, binSeqRev, {style: "toolbutton"});
@@ -144,34 +168,68 @@
         
         btnSeqForward.size = btnSeqReverse.size = btnSeqRandom.size = btnAlignAll.size = btnShiftBlock.size = [30, 30];
         
-        btnSeqForward.helpTip = "Dịch keyframe tiến về phía trước";
-        btnSeqReverse.helpTip = "Dịch keyframe đảo ngược thứ tự";
-        btnSeqRandom.helpTip  = "Dịch keyframe ngẫu nhiên";
-        btnAlignAll.helpTip   = "Dóng thẳng hàng tất cả keyframe vào Thời điểm hiện tại (xoá stagger)";
-        btnShiftBlock.helpTip = "Dịch chuyển toàn bộ khối keyframe vào Thời điểm hiện tại (giữ nguyên stagger)";
+        btnSeqForward.helpTip = "Dịch tiến về phía trước";
+        btnSeqReverse.helpTip = "Dịch đảo ngược thứ tự";
+        btnSeqRandom.helpTip  = "Dịch ngẫu nhiên";
+        btnAlignAll.helpTip   = "Dóng thẳng hàng tất cả vào Thời điểm hiện tại (xoá stagger)";
+        btnShiftBlock.helpTip = "Dịch chuyển toàn bộ khối vào Thời điểm hiện tại (giữ nguyên stagger)";
 
-    // --- ROW 4: CLONE & MIRROR ---
+        // --- ROW 4: CLONE & MIRROR ---
         var cloneMirrorRow = offsetMainGroup.add("group");
         cloneMirrorRow.alignChildren = ["center", "center"];
         cloneMirrorRow.spacing = 15;
+        // Chốt cứng kích thước (80 + 15 + 80 = 175) để khi nút bị ẩn, khung UI vẫn giữ nguyên khoảng trống
+        cloneMirrorRow.preferredSize = [175, 30];
         
-        // Change these from "button" to "iconbutton" with the flat toolbutton style
         var btnClone = cloneMirrorRow.add("iconbutton", undefined, binCloneIcon, {style: "toolbutton"});
         var btnMirror = cloneMirrorRow.add("iconbutton", undefined, binMirrorIcon, {style: "toolbutton"});
         
-        // Lock the size to match your Figma frame
         btnClone.size = [80, 30];
         btnMirror.size = [80, 30];
         
         btnClone.helpTip = "Nhân bản keyframe đã chọn và dán tại Thời điểm hiện tại";
         btnMirror.helpTip = "Nhân bản và đảo ngược keyframe đã chọn vào Thời điểm hiện tại";
 
-        // --- EVENTS ---
-        btnSeqForward.onClick = function() { SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "forward"); }
-        btnSeqReverse.onClick = function() { SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "reverse"); }
-        btnSeqRandom.onClick  = function() { SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "random"); }
-        btnAlignAll.onClick   = function() { AlignAllToCTI(); }
-        btnShiftBlock.onClick = function() { ShiftBlockToCTI(); }
+        // --- SỰ KIỆN CHO CHECKBOX VÀ CÁC NÚT ---
+        chkLayerMode.onClick = function() {
+            var isLayer = chkLayerMode.value;
+            
+            // Ẩn 2 nút (nhờ preferredSize ở trên, nó sẽ để lại khoảng trống y như opacity = 0)
+            btnClone.visible = !isLayer;
+            btnMirror.visible = !isLayer;
+            btnClone.enabled = !isLayer;
+            btnMirror.enabled = !isLayer;
+
+            // Chuyển đổi icon
+            btnSeqForward.image = isLayer ? binSeqFwdLayer : binSeqFwd;
+            btnSeqReverse.image = isLayer ? binSeqRevLayer : binSeqRev;
+            btnSeqRandom.image  = isLayer ? binSeqRndLayer : binSeqRnd;
+            btnAlignAll.image   = isLayer ? binAlignLayer : binAlign;
+            btnShiftBlock.image = isLayer ? binShiftLayer : binShift;
+            
+            // Đã xóa dòng panel.layout.layout(true); đi để tránh lỗi sập căn lề của ScriptUI
+        };
+
+        btnSeqForward.onClick = function() { 
+            if (chkLayerMode.value) SequenceLayers(Number(inputOffset.text), Number(inputStep.text), "forward");
+            else SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "forward"); 
+        }
+        btnSeqReverse.onClick = function() { 
+            if (chkLayerMode.value) SequenceLayers(Number(inputOffset.text), Number(inputStep.text), "reverse");
+            else SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "reverse"); 
+        }
+        btnSeqRandom.onClick  = function() { 
+            if (chkLayerMode.value) SequenceLayers(Number(inputOffset.text), Number(inputStep.text), "random");
+            else SequenceKeyframes(Number(inputOffset.text), Number(inputStep.text), "random"); 
+        }
+        btnAlignAll.onClick   = function() { 
+            if (chkLayerMode.value) AlignLayersToCTI();
+            else AlignAllToCTI(); 
+        }
+        btnShiftBlock.onClick = function() { 
+            if (chkLayerMode.value) ShiftLayersToCTI();
+            else ShiftBlockToCTI(); 
+        }
         btnClone.onClick      = function() { CloneKeyframesToCTI(false); }
         btnMirror.onClick     = function() { CloneKeyframesToCTI(true); }
 
@@ -836,7 +894,11 @@
         // --- FINAL RESELECTION LOOP ---
         for (var i = 0; i < keysToSelect.length; i++) {
             var p = keysToSelect[i].prop;
-            p.selected = true;
+            // Bỏ chọn tất cả keyframes cũ của thuộc tính này
+            for (var k = 1; k <= p.numKeys; k++) {
+                p.setSelectedAtKey(k, false);
+            }
+            // Chỉ chọn lại đúng các key vừa được tạo/dịch chuyển
             for (var j = 0; j < keysToSelect[i].keys.length; j++) {
                 p.setSelectedAtKey(keysToSelect[i].keys[j], true);
             }
@@ -880,7 +942,11 @@
         // --- FINAL RESELECTION LOOP ---
         for (var i = 0; i < keysToSelect.length; i++) {
             var p = keysToSelect[i].prop;
-            p.selected = true;
+            // Bỏ chọn tất cả keyframes cũ của thuộc tính này
+            for (var k = 1; k <= p.numKeys; k++) {
+                p.setSelectedAtKey(k, false);
+            }
+            // Chỉ chọn lại đúng các key vừa được tạo/dịch chuyển
             for (var j = 0; j < keysToSelect[i].keys.length; j++) {
                 p.setSelectedAtKey(keysToSelect[i].keys[j], true);
             }
@@ -928,7 +994,11 @@
         // --- FINAL RESELECTION LOOP ---
         for (var i = 0; i < keysToSelect.length; i++) {
             var p = keysToSelect[i].prop;
-            p.selected = true;
+            // Bỏ chọn tất cả keyframes cũ của thuộc tính này
+            for (var k = 1; k <= p.numKeys; k++) {
+                p.setSelectedAtKey(k, false);
+            }
+            // Chỉ chọn lại đúng các key vừa được tạo/dịch chuyển
             for (var j = 0; j < keysToSelect[i].keys.length; j++) {
                 p.setSelectedAtKey(keysToSelect[i].keys[j], true);
             }
@@ -985,7 +1055,11 @@
         // --- FINAL RESELECTION LOOP ---
         for (var i = 0; i < keysToSelect.length; i++) {
             var p = keysToSelect[i].prop;
-            p.selected = true;
+            // Bỏ chọn tất cả keyframes cũ của thuộc tính này
+            for (var k = 1; k <= p.numKeys; k++) {
+                p.setSelectedAtKey(k, false);
+            }
+            // Chỉ chọn lại đúng các key vừa được tạo/dịch chuyển
             for (var j = 0; j < keysToSelect[i].keys.length; j++) {
                 p.setSelectedAtKey(keysToSelect[i].keys[j], true);
             }
@@ -1174,6 +1248,97 @@
             currentProp = currentProp.parentProperty;
         }
         return indices;
+    }
+    // ==========================================
+// --- LAYER MODE FUNCTIONS ---
+// ==========================================
+
+    function SequenceLayers(offsetFrames, step, direction) {
+        var comp = app.project.activeItem;
+        if (!comp || comp.selectedLayers.length === 0) return;
+        if (step < 1) step = 1; 
+
+        app.beginUndoGroup("Sequence Layers");
+
+        // Sao chép mảng layer để tránh lỗi tham chiếu khi lật mảng
+        var layers = [];
+        for (var i = 0; i < comp.selectedLayers.length; i++) {
+            layers.push(comp.selectedLayers[i]);
+        }
+
+        // Mặc định: Sắp xếp layer theo Index từ trên xuống dưới
+        layers.sort(function(a, b) { return a.index - b.index; });
+
+        if (direction === "reverse") {
+            layers.reverse();
+        } else if (direction === "random") {
+            for (var i = layers.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = layers[i];
+                layers[i] = layers[j];
+                layers[j] = temp;
+            }
+        }
+
+        var fps = comp.frameRate;
+        var offsetTime = offsetFrames / fps;
+
+        for (var i = 0; i < layers.length; i++) {
+            var groupIndex = Math.floor(i / step);
+            // Dịch chuyển inPoint (bằng cách cộng vào startTime)
+            layers[i].startTime += groupIndex * offsetTime;
+        }
+
+        app.endUndoGroup();
+    }
+
+    function AlignLayersToCTI() {
+        var comp = app.project.activeItem;
+        if (!comp || comp.selectedLayers.length === 0) return;
+
+        app.beginUndoGroup("Align Layers to Thời điểm hiện tại");
+
+        var layers = comp.selectedLayers;
+        var cti = comp.time;
+
+        for (var i = 0; i < layers.length; i++) {
+            // Đẩy thời điểm bắt đầu (inPoint) của tất cả layer bằng với CTI
+            var offset = cti - layers[i].inPoint;
+            layers[i].startTime += offset;
+        }
+
+        app.endUndoGroup();
+    }
+
+    function ShiftLayersToCTI() {
+        var comp = app.project.activeItem;
+        if (!comp || comp.selectedLayers.length === 0) return;
+
+        app.beginUndoGroup("Shift Layer Block to Thời điểm hiện tại");
+
+        var layers = comp.selectedLayers;
+        var cti = comp.time;
+        var earliestTime = layers[0].inPoint;
+
+        // Tìm layer có inPoint sớm nhất
+        for (var i = 1; i < layers.length; i++) {
+            if (layers[i].inPoint < earliestTime) {
+                earliestTime = layers[i].inPoint;
+            }
+        }
+
+        var globalOffsetTime = cti - earliestTime;
+        if (globalOffsetTime === 0) {
+            app.endUndoGroup();
+            return;
+        }
+
+        // Giữ nguyên stagger, đẩy toàn bộ khối theo CTI
+        for (var i = 0; i < layers.length; i++) {
+            layers[i].startTime += globalOffsetTime;
+        }
+
+        app.endUndoGroup();
     }
 
 
