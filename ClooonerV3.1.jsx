@@ -588,8 +588,13 @@
                     removeFx(pivot, "Twisted Rate");
                 }
 
-                ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                if (make3D) {
+                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                } else {
+                    removeFx(pivot, "Orient X (3D only)");
+                    removeFx(pivot, "Orient Y (3D only)");
+                }
                 ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
                 var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
@@ -733,19 +738,20 @@
         var pathRow1 = tabPath.add("group");
         pathRow1.orientation = "row";
         pathRow1.alignChildren = ["center", "center"];
-        pathRow1.spacing = 5; // Khoảng cách 5px
+        pathRow1.spacing = 5;
 
         var pathOrientCheckbox = createCustomCheckbox(pathRow1, "Xoay theo Path", true, pathOrient_ON_Bin, pathOrient_OFF_Bin);
-        var pathTaperCheckbox = createCustomCheckbox(pathRow1, "Taper Mode", false, pathTaper_ON_Bin, pathTaper_OFF_Bin);
-        var pathTrimCheckbox = createCustomCheckbox(pathRow1, "Trimpath FX", false, pathTrim_ON_Bin, pathTrim_OFF_Bin);
+        var path3DCheckbox = createCustomCheckbox(pathRow1, "3D Mode", false, mode3D_ON_Bin, mode3D_OFF_Bin); // Tận dụng Icon Tab Tròn
+        var pathTwistedCheckbox = createCustomCheckbox(pathRow1, "Kích hoạt Twisted", false, pathTwisted_ON_Bin, pathTwisted_OFF_Bin);
 
-        // --- ROW 2: Chứa 2 Icon ---
+        // --- ROW 2: Chứa 3 Icon ---
         var pathRow2 = tabPath.add("group");
         pathRow2.orientation = "row";
         pathRow2.alignChildren = ["center", "center"];
-        pathRow2.spacing = 5; // Khoảng cách 5px
+        pathRow2.spacing = 5;
 
-        var pathTwistedCheckbox = createCustomCheckbox(pathRow2, "Kích hoạt Twisted", false, pathTwisted_ON_Bin, pathTwisted_OFF_Bin);
+        var pathTaperCheckbox = createCustomCheckbox(pathRow2, "Taper Mode", false, pathTaper_ON_Bin, pathTaper_OFF_Bin);
+        var pathTrimCheckbox = createCustomCheckbox(pathRow2, "Trimpath FX", false, pathTrim_ON_Bin, pathTrim_OFF_Bin);
         var pathDelayCheckbox = createCustomCheckbox(pathRow2, "Kích hoạt Delayed Offset", false, pathDelay_ON_Bin, pathDelay_OFF_Bin);
 
         // --- NÚT UPDATE MODE (TAB PATH) ---
@@ -776,6 +782,9 @@
                 var useTrim = pathTrimCheckbox.value; 
                 var isTwisted = pathTwistedCheckbox.value; 
                 var isDelayed = pathDelayCheckbox.value;
+                var make3D = path3DCheckbox.value;
+                
+                pivot.threeDLayer = make3D;
 
                 // Hàm xoá Effect an toàn nếu tồn tại
                 function removeFx(layer, fxName) {
@@ -817,8 +826,13 @@
                     removeFx(pivot, "Delay Offset"); removeFx(pivot, "Delay Frames");
                 }
 
-                ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                if (make3D) {
+                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                } else {
+                    removeFx(pivot, "Orient X (3D only)");
+                    removeFx(pivot, "Orient Y (3D only)");
+                }
                 ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
                 var rotators = [];
@@ -838,6 +852,9 @@
                     var rot = rotators[r];
                     var kid = children[r];
                     if(!kid) continue;
+                    
+                    rot.threeDLayer = make3D;
+                    kid.threeDLayer = make3D;
 
                     var delayBlock = isDelayed ? 
                         'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")("Slider");\n' +
@@ -1092,11 +1109,12 @@
         toolPathFeatureRow.alignChildren = ["center", "center"];
         toolPathFeatureRow.spacing = 10;
 
-        // Gọi nhà máy tạo 5 Checkbox Icon (Dùng Tooltip có chữ "Kích hoạt")
+        // Gọi nhà máy tạo 6 Checkbox Icon (Dùng Tooltip có chữ "Kích hoạt")
         var toolOrientChk = createCustomCheckbox(toolPathFeatureRow, "Auto Orient (xoay theo path)", true, toolOrient_ON_Bin, toolOrient_OFF_Bin);
+        var toolPath3DChk = createCustomCheckbox(toolPathFeatureRow, "3D Mode", false, toolCirc_3D_ON_Bin, toolCirc_3D_OFF_Bin);
+        var toolTwistedChk_Path = createCustomCheckbox(toolPathFeatureRow, "Twisted", false, toolTwisted_ON_Bin, toolTwisted_OFF_Bin);
         var toolTaperChk = createCustomCheckbox(toolPathFeatureRow, "Taper", false, toolTaper_ON_Bin, toolTaper_OFF_Bin);
         var toolTrimChk = createCustomCheckbox(toolPathFeatureRow, "TrimPath FX", false, toolTrim_ON_Bin, toolTrim_OFF_Bin);
-        var toolTwistedChk_Path = createCustomCheckbox(toolPathFeatureRow, "Twisted", false, toolTwisted_ON_Bin, toolTwisted_OFF_Bin);
         var toolDelayChk = createCustomCheckbox(toolPathFeatureRow, "Delay Offset", false, toolDelay_ON_Bin, toolDelay_OFF_Bin);
 
         // --- NÚT BẤM CHÍNH ---
@@ -2004,9 +2022,9 @@
                     return;
                 }
 
-                if (make3D && (!parent.threeDLayer || !child.threeDLayer)) {
-                    alert("Cả hai layer pivot null và layer clone phải là 3D Layer.");
-                    return;
+                if (make3D) {
+                    parent.threeDLayer = true;
+                    child.threeDLayer = true;
                 }
 
                 // --- THÊM CẢNH BÁO TRUE CLONE Ở ĐÂY ---
@@ -2075,18 +2093,21 @@
                 pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
                 
                 ensureControl(pivot, "Angle", "ADBE Angle Control", angle);
-                ensureControl(pivot, "Radius", "ADBE Slider Control", planeLen); // CHỈ GÁN BÁN KÍNH MẶT PHẲNG
-                ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100); // HIỆU ỨNG XOÁY VÀO TÂM
-                ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);  // HIỆU ỨNG ĐƯỜNG HẦM CHIỀU SÂU
                 ensureControl(pivot, "Offset", "ADBE Angle Control", 0);
+                ensureControl(pivot, "Radius", "ADBE Slider Control", planeLen); 
+                ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100); 
+                ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);  
                 
+                if (make3D) {
+                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                }
+                ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
+
                 if (isTwisted) {
                     ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
                     ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1);
                 }
-                ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
                 var rotators = [], children = [];
                 var lastRot = pivot;
@@ -2275,8 +2296,15 @@
                     var useTaper = pathTaperCheckbox.value;
                     var useOrient = pathOrientCheckbox.value; 
                     var useTrim = pathTrimCheckbox.value; 
-                    var isTwisted = pathTwistedCheckbox.value; 
+                    var isTwisted = pathTwistedCheckbox.value;
                     var isDelayed = pathDelayCheckbox.value;
+                    var make3D = path3DCheckbox.value;
+                    
+                    if (make3D) {
+                        pivot.threeDLayer = true;
+                        shapeLayer.threeDLayer = true;
+                        child.threeDLayer = true;
+                    }
                     
                     if (useTaper) {
                         ensureControl(pivot, "Start Range", "ADBE Slider Control", 20);
@@ -2298,8 +2326,10 @@
                         ensureControl(pivot, "Delay Offset", "ADBE Slider Control", 0);
                         ensureControl(pivot, "Delay Frames", "ADBE Slider Control", 10);
                     }
-                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                    if (make3D) {
+                        ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                        ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                    }
                     ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
                     // --- GẮN SHAPE LAYER VÀO PIVOT THEO YÊU CẦU ---
@@ -2325,11 +2355,16 @@
                         rot.transform.position.setValue([0, 0, 0]);
                         if (rot.property("Transform").property("Anchor Point")) rot.property("Transform").property("Anchor Point").setValue([0,0,0]);
 
-                        kid.parent = rot;
                         kid.transform.position.setValue(kid.threeDLayer ? [0, 0, 0] : [0, 0]);
+                        kid.parent = rot; 
+                        
+                        rot.threeDLayer = make3D;
+                        kid.threeDLayer = make3D;
 
+                        // Sửa lỗi AE tự động Auto-Orient 86 độ
                         rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
                         kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+
                         if (kid.threeDLayer) {
                             kid.transform.orientation.setValue([0, 0, 0]);
                             kid.transform.xRotation.setValue(0);
@@ -2623,19 +2658,23 @@
 
                     ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
                     pivot.property("Effects").property("Total Clones").property("Slider").expression = totalClones.toString();
-                    ensureControl(pivot, "Radius", "ADBE Slider Control", avgRadius);
+                    
                     ensureControl(pivot, "Angle", "ADBE Angle Control", 30);
+                    ensureControl(pivot, "Offset", "ADBE Angle Control", 0);
+                    ensureControl(pivot, "Radius", "ADBE Slider Control", avgRadius);
                     ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100);
                     ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);
-                    ensureControl(pivot, "Offset", "ADBE Angle Control", 0);
                     
+                    if (make3D) {
+                        ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                        ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                    }
+                    ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
+
                     if (isTwisted) {
                         ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
                         ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1);
                     }
-                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
-                    ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                     
                     // FIX: Cập nhật biến lastRot sau khi đã tạo Pivot Null thành công
                     lastRot = pivot; 
@@ -2804,6 +2843,7 @@
             var useTrim = toolTrimChk.value;
             var isTwisted = toolTwistedChk_Path.value;
             var isDelayed = toolDelayChk.value;
+            var make3D = toolPath3DChk.value;
 
             app.beginUndoGroup("Rig to Path");
             try {
@@ -2877,8 +2917,10 @@
                         ensureControl(pivot, "Delay Offset", "ADBE Slider Control", 0);
                         ensureControl(pivot, "Delay Frames", "ADBE Slider Control", 10);
                     }
-                    ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                    ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                    if (make3D) {
+                        ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                        ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+                    }
                     ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                     
                     lastRot = pivot; 
