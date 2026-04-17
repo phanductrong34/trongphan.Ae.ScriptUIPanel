@@ -620,49 +620,74 @@
                 else if (axisY.value) axis = "Y";
                 else axis = "Z";
             }
-            pivot.threeDLayer = make3D;
             
-            function removeFx(layer, fxName) { var fxProp = layer.property("Effects").property(fxName); if (fxProp) fxProp.remove(); }
-
-            if (isTwisted) {
-                ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
-                ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1);
-            } else {
-                removeFx(pivot, "Twisted Angle"); removeFx(pivot, "Twisted Rate");
+            var rotators = [], children = [], origVecStrs = [];
+            for (var i = 1; i <= comp.numLayers; i++) { 
+                var l = comp.layer(i); 
+                if (l.parent === pivot) { 
+                    rotators.push(l); 
+                    for (var j = 1; j <= comp.numLayers; j++) { 
+                        var kid = comp.layer(j); 
+                        if (kid.parent === l) { 
+                            children.push(kid); 
+                            // TRÍCH XUẤT VECTOR GỐC TRƯỚC KHI XOÁ EXPRESSION
+                            var kidPosExpr = kid.property("Transform").property("Position").expression;
+                            var match = kidPosExpr ? kidPosExpr.match(/orig\s*=\s*(\[.*?\]);/) : null;
+                            origVecStrs.push(match ? match[1] : "[0, -1, 0]");
+                            break; 
+                        } 
+                    } 
+                } 
             }
-            if (make3D) {
-                ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);
-                ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
-            } else {
-                removeFx(pivot, "Depth Stagger"); removeFx(pivot, "Orient X (3D only)"); removeFx(pivot, "Orient Y (3D only)");
-            }
-            ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
-            var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
-            for(var p=0; p<pProps.length; p++) { var pProp = pivot.property("Transform").property(pProps[p]); if(pProp && pProp.canSetExpression) pProp.expression = ""; }
-
-            var rotators = [], children = [];
-            for (var i = 1; i <= comp.numLayers; i++) {
-                var l = comp.layer(i);
-                if (l.parent === pivot) {
-                    rotators.push(l);
-                    for (var j = 1; j <= comp.numLayers; j++) { var kid = comp.layer(j); if (kid.parent === l) { children.push(kid); break; } }
-                }
-            }
+            // 1. QUÉT SẠCH EXPRESSION CŨ ĐỂ KHÔNG BỊ LỖI "NULL IS NOT AN OBJECT"
+            var pProps = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
             for (var r = 0; r < rotators.length; r++) {
                 var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
-                rot.threeDLayer = kid.threeDLayer = make3D;
-                for(var pr=0; pr<pProps.length; pr++) {
-                    var rProp = rot.property("Transform").property(pProps[pr]); var kProp = kid.property("Transform").property(pProps[pr]);
-                    if(rProp && rProp.canSetExpression) rProp.expression = ""; if(kProp && kProp.canSetExpression) kProp.expression = "";
+                for (var p = 0; p < pProps.length; p++) {
+                    var pR = rot.property("Transform").property(pProps[p]); var pK = kid.property("Transform").property(pProps[p]);
+                    if (pR && pR.canSetExpression) pR.expression = "";
+                    if (pK && pK.canSetExpression) pK.expression = "";
                 }
+            }
+
+            // 2. THIẾT LẬP 3D VÀ EFFECT CHO PIVOT SAU KHI ĐÃ AN TOÀN
+            pivot.threeDLayer = make3D;
+            function removeFx(layer, fxName) { var fxProp = layer.property("Effects").property(fxName); if (fxProp) fxProp.remove(); }
+
+            if (isTwisted) { ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5); ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1); } 
+            else { removeFx(pivot, "Twisted Angle"); removeFx(pivot, "Twisted Rate"); }
+            
+            if (make3D) { ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100); ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); } 
+            else { removeFx(pivot, "Depth Stagger"); removeFx(pivot, "Orient X (3D only)"); removeFx(pivot, "Orient Y (3D only)"); }
+            
+            ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
+
+            // 3. APPLY LẠI EXPRESSION MỚI CHO CLONE
+            for (var r = 0; r < rotators.length; r++) {
+                var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
+                
+                var oldKidScale = kid.transform.scale.value;
+                var rotParent = rot.parent; var kidParent = kid.parent;
+                kid.parent = null; rot.parent = null;
+
+                rot.threeDLayer = kid.threeDLayer = make3D;
+
+                rot.parent = rotParent; kid.parent = kidParent;
+                rot.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                kid.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                
+                rot.transform.scale.setValue(make3D ? [100, 100, 100] : [100, 100]);
+                kid.transform.scale.setValue(make3D ? [oldKidScale[0], oldKidScale[1], oldKidScale.length > 2 ? oldKidScale[2] : oldKidScale[0]] : [oldKidScale[0], oldKidScale[1]]);
+
                 var rotPropName = make3D ? (axis + " Rotation") : "Rotation";
                 rot.property("Transform").property(rotPropName).expression = 'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")("Angle");\nos = thisComp.layer("' + pivot.name + '").effect("Offset")("Angle");\nidx = effect("Clone Index")("Slider");\nvalue + (ctrl * idx) + os;';
+                
                 var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")("Angle");\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")("Slider");\ntIdx = effect("Clone Index")("Slider");\ntwistVal = tAngle * tRate * tIdx;\n' : '';
                 var baseKidExpr = 'value';
                 if (normalize) { var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation"; baseKidExpr += ' - parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName; }
                 if (isTwisted) baseKidExpr += ' + twistVal';
+                
                 if (make3D) {
                     kid.property("Transform").property("X Rotation").expression = (axis === "X" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")("Angle");';
                     kid.property("Transform").property("Y Rotation").expression = (axis === "Y" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")("Angle");';
@@ -670,6 +695,13 @@
                 } else {
                     kid.property("Transform").property("Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")("Angle");';
                 }
+
+                // PHỤC HỒI LẠI EXPRESSION TÍNH TOÁN BÁN KÍNH (BỊ THIẾU Ở BẢN TRƯỚC)
+                var origVecStr = origVecStrs[r];
+                var rScaleStr = 'rScale = Math.max(0, 1 - (1 - rStag) * mathIdx);\n';
+                var posExpr = '' + 'axis = "' + axis + '";\n' + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")("Slider");\n' + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")("Slider") / 100;\n' + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")("Slider") / 100;\n' : 'dStag = 1;\n') + 'idx = effect("Clone Index")("Slider");\n' + 'mathIdx = idx + 1;\n' + rScaleStr + 'dScale = Math.max(0, 1 - (1 - dStag) * mathIdx);\n' + 'orig = ' + origVecStr + ';\n' + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; depthVec = [orig[0], 0, 0]; }\n' + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; depthVec = [0, orig[1], 0]; }\n' + 'else { planeVec = [orig[0], orig[1], 0]; depthVec = [0, 0, orig[2]]; }\n' + 'planeLen = length(planeVec);\n' + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n' + 'newPlane = planeDir * rad * rScale;\n' + 'newDepth = depthVec * dScale;\n' + 'offset = newPlane + newDepth;\n' + (make3D ? '(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [offset[0], offset[1]];');
+                
+                kid.transform.position.expression = posExpr;
             }
         }
 
@@ -677,7 +709,26 @@
         function forceUpdatePath(pivot, comp) {
             var useOrient = pathOrientCheckbox.value; var useTaper = pathTaperCheckbox.value; var useTrim = pathTrimCheckbox.value; 
             var isTwisted = pathTwistedCheckbox.value; var isDelayed = pathDelayCheckbox.value; var make3D = path3DCheckbox.value;
+            
+            var rotators = [], children = [];
+            for (var i = 1; i <= comp.numLayers; i++) { var l = comp.layer(i); if (l.parent === pivot) { rotators.push(l); for (var j = 1; j <= comp.numLayers; j++) { var kid = comp.layer(j); if (kid.parent === l) { children.push(kid); break; } } } }
+
+            // 1. QUÉT DỌN SẠCH EXPRESSION CŨ ĐỂ TRÁNH LỖI KHI GỠ EFFECT
+            var propsToClear = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
+            for (var r = 0; r < rotators.length; r++) {
+                var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
+                for (var p = 0; p < propsToClear.length; p++) {
+                    var pR = rot.property("Transform").property(propsToClear[p]); var pK = kid.property("Transform").property(propsToClear[p]);
+                    if (pR && pR.canSetExpression) pR.expression = "";
+                    if (pK && pK.canSetExpression) pK.expression = "";
+                }
+                try { rot.property("Effects").property("Path Position").property("Slider").expression = ""; } catch(e){}
+                try { kid.property("Effects").property("Path Position").property("Slider").expression = ""; } catch(e){}
+            }
+
+            // 2. THIẾT LẬP 3D VÀ EFFECT CHO CONTROL NULL SAU KHI ĐÃ AN TOÀN
             pivot.threeDLayer = make3D;
+            if (make3D) { try { var targetLayerIdx = pivot.effect("Path")("Layer").value; if (targetLayerIdx) comp.layer(targetLayerIdx).threeDLayer = true; } catch(e) {} }
             
             function removeFx(layer, fxName) { var fxProp = layer.property("Effects").property(fxName); if (fxProp) fxProp.remove(); }
             
@@ -694,25 +745,37 @@
             else { removeFx(pivot, "Orient X (3D only)"); removeFx(pivot, "Orient Y (3D only)"); }
             ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
 
-            var rotators = [], children = [];
-            for (var i = 1; i <= comp.numLayers; i++) { var l = comp.layer(i); if (l.parent === pivot) { rotators.push(l); for (var j = 1; j <= comp.numLayers; j++) { var kid = comp.layer(j); if (kid.parent === l) { children.push(kid); break; } } } }
+            // 3. APPLY LẠI EXPRESSION MỚI CHO CLONE LAYER
             for (var r = 0; r < rotators.length; r++) {
                 var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
+                
+                var oldKidScale = kid.transform.scale.value;
+                var rotParent = rot.parent; var kidParent = kid.parent;
+                kid.parent = null; rot.parent = null;
+
                 rot.threeDLayer = kid.threeDLayer = make3D;
+
+                rot.parent = rotParent; kid.parent = kidParent;
+                kid.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                rot.transform.scale.setValue(make3D ? [100, 100, 100] : [100, 100]);
+                kid.transform.scale.setValue(make3D ? [oldKidScale[0], oldKidScale[1], oldKidScale.length > 2 ? oldKidScale[2] : oldKidScale[0]] : [oldKidScale[0], oldKidScale[1]]);
+
                 var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")("Slider");\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")("Slider").valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                 rot.property("Effects").property("Path Position").property("Slider").expression = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")("Slider");\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")("Slider");\nidx = effect("Clone Index")("Slider");\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
                 kid.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");';
-                var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n} catch(e) { value; }';
+                
+                var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  z = value.length == 3 ? value[2] + (cPos.length > 2 ? cPos[2] : 0) : 0;\n  (value.length == 3) ? [x, y, z] : [x, y];\n} catch(e) { value; }';
                 rot.property("Transform").property("Position").expression = pathPositionExpr;
+                
                 if (useTaper) { rot.property("Transform").property("Scale").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")("Slider") % 100;\n  if (pct < 0) pct += 100;\n  sR = Math.min(ctrl.effect("Start Range")("Slider"), ctrl.effect("End Range")("Slider"));\n  eR = Math.max(ctrl.effect("Start Range")("Slider"), ctrl.effect("End Range")("Slider"));\n  sS = ctrl.effect("Start Scale")("Slider");\n  eS = ctrl.effect("End Scale")("Slider");\n  s = 100;\n  if (pct <= sR && sR > 0) {\n    s = linear(pct, 0, sR, sS, 100);\n  } else if (pct >= eR && eR < 100) {\n    s = linear(pct, eR, 100, 100, eS);\n  }\n  (value.length == 3) ? [value[0] * s/100, value[1] * s/100, value[2] * s/100] : [value[0] * s/100, value[1] * s/100];\n} catch(e) { value; }'; } 
-                else { if(rot.property("Transform").property("Scale").canSetExpression) rot.property("Transform").property("Scale").expression = ""; }
-                var rProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
-                for(var p=0; p<rProps.length; p++) { var pR = rot.property("Transform").property(rProps[p]); var pK = kid.property("Transform").property(rProps[p]); if(pR && pR.canSetExpression) pR.expression = ""; if(pK && pK.canSetExpression) pK.expression = ""; }
-                if (useOrient) { rot.property("Transform").property(rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  duongpath = targetLayer.content(1).content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
+                
+                if (useOrient) { rot.property("Transform").property(rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
+                
                 if (useTrim) { kid.property("Transform").property("Opacity").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")("Slider") % 100;\n  if (pct < 0) pct += 100;\n  lS = Math.min(ctrl.effect("Limit Start")("Slider"), ctrl.effect("Limit End")("Slider"));\n  lE = Math.max(ctrl.effect("Limit Start")("Slider"), ctrl.effect("Limit End")("Slider"));\n  (pct >= lS && pct <= lE) ? value : 0;\n} catch(e) { value; }'; } 
-                else { if(kid.property("Transform").property("Opacity").canSetExpression) kid.property("Transform").property("Opacity").expression = ""; }
+                
                 var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")("Angle");\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")("Slider");\ntIdx = effect("Clone Index")("Slider");\ntwistVal = tAngle * tRate * tIdx;\n' : '';
                 var baseKidExpr = isTwisted ? 'value + twistVal' : 'value';
+                
                 if (kid.threeDLayer) { kid.property("Transform").property("X Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")("Angle");'; kid.property("Transform").property("Y Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")("Angle");'; kid.property("Transform").property("Z Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")("Angle");'; } 
                 else { kid.property("Transform").property("Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")("Angle");'; }
             }
@@ -1691,16 +1754,7 @@
                     var origVecStr = "[0, -1, 0]"; // Biến toàn cục hứng giá trị Vector cho cả hệ thống
 
                     if (isAppending) {
-                        forceUpdateCircular(pivot, comp); 
-                        var totalClonesCtrl = pivot.property("Effects").property("Total Clones");
-                        startIndex = parseInt(totalClonesCtrl.property("Slider").value);
-                        totalClonesCtrl.property("Slider").expression = (startIndex + targetLayers.length).toString(); 
-                        
-                        if (!pivot.property("Effects").property("Radius")) {
-                            var pPos = pivot.transform.position.value; var tDist = 0;
-                            for (var i = 0; i < targetLayers.length; i++) { var cP = targetLayers[i].transform.position.value; tDist += Math.sqrt(Math.pow(cP[0]-pPos[0],2) + Math.pow(cP[1]-pPos[1],2) + (make3D ? Math.pow(cP[2]-pPos[2],2) : 0)); }
-                            ensureControl(pivot, "Radius", "ADBE Slider Control", tDist / targetLayers.length);
-                        }
+                        // ĐỔI VỊ TRÍ: Trích xuất Vector gốc TRƯỚC KHI chạy forceUpdateCircular để tránh mất Expression
                         var maxIndex = -1;
                         for (var i = 1; i <= comp.numLayers; i++) { var l = comp.layer(i); if (l.parent === pivot && l.property("Effects") && l.property("Effects").property("Clone Index")) { var idx = parseInt(l.property("Effects").property("Clone Index").property("Slider").value); if (idx > maxIndex) { maxIndex = idx; lastRot = l; } } }
                         if (lastRot) { for (var j = 1; j <= comp.numLayers; j++) { if (comp.layer(j).parent === lastRot) { lastKid = comp.layer(j); break; } } }
@@ -1711,6 +1765,16 @@
                             if (match) origVecStr = match[1];
                         }
 
+                        forceUpdateCircular(pivot, comp); 
+                        var totalClonesCtrl = pivot.property("Effects").property("Total Clones");
+                        startIndex = parseInt(totalClonesCtrl.property("Slider").value);
+                        totalClonesCtrl.property("Slider").expression = (startIndex + targetLayers.length).toString(); 
+                        
+                        if (!pivot.property("Effects").property("Radius")) {
+                            var pPos = pivot.transform.position.value; var tDist = 0;
+                            for (var i = 0; i < targetLayers.length; i++) { var cP = targetLayers[i].transform.position.value; tDist += Math.sqrt(Math.pow(cP[0]-pPos[0],2) + Math.pow(cP[1]-pPos[1],2) + (make3D ? Math.pow(cP[2]-pPos[2],2) : 0)); }
+                            ensureControl(pivot, "Radius", "ADBE Slider Control", tDist / targetLayers.length);
+                        }
                     } else {
                         var totalClones = targetLayers.length; pivot.threeDLayer = make3D; 
                         if (!pivot.property("Effects").property("isClooonerCircular")) pivot.property("Effects").addProperty("ADBE Checkbox Control").name = "isClooonerCircular";
@@ -1800,7 +1864,11 @@
                         if (useTrim) { ensureControl(pivot, "Trim Start", "ADBE Slider Control", 0); ensureControl(pivot, "Trim End", "ADBE Slider Control", 100); ensureControl(pivot, "Limit Start", "ADBE Slider Control", 0); ensureControl(pivot, "Limit End", "ADBE Slider Control", 100); }
                         if (isTwisted) { ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5); ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1); }
                         if (isDelayed) { ensureControl(pivot, "Delay Offset", "ADBE Slider Control", 0); ensureControl(pivot, "Delay Frames", "ADBE Slider Control", 10); }
-                        if (make3D) { ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); }
+                        if (make3D) { 
+                            pivot.threeDLayer = true;
+                            shapeLayer.threeDLayer = true;
+                            ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); 
+                        }
                         ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                         lastRot = pivot; shapeLayer.parent = pivot;
                     }
@@ -1813,15 +1881,24 @@
                         var currentIndex = startIndex + i; var baseName = kid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
                         rot.name = (currentIndex + 1) + " - Null " + baseName; kid.name = (currentIndex + 1) + " - " + baseName + " - Rig";
                         rot.moveAfter(lastRot); lastRot = rot; if (lastKid) kid.moveAfter(lastKid); lastKid = kid;
-                        rot.parent = pivot; rot.transform.position.setValue([0,0,0]); kid.parent = rot; rot.threeDLayer = make3D; kid.threeDLayer = make3D;
-                        rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.transform.position.setValue(kid.threeDLayer ? [0, 0, 0] : [0, 0]);
-                        if (kid.threeDLayer) { kid.transform.orientation.setValue([0, 0, 0]); kid.transform.xRotation.setValue(0); kid.transform.yRotation.setValue(0); kid.transform.zRotation.setValue(0); } else { kid.transform.rotation.setValue(0); }
 
+                        var oldKidScale = kid.transform.scale.value;
+
+                        rot.threeDLayer = make3D; kid.threeDLayer = make3D;
+                        
+                        rot.parent = pivot; rot.transform.position.setValue(make3D ? [0,0,0] : [0,0]); 
+                        kid.parent = rot; kid.transform.position.setValue(make3D ? [0,0,0] : [0,0]);
+                        
+                        rot.transform.scale.setValue(make3D ? [100,100,100] : [100,100]);
+                        kid.transform.scale.setValue(make3D ? [oldKidScale[0], oldKidScale[1], oldKidScale.length > 2 ? oldKidScale[2] : oldKidScale[0]] : [oldKidScale[0], oldKidScale[1]]);
+
+                        rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+                        if (make3D) { kid.transform.orientation.setValue([0, 0, 0]); kid.transform.xRotation.setValue(0); kid.transform.yRotation.setValue(0); kid.transform.zRotation.setValue(0); } else { kid.transform.rotation.setValue(0); }
                         ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(rot, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex);
                         var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")("Slider");\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")("Slider").valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                         var posExpr = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")("Slider");\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")("Slider");\nidx = effect("Clone Index")("Slider");\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
                         rot.property("Effects").property("Path Position").property("Slider").expression = posExpr; kid.property("Effects").property("Path Position").property("Slider").expression = 'parent.effect("Path Position")("Slider");';
-                        var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n} catch(e) { value; }';
+                        var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  z = value.length == 3 ? value[2] + (cPos.length > 2 ? cPos[2] : 0) : 0;\n  (value.length == 3) ? [x, y, z] : [x, y];\n} catch(e) { value; }';
                         rot.property("Transform").property("Position").expression = pathPositionExpr;
                         if (useTaper) { rot.property("Transform").property("Scale").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")("Slider") % 100;\n  if (pct < 0) pct += 100;\n  sR = Math.min(ctrl.effect("Start Range")("Slider"), ctrl.effect("End Range")("Slider"));\n  eR = Math.max(ctrl.effect("Start Range")("Slider"), ctrl.effect("End Range")("Slider"));\n  sS = ctrl.effect("Start Scale")("Slider");\n  eS = ctrl.effect("End Scale")("Slider");\n  s = 100;\n  if (pct <= sR && sR > 0) {\n    s = linear(pct, 0, sR, sS, 100);\n  } else if (pct >= eR && eR < 100) {\n    s = linear(pct, eR, 100, 100, eS);\n  }\n  (value.length == 3) ? [value[0] * s/100, value[1] * s/100, value[2] * s/100] : [value[0] * s/100, value[1] * s/100];\n} catch(e) { value; }'; }
                         if (useOrient) { rot.property("Transform").property(rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")("Slider");\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")("Slider");\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")("Slider");\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
@@ -2249,17 +2326,21 @@
                         rot.moveAfter(lastRot); lastRot = rot;
                         if (lastKid) kid.moveAfter(lastKid); lastKid = kid;
 
-                        rot.parent = pivot;
-                        rot.transform.position.setValue([0, 0, 0]);
-                        if (rot.property("Transform").property("Anchor Point")) rot.property("Transform").property("Anchor Point").setValue([0,0,0]);
+                        var oldKidScale = kid.transform.scale.value;
 
-                        kid.transform.position.setValue(kid.threeDLayer ? [0, 0, 0] : [0, 0]);
-                        kid.parent = rot; 
-                        
                         rot.threeDLayer = make3D;
                         kid.threeDLayer = make3D;
 
-                        // Sửa lỗi AE tự động Auto-Orient 86 độ
+                        rot.parent = pivot;
+                        rot.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                        if (rot.property("Transform").property("Anchor Point")) rot.property("Transform").property("Anchor Point").setValue(make3D ? [0,0,0] : [0,0]);
+
+                        kid.parent = rot; 
+                        kid.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                        
+                        rot.transform.scale.setValue(make3D ? [100, 100, 100] : [100, 100]);
+                        kid.transform.scale.setValue(make3D ? [oldKidScale[0], oldKidScale[1], oldKidScale.length > 2 ? oldKidScale[2] : oldKidScale[0]] : [oldKidScale[0], oldKidScale[1]]);
+
                         rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
                         kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
 
@@ -2315,7 +2396,8 @@
                             '  cPos = parent.fromComp(pos);\n' +
                             '  x = value[0] + cPos[0];\n' +
                             '  y = value[1] + cPos[1];\n' +
-                            '  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n' +
+                            '  z = value.length == 3 ? value[2] + (cPos.length > 2 ? cPos[2] : 0) : 0;\n' +
+                            '  (value.length == 3) ? [x, y, z] : [x, y];\n' +
                             '} catch(e) { value; }';
 
                         rot.property("Transform").property("Position").expression = pathPositionExpr;
