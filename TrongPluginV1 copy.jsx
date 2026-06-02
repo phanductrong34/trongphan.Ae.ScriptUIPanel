@@ -29,17 +29,17 @@
         percentageMainGroup.spacing = 5;
 
         var percentLabelGroup = percentageMainGroup.add("group");
-        percentLabelGroup.add("statictext", undefined, "Phần trăm:");
+        percentLabelGroup.add("statictext", undefined, "Percentage:");
 
         var percentControlGroup = percentageMainGroup.add("group");
         percentControlGroup.alignChildren = ["center", "center"];
         var sliderPercent = percentControlGroup.add("slider", undefined, 20, 0, 100);
         sliderPercent.size = [100, 15];
-        sliderPercent.helpTip = "Kéo để chọn phần trăm overshoot";
+        sliderPercent.helpTip = "Drag to set overshoot percentage";
 
         var inputPercent = percentControlGroup.add("edittext", undefined, "20");
-        inputPercent.characters = 4; // Cho phép nhập số lớn hơn
-        inputPercent.helpTip = "Nhập số phần trăm mà keyframe overshoot sẽ đi quá (Có thể gõ > 100%)";
+        inputPercent.characters = 4;
+        inputPercent.helpTip = "Enter overshoot percentage (Can exceed 100%)";
 
         // Đồng bộ Slider và Edittext (Cho phép nhập lố 100%)
         sliderPercent.onChanging = function() {
@@ -57,7 +57,7 @@
         // group số key frame
         var frameCountGroup = overshootGroup.add("group");
         frameCountGroup.alignChildren = ["left", "center"];
-        frameCountGroup.add("statictext", undefined, "Số key chèn thêm:");
+        frameCountGroup.add("statictext", undefined, "Keys to insert:");
 
         var incrementGroup = overshootGroup.add("group");
         incrementGroup.alignChildren = ["left","right"];
@@ -72,10 +72,10 @@
         
         inputCount.characters = 5;
         inputCount.onlyNumbers = true;
-        inputCount.helpTip="Nhập số keyframe overshoot mà bạn muốn chèn"
+        inputCount.helpTip="Enter the number of overshoot keyframes to insert"
     
         // checkbox chèn giữa
-        var checkbox = overshootGroup.add("checkbox", undefined, "Chèn vào giữa");
+        var checkbox = overshootGroup.add("checkbox", undefined, "Insert in Middle");
         checkbox.value = true;
 
         // Add button and event
@@ -127,8 +127,8 @@
         var layerModeGroup = offseterPanel.add("group");
         layerModeGroup.alignment = "left";
         var chkLayerMode = layerModeGroup.add("checkbox", undefined, "Layer Mode");
-        chkLayerMode.value = false; // Mặc định tắt
-        chkLayerMode.helpTip = "Bật lên để offset tool tác động vào layer thay vì keyframe";
+        chkLayerMode.value = false; 
+        chkLayerMode.helpTip = "Toggle to affect layers instead of keyframes";
 
         var offsetSpacer = offseterPanel.add("group");
         offsetSpacer.preferredSize.height = 5;
@@ -147,13 +147,13 @@
         var inputOffset = offsetRow1.add("edittext", undefined, "3");
         inputOffset.characters = 3;
         inputOffset.onlyNumbers = true;
-        inputOffset.helpTip = "Số frame cách nhau giữa các thuộc tính/layer";
+        inputOffset.helpTip = "Frame gap between properties/layers";
         
         offsetRow1.add("statictext", undefined, "Step:");
         var inputStep = offsetRow1.add("edittext", undefined, "1");
         inputStep.characters = 3;
         inputStep.onlyNumbers = true;
-        inputStep.helpTip = "Số thuộc tính/layer đi cùng nhau trong 1 nhịp (Step)";
+        inputStep.helpTip = "Number of properties/layers moved together per step";
 
 // --- BINARY ICON STRINGS ---
         var binSeqFwd ="\u0089PNG\r\n\x1A\n\x00\x00\x00\rIHDR\x00\x00\x00\x1E\x00\x00\x00\x1E\b\x06\x00\x00\x00;0\u00AE\u00A2\x00\x00\x00\tpHYs\x00\x00\x0B\x13\x00\x00\x0B\x13\x01\x00\u009A\u009C\x18\x00\x00\x00\x01sRGB\x00\u00AE\u00CE\x1C\u00E9\x00\x00\x00\x04gAMA\x00\x00\u00B1\u008F\x0B\u00FCa\x05\x00\x00\x00\x0EtEXtSoftware\x00Figma\u009E\u00B1\u0096c\x00\x00\x01\x1DIDATx\x01\u00ED\u0094\u00CD\x11\u00820\x10\u0085\x1F\u00DA\u0080%P\u0082-\u00D8\u0081\x1D\u0088\x1D8\u00E2\u00C1\u009BX\u0080?%`\x05\u00DA\u0081%\u0088\x1DP\u0082wd\u00E2f\u008D\u00CA?\x13\u0087p\u00817\u0093!\u00B3I\u00F8\u0092\u00DD7\x0B\u00F4\u00EA\u00D59\u00895l\u00B1\u00C4\x06\r\u00CBB\r\x14\x11\u00AE4\u00B5i\u00F8\u00D6\x0Es\u0098\x06g\u00A0\x1F5\x06\x1F\u0094\u00AED8d\u00A0R\u008Ep1\u0085Qp\u00CC/\x0BR1\u0081-\u00BD\u00F8\u0082\x06T]\u00E3\x05F\x18r\u00BA\u00C7\f\u00DD\u00C3C[\u0092pr\u00B5\u0093\u008B\u00AF\u00B01\u00E1\u00F6\u00EA\u00CBH\u00A8\x0B\u00C1\u00E3O\u00B8\u00A5\u00B9\u009F\u00A1\u0094v/\x1D\u0084Ge\u00D8BC\x03\u009D\u00CD\\s\u0091O;\u00FDE\u00DB\u00E9Z`\u00EB\u0088\x07\u00B9}B\u00D3\u00F0\x17$\u00E7?9f\x0E\u00AC\u00E0\u00E1\x17\u00AE\u00A0|!%n<&Ei\u00B79\u00F5\u00C9\u0098\u008B\u00992\u00DD\u00AC\u00EE\u00BC\u00B6\u00B9J/\u00F2\u0086\u00F9\u0089\u0090C\u00CD\u00E6\x04\u0093`\u00D5F\u00CF\x05K\u00A5p\u00ED\x1A\x17*\u00E6\u00D6\x1Af\u00A2\u00D2\u0088\u00F7\u00B2#\u00CD\u00A5\u009Aj\u00AE\u00DA\u00AB\u00AD\u00A0\u00D2t\x01\u00DA\x10\x1Bn\u0085\x1B}\u00C7\u00E8\u00D5\u00ABsz\x01kjd\u00D7GI\u00BA\u00C9\x00\x00\x00\x00IEND\u00AEB`\u0082";
@@ -207,11 +207,11 @@
         btnSeqFwdLayer.visible = btnSeqRevLayer.visible = btnSeqRndLayer.visible = btnAlignLayer.visible = btnShiftLayer.visible = false;
 
         // Tooltip chung
-        btnSeqForward.helpTip = btnSeqFwdLayer.helpTip = "Dịch tiến về phía trước";
-        btnSeqReverse.helpTip = btnSeqRevLayer.helpTip = "Dịch đảo ngược thứ tự";
-        btnSeqRandom.helpTip  = btnSeqRndLayer.helpTip = "Dịch ngẫu nhiên";
-        btnAlignAll.helpTip   = btnAlignLayer.helpTip  = "Dóng thẳng hàng tất cả vào Thời điểm hiện tại";
-        btnShiftBlock.helpTip = btnShiftLayer.helpTip  = "Dịch chuyển toàn bộ khối vào Thời điểm hiện tại (giữ nguyên stagger)";
+        btnSeqForward.helpTip = btnSeqFwdLayer.helpTip = "Sequence forward";
+        btnSeqReverse.helpTip = btnSeqRevLayer.helpTip = "Sequence in reverse";
+        btnSeqRandom.helpTip  = btnSeqRndLayer.helpTip = "Sequence randomly";
+        btnAlignAll.helpTip   = btnAlignLayer.helpTip  = "Align all to Current Time Indicator (CTI)";
+        btnShiftBlock.helpTip = btnShiftLayer.helpTip  = "Shift entire block to CTI (maintains spacing)";
 
         // --- ROW 4: CLONE & MIRROR ---
         var cloneMirrorRow = offsetMainGroup.add("group");
@@ -226,8 +226,8 @@
         btnClone.size = [80, 30];
         btnMirror.size = [80, 30];
         
-        btnClone.helpTip = "Nhân bản keyframe đã chọn và dán tại Thời điểm hiện tại";
-        btnMirror.helpTip = "Nhân bản và đảo ngược keyframe đã chọn vào Thời điểm hiện tại";
+        btnClone.helpTip = "Clone selected keyframes to CTI";
+        btnMirror.helpTip = "Mirror selected keyframes to CTI";
 
         // --- SỰ KIỆN CHO CHECKBOX VÀ CÁC NÚT ---
         chkLayerMode.onClick = function() {
@@ -294,7 +294,7 @@
         presetPercentMainGroup.spacing = 5;
 
         var presetPercentLabelGroup = presetPercentMainGroup.add("group");
-        presetPercentLabelGroup.add("statictext", undefined, "Phần trăm:"); // Đổi text cho giống Tab kia
+        presetPercentLabelGroup.add("statictext", undefined, "Percentage:");
 
         var presetPercentControlGroup = presetPercentMainGroup.add("group");
         presetPercentControlGroup.alignChildren = ["center", "center"];
@@ -326,8 +326,8 @@
         scaleXYGroup.alignChildren = ["left", "center"];
         var btnScaleXY1 = scaleXYGroup.add("button", undefined, "Scale XY-1");
         var btnScaleXY2 = scaleXYGroup.add("button", undefined, "Scale XY-2");
-        btnScaleXY1.helpTip = "Scale Overshoot đều 1 lần vào đầu layer";
-        btnScaleXY2.helpTip = "Scale Overshoot đều 2 lần vào đầu layer";
+        btnScaleXY1.helpTip = "Scale Overshoot uniformly 1 time at layer start";
+        btnScaleXY2.helpTip = "Scale Overshoot uniformly 2 times at layer start";
         btnScaleXY1.size = [65, 30];
         btnScaleXY2.size = [65, 30];
 
@@ -339,8 +339,8 @@
         scaleXGroup.alignChildren = ["left", "center"];
         var btnScaleX1 = scaleXGroup.add("button", undefined, "Scale X-1");
         var btnScaleX2 = scaleXGroup.add("button", undefined, "Scale X-2");
-        btnScaleX1.helpTip = "Scale Overshoot trục ngang 1 lần vào đầu layer";
-        btnScaleX2.helpTip = "Scale Overshoot trục ngang 2 lần vào đầu layer";
+        btnScaleX1.helpTip = "X-Axis Scale Overshoot 1 time at layer start";
+        btnScaleX2.helpTip = "X-Axis Scale Overshoot 2 times at layer start";
         btnScaleX1.size = [65, 30];
         btnScaleX2.size = [65, 30];
 
@@ -352,8 +352,8 @@
         scaleYGroup.alignChildren = ["left", "center"]; 
         var btnScaleY1 = scaleYGroup.add("button", undefined, "Scale Y-1");
         var btnScaleY2 = scaleYGroup.add("button", undefined, "Scale Y-2");
-        btnScaleY1.helpTip = "Scale Overshoot trục dọc 1 lần vào đầu layer";
-        btnScaleY2.helpTip = "Scale Overshoot trục dọc 2 lần vào đầu layer";
+        btnScaleY1.helpTip = "Y-Axis Scale Overshoot 1 time at layer start";
+        btnScaleY2.helpTip = "Y-Axis Scale Overshoot 2 times at layer start";
         btnScaleY1.size = [65, 30];
         btnScaleY2.size = [65, 30];
 
@@ -366,8 +366,8 @@
         scaRotGroup.alignChildren = ["left", "center"];
         var btnScaro1 = scaRotGroup.add("button", undefined, "Scaro-1");
         var btnScaro2 = scaRotGroup.add("button", undefined, "Scaro-2");
-        btnScaro1.helpTip = "Scale + Rotation Overshoot 1 lần vào đầu layer";
-        btnScaro2.helpTip = "Scale + Rotation Overshoot 2 lần vào đầu layer";
+        btnScaro1.helpTip = "Scale + Rotation Overshoot 1 time at layer start";
+        btnScaro2.helpTip = "Scale + Rotation Overshoot 2 times at layer start";
         btnScaro1.size = [65, 30];
         btnScaro2.size = [65, 30];
 
@@ -383,8 +383,8 @@
         fadeInGroup.alignChildren = ["left", "center"];
         var btnFadeIn = fadeInGroup.add("button", undefined, "Fade In");
         var btnFadeOut = fadeInGroup.add("button", undefined, "Fade Out");
-        btnFadeIn.helpTip = "Fade In đầu layer";
-        btnFadeOut.helpTip = "Fade Out cuối layer";
+        btnFadeIn.helpTip = "Fade In at layer start";
+        btnFadeOut.helpTip = "Fade Out at layer end";
         btnFadeIn.size = [65, 30];
         btnFadeOut.size = [65, 30];
 
@@ -399,20 +399,20 @@
 
         // --- FOOTER AND LINK ---
         var footerGroup = panel.add("group");
-        footerGroup.orientation = "column"; // Đổi thành dọc để xếp 2 hàng
+        footerGroup.orientation = "column"; 
         footerGroup.alignChildren = ["center", "center"];
         footerGroup.margins = [0, 5, 0, 0]; 
-        footerGroup.spacing = 2; // Khoảng cách giữa 2 nút cho sát lại
+        footerGroup.spacing = 2; 
         
         // Dòng 1: Hướng dẫn
         var guideRow = footerGroup.add("group");
-        var txtGuide = guideRow.add("statictext", undefined, "Hướng dẫn");
+        var txtGuide = guideRow.add("statictext", undefined, "User Guide");
         var btnHelp = guideRow.add("button", undefined, "?");
         btnHelp.size = [20, 20];
         
         // Dòng 2: Tác giả
         var authorRow = footerGroup.add("group");
-        var txtAuthor = authorRow.add("statictext", undefined, "Plugin bởi Trọng");
+        var txtAuthor = authorRow.add("statictext", undefined, "Plugin by Trong");
         var btnAuthor = authorRow.add("button", undefined, "♥︎");
         btnAuthor.size = [20, 20];
         
@@ -433,7 +433,7 @@
 
         // --- HÀM POPUP HƯỚNG DẪN SỬ DỤNG ---
         function showHelpGuide() {
-            var win = new Window("dialog", "Hướng dẫn sử dụng KeyShooter 2.1");
+            var win = new Window("dialog", "KeyShooter 2.1 User Guide");
             win.orientation = "column";
             win.alignChildren = ["left", "top"];
             win.spacing = 10;
@@ -446,33 +446,33 @@
                 return st;
             }
 
-            addLine(win, "🚀 TAB OVERSHOOT (Custom Keyframe)", true);
-            addLine(win, "• Phần trăm: Độ nảy/vượt quá của key.");
-            addLine(win, "• Số key: Số nhịp dập dình sẽ được tự động chèn vào.");
-            addLine(win, "• Chèn vào giữa: Giữ nguyên tổng thời lượng, chia đều key vào trong.");
+            addLine(win, "🚀 OVERSHOOT TAB (Custom Keyframes)", true);
+            addLine(win, "• Percentage: Bounce/overshoot intensity. Type >100% for extreme bounce!");
+            addLine(win, "• Keys to insert: Number of bounce keyframes added.");
+            addLine(win, "• Insert in Middle: Keeps total duration, distributes keys evenly inside.");
             
             var div1 = win.add("panel", undefined, undefined, {borderStyle: "sunken"});
             div1.alignment = "fill"; div1.minimumSize.height = 2;
 
-            addLine(win, "⏱️ OFFSET TOOL (Dịch chuyển thời gian)", true);
-            addLine(win, "• Layer Mode: Bật để tác động vào Layer thay vì Keyframe.");
-            addLine(win, "• Offset & Step: Khoảng cách frame giữa mỗi nhóm (Step) layer/key.");
-            addLine(win, "• (Align): Gộp thẳng hàng tất cả về Thời điểm hiện tại (CTI).");
-            addLine(win, "• (Shift): Dịch nguyên khối (giữ nguyên khoảng cách) tới CTI.");
-            addLine(win, "• (Clone/Mirror): Copy hoặc copy đối xứng keyframe tới CTI.");
+            addLine(win, "⏱️ OFFSET TOOL (Time Shifting)", true);
+            addLine(win, "• Layer Mode: Toggle to affect Layers instead of Keyframes.");
+            addLine(win, "• Offset & Step: Frame gap between each group (Step) of layers/keys.");
+            addLine(win, "• (Align): Align all to Current Time Indicator (CTI).");
+            addLine(win, "• (Shift): Shift entire block to CTI (maintains spacing/stagger).");
+            addLine(win, "• (Clone/Mirror): Copy or mirror copy selected keyframes to CTI.");
 
             var div2 = win.add("panel", undefined, undefined, {borderStyle: "sunken"});
             div2.alignment = "fill"; div2.minimumSize.height = 2;
 
-            addLine(win, "✨ TAB PRESET (Animation Nhanh)", true);
-            addLine(win, "• Preset tự động nhận diện % Scale / Góc xoay hiện tại của layer.");
-            addLine(win, "• Chọn nút hậu tố 1: Quá 1 lần rồi về đích.");
-            addLine(win, "• Chọn nút hậu tố 2: Quá đi, giật về rồi mới về đích.");
-            addLine(win, "• Fade In/Out: Làm mờ Opacity tự động 10 frames tại đầu/cuối layer.");
+            addLine(win, "✨ PRESET TAB (Quick Animation)", true);
+            addLine(win, "• Presets auto-detect layer's current % Scale / Rotation.");
+            addLine(win, "• Suffix '1': Overshoots once then settles.");
+            addLine(win, "• Suffix '2': Overshoots, bounces back, then settles.");
+            addLine(win, "• Fade In/Out: Auto 10-frame Opacity fade at layer start/end.");
 
             var btnCloseGroup = win.add("group");
             btnCloseGroup.alignment = "center";
-            var btnClose = btnCloseGroup.add("button", undefined, "Overshoot thôi");
+            var btnClose = btnCloseGroup.add("button", undefined, "Got it!");
             btnClose.onClick = function() { win.close(); }
 
             win.center();
@@ -500,7 +500,7 @@
 
     function OverShoot(isCenter, percentage, count){
         if (count > 50){
-            alert("Lắc thế thì chết à :))))");
+            alert("Max 50 keys allowed! :))))");
             return;
         }
 
@@ -1001,7 +1001,7 @@
         var comp = app.project.activeItem;
         if (!comp) return;
 
-        app.beginUndoGroup("Align All Keyframes to Thời điểm hiện tại");
+        app.beginUndoGroup("Align All Keyframes to CTI");
 
         var selProps = comp.selectedProperties;
         var cti = comp.time;
@@ -1073,7 +1073,7 @@
         var globalOffsetTime = cti - earliestTime;
         if (globalOffsetTime === 0) return;
 
-        app.beginUndoGroup("Shift Keyframe Block to Thời điểm hiện tại");
+        app.beginUndoGroup("Shift Keyframe Block to CTI");
 
         for (var i = 0; i < validProps.length; i++) {
             var newIndices = shiftPropertyKeyframes(validProps[i].prop, validProps[i].keys, globalOffsetTime);
@@ -1102,7 +1102,7 @@
         var comp = app.project.activeItem;
         if (!comp) return;
 
-        app.beginUndoGroup(isMirror ? "Mirror Keyframes to Thời điểm hiện tại" : "Clone Keyframes to Thời điểm hiện tại");
+        app.beginUndoGroup(isMirror ? "Mirror Keyframes to CTI" : "Clone Keyframes to CTI");
 
         var selProps = comp.selectedProperties;
         var cti = comp.time;
@@ -1385,7 +1385,7 @@
         var comp = app.project.activeItem;
         if (!comp || comp.selectedLayers.length === 0) return;
 
-        app.beginUndoGroup("Align Layers to Thời điểm hiện tại");
+        app.beginUndoGroup("Align Layers to CTI");
 
         var layers = comp.selectedLayers;
         var cti = comp.time;
@@ -1403,7 +1403,7 @@
         var comp = app.project.activeItem;
         if (!comp || comp.selectedLayers.length === 0) return;
 
-        app.beginUndoGroup("Shift Layer Block to Thời điểm hiện tại");
+        app.beginUndoGroup("Shift Layer Block to CTI");
 
         var layers = comp.selectedLayers;
         var cti = comp.time;
