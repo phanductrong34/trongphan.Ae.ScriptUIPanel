@@ -679,6 +679,9 @@
             var isTwisted = pathTwistedCheckbox.value; var isDelayed = pathDelayCheckbox.value; var make3D = path3DCheckbox.value;
             pivot.threeDLayer = make3D;
             
+            // Ép bật 3D cho Shape Layer an toàn đa ngôn ngữ
+            if (make3D) { try { var targetLayerIdx = pivot.property("Effects").property("Path").property(1).value; if (targetLayerIdx) comp.layer(targetLayerIdx).threeDLayer = true; } catch(e) {} }
+
             function removeFx(layer, fxName) { var fxProp = layer.property("Effects").property(fxName); if (fxProp) fxProp.remove(); }
             
             if (useTaper) { ensureControl(pivot, "Start Range", "ADBE Slider Control", 20); ensureControl(pivot, "Start Scale", "ADBE Slider Control", 0); ensureControl(pivot, "End Range", "ADBE Slider Control", 80); ensureControl(pivot, "End Scale", "ADBE Slider Control", 0); } 
@@ -702,13 +705,13 @@
                 var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")(1);\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")(1).valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                 rot.property("Effects").property("Path Position").property(1).expression = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")(1);\nidx = effect("Clone Index")(1);\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
                 kid.property("Effects").property("Path Position").property(1).expression = 'parent.effect("Path Position")(1);';
-                var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n} catch(e) { value; }';
+                var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  (value.length == 3) ? [x, y, value[2] + cPos[2]] : [x, y];\n} catch(e) { value; }';
                 getSafeProp(rot, "Position").expression = pathPositionExpr;
                 if (useTaper) { getSafeProp(rot, "Scale").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")(1) % 100;\n  if (pct < 0) pct += 100;\n  sR = Math.min(ctrl.effect("Start Range")(1), ctrl.effect("End Range")(1));\n  eR = Math.max(ctrl.effect("Start Range")(1), ctrl.effect("End Range")(1));\n  sS = ctrl.effect("Start Scale")(1);\n  eS = ctrl.effect("End Scale")(1);\n  s = 100;\n  if (pct <= sR && sR > 0) {\n    s = linear(pct, 0, sR, sS, 100);\n  } else if (pct >= eR && eR < 100) {\n    s = linear(pct, eR, 100, 100, eS);\n  }\n  (value.length == 3) ? [value[0] * s/100, value[1] * s/100, value[2] * s/100] : [value[0] * s/100, value[1] * s/100];\n} catch(e) { value; }'; } 
                 else { if(getSafeProp(rot, "Scale").canSetExpression) getSafeProp(rot, "Scale").expression = ""; }
                 var rProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
                 for(var p=0; p<rProps.length; p++) { var pR = getSafeProp(rot, rProps[p]); var pK = getSafeProp(kid, rProps[p]); if(pR && pR.canSetExpression) pR.expression = ""; if(pK && pK.canSetExpression) pK.expression = ""; }
-                if (useOrient) { getSafeProp(rot, rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n  duongpath = targetLayer.content(1).content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
+                if (useOrient) { getSafeProp(rot, rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  duongpath = targetLayer.content(1).content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
                 if (useTrim) { getSafeProp(kid, "Opacity").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")(1) % 100;\n  if (pct < 0) pct += 100;\n  lS = Math.min(ctrl.effect("Limit Start")(1), ctrl.effect("Limit End")(1));\n  lE = Math.max(ctrl.effect("Limit Start")(1), ctrl.effect("Limit End")(1));\n  (pct >= lS && pct <= lE) ? value : 0;\n} catch(e) { value; }'; } 
                 else { if(getSafeProp(kid, "Opacity").canSetExpression) getSafeProp(kid, "Opacity").expression = ""; }
                 var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")(1);\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")(1);\ntIdx = effect("Clone Index")(1);\ntwistVal = tAngle * tRate * tIdx;\n' : '';
@@ -775,11 +778,11 @@
         toolOrderPanel.spacing = 15;
         toolOrderPanel.margins = 15;
 
-        var btnReverseOrder = toolOrderPanel.add("button", undefined, "Reverse Layers Order");
+        var btnReverseOrder = toolOrderPanel.add("button", undefined, "🔄 Reverse Layers Order");
         btnReverseOrder.preferredSize.height = 30;
         btnReverseOrder.helpTip = "Select layers to reverse, OR select a Control Null to automatically reverse all its clones.";
 
-        var btnShuffleOrder = toolOrderPanel.add("button", undefined, "Random Shuffle Order");
+        var btnShuffleOrder = toolOrderPanel.add("button", undefined, "🎲 Random Shuffle Order");
         btnShuffleOrder.preferredSize.height = 30;
         btnShuffleOrder.helpTip = "Select Control Null to randomly shuffle index, rename, and reorder clones on the timeline.";
 
@@ -960,7 +963,7 @@
         toolHelperPanel.spacing = 15;
         toolHelperPanel.margins = 15;
 
-        var btnToggleNulls = toolHelperPanel.add("button", undefined, "Toggle Hide Helper Nulls");
+        var btnToggleNulls = toolHelperPanel.add("button", undefined, "👁️ Toggle Hide Helper Nulls");
         btnToggleNulls.preferredSize.height = 30;
         btnToggleNulls.helpTip = "Show/Hide Helper Nulls visibility in the selected system.";
 
@@ -1324,8 +1327,8 @@
                     }
                 }
                 
-                // Thu dọn Shape Layer rỗng nếu Engine của AE giật lag tự đẻ ra
-                if (comp.layer(1) && comp.layer(1).name === "Shape Layer 1" && comp.layer(1).property("ADBE Root Vectors Group").numProperties === 0) {
+                // Thu dọn Shape Layer rỗng đa ngôn ngữ
+                if (comp.layer(1) && comp.layer(1) instanceof ShapeLayer && comp.layer(1).property("ADBE Root Vectors Group").numProperties === 0) {
                     comp.layer(1).remove();
                 }
             }
@@ -1387,10 +1390,9 @@
                         // ================= CLEAN ALL =================
                         // Nhả Shape Path an toàn trước khi xoá Pivot
                         if (isPathControl && pivotFx.property("Path")) {
-                            var pathIdx = Math.round(pivotFx.property("Path").property("Layer").value);
+                            var pathIdx = Math.round(pivotFx.property("Path").property(1).value);
                             if (pathIdx > 0 && comp.layer(pathIdx).parent === pivot) comp.layer(pathIdx).parent = null;
                         }
-                        
                         for (var i = 1; i <= comp.numLayers; i++) {
                             var kid = comp.layer(i);
                             if (kid.parent && kid.parent.parent && kid.parent.parent.index === pivot.index && kid.property("Effects") && kid.property("Effects").property("Clone Index") !== null) {
@@ -1563,7 +1565,7 @@
                     
                     // Nhả Shape Path an toàn trước khi dọn dẹp
                     if (isPathControl && pivotFx && pivotFx.property("Path")) {
-                        var pathIdx = Math.round(pivotFx.property("Path").property("Layer").value);
+                        var pathIdx = Math.round(pivotFx.property("Path").property(1).value);
                         if (pathIdx > 0 && comp.layer(pathIdx).parent === pivot) comp.layer(pathIdx).parent = null;
                     }
 
@@ -1801,7 +1803,7 @@
                         var totalClones = targetLayers.length;
                         pivot = comp.layers.addNull(); pivot.name = uniqueName(comp, "Clone on Path Control"); pivot.label = 10; pivot.moveBefore(shapeLayer);
                         if (!pivot.property("Effects").property("isClooonerPath")) pivot.property("Effects").addProperty("ADBE Checkbox Control").name = "isClooonerPath";
-                        var pathLayerCtrl = pivot.property("Effects").addProperty("ADBE Layer Control"); pathLayerCtrl.name = "Path"; pathLayerCtrl.property("Layer").setValue(shapeLayer.index); 
+                        var pathLayerCtrl = pivot.property("Effects").addProperty("ADBE Layer Control"); pathLayerCtrl.name = "Path"; pathLayerCtrl.property(1).setValue(shapeLayer.index); 
                         ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones); pivot.property("Effects").property("Total Clones").property(1).expression = totalClones.toString(); ensureControl(pivot, "Distance", "ADBE Slider Control", 5); ensureControl(pivot, "Offset", "ADBE Slider Control", 0);
                         if (useTaper) { ensureControl(pivot, "Start Range", "ADBE Slider Control", 20); ensureControl(pivot, "Start Scale", "ADBE Slider Control", 0); ensureControl(pivot, "End Range", "ADBE Slider Control", 80); ensureControl(pivot, "End Scale", "ADBE Slider Control", 0); }
                         if (useTrim) { ensureControl(pivot, "Trim Start", "ADBE Slider Control", 0); ensureControl(pivot, "Trim End", "ADBE Slider Control", 100); ensureControl(pivot, "Limit Start", "ADBE Slider Control", 0); ensureControl(pivot, "Limit End", "ADBE Slider Control", 100); }
@@ -1837,10 +1839,10 @@
                         var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")(1);\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")(1).valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                         var posExpr = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")(1);\nidx = effect("Clone Index")(1);\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
                         rot.property("Effects").property("Path Position").property(1).expression = posExpr; kid.property("Effects").property("Path Position").property(1).expression = 'parent.effect("Path Position")(1);';
-                        var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  z = value.length == 3 ? value[2] + (cPos.length > 2 ? cPos[2] : 0) : 0;\n  (value.length == 3) ? [x, y, z] : [x, y];\n} catch(e) { value; }';
+                        var pathPositionExpr = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  pt = duongpath.pointOnPath(physicalPct);\n  try { pt = pt + shapeGroup.transform.position - shapeGroup.transform.anchorPoint; } catch(err) {}\n  pos = targetLayer.toComp(pt);\n  cPos = parent.fromComp(pos);\n  x = value[0] + cPos[0];\n  y = value[1] + cPos[1];\n  z = value.length == 3 ? value[2] + (cPos.length > 2 ? cPos[2] : 0) : 0;\n  (value.length == 3) ? [x, y, z] : [x, y];\n} catch(e) { value; }';
                         getSafeProp(rot, "Position").expression = pathPositionExpr;
                         if (useTaper) { getSafeProp(rot, "Scale").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")(1) % 100;\n  if (pct < 0) pct += 100;\n  sR = Math.min(ctrl.effect("Start Range")(1), ctrl.effect("End Range")(1));\n  eR = Math.max(ctrl.effect("Start Range")(1), ctrl.effect("End Range")(1));\n  sS = ctrl.effect("Start Scale")(1);\n  eS = ctrl.effect("End Scale")(1);\n  s = 100;\n  if (pct <= sR && sR > 0) {\n    s = linear(pct, 0, sR, sS, 100);\n  } else if (pct >= eR && eR < 100) {\n    s = linear(pct, eR, 100, 100, eS);\n  }\n  (value.length == 3) ? [value[0] * s/100, value[1] * s/100, value[2] * s/100] : [value[0] * s/100, value[1] * s/100];\n} catch(e) { value; }'; } 
-                        if (useOrient) { getSafeProp(rot, rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
+                        if (useOrient) { getSafeProp(rot, rot.threeDLayer ? "Z Rotation" : "Rotation").expression = 'try {\n  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n  shapeGroup = targetLayer.content(1);\n  duongpath = shapeGroup.content(1).path;\n  logicalPct = effect("Path Position")(1);\n' + (useTrim ? '  tS = thisComp.layer("' + pivot.name + '").effect("Trim Start")(1);\n  tE = thisComp.layer("' + pivot.name + '").effect("Trim End")(1);\n' : '  tS = 0; tE = 100;\n') + '  physicalPct = linear(logicalPct, 0, 100, tS, tE) / 100;\n  vec = duongpath.tangentOnPath(physicalPct);\n  vecComp = targetLayer.toCompVec(vec);\n  ang = radiansToDegrees(Math.atan2(vecComp[1], vecComp[0]));\n  value + ang;\n} catch(e) { value; }'; }
                         if (useTrim) { getSafeProp(kid, "Opacity").expression = 'try {\n  ctrl = thisComp.layer("' + pivot.name + '");\n  pct = effect("Path Position")(1) % 100;\n  if (pct < 0) pct += 100;\n  lS = Math.min(ctrl.effect("Limit Start")(1), ctrl.effect("Limit End")(1));\n  lE = Math.max(ctrl.effect("Limit Start")(1), ctrl.effect("Limit End")(1));\n  (pct >= lS && pct <= lE) ? value : 0;\n} catch(e) { value; }'; }
                         var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")(1);\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")(1);\ntIdx = effect("Clone Index")(1);\ntwistVal = tAngle * tRate * tIdx;\n' : '';
                         var baseKidExpr = isTwisted ? 'value + twistVal' : 'value';
@@ -2205,7 +2207,8 @@
                     }
                     var pathLayerCtrl = pivot.property("Effects").addProperty("ADBE Layer Control");
                     pathLayerCtrl.name = "Path";
-                    pathLayerCtrl.property("Layer").setValue(shapeLayer.index); 
+                    // Thay "Layer" bằng số 1 để vượt lỗi đa ngôn ngữ của AE
+                    pathLayerCtrl.property(1).setValue(shapeLayer.index);
 
                     ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
                     pivot.property("Effects").property("Total Clones").property(1).expression = totalClones.toString();
@@ -2327,7 +2330,7 @@
                         // --- CẬP NHẬT EXPRESSION BÙ TRỪ TOẠ ĐỘ VỚI GROUP TRANSFORM ---
                         var pathPositionExpr =
                             'try {\n' +
-                            '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n' +
+                            '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
                             '  shapeGroup = targetLayer.content(1);\n' +
                             '  duongpath = shapeGroup.content(1).path;\n' +
                             '  logicalPct = effect("Path Position")(1);\n' +
@@ -2374,7 +2377,7 @@
                         if (useOrient) {
                             var orientExpr =
                                 'try {\n' +
-                                '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")(1);\n' +
+                                '  targetLayer = thisComp.layer("' + pivot.name + '").effect("Path")("Layer");\n' +
                                 '  duongpath = targetLayer.content(1).content(1).path;\n' +
                                 '  logicalPct = effect("Path Position")(1);\n' +
                                 (useTrim ? 
@@ -2577,11 +2580,13 @@
                             newKid.transform.rotation.setValue(0);
                         }
 
-                        // Copy Expressions từ Clone Mẫu
+                        // Copy Expressions từ Clone Mẫu (Vá lỗi đa ngôn ngữ)
                         var props = ["Position", "Scale", "Rotation", "X Rotation", "Y Rotation", "Z Rotation", "Opacity", "Orientation"];
                         for (var p = 0; p < props.length; p++) {
-                            if (sampleKid.transform[props[p]].canSetExpression && sampleKid.transform[props[p]].expression !== "") {
-                                newKid.transform[props[p]].expression = sampleKid.transform[props[p]].expression;
+                            var sProp = getSafeProp(sampleKid, props[p]);
+                            var nProp = getSafeProp(newKid, props[p]);
+                            if (sProp && nProp && sProp.canSetExpression && sProp.expression !== "") {
+                                nProp.expression = sProp.expression;
                             }
                         }
 
