@@ -637,7 +637,20 @@
             } else {
                 removeFx(pivot, "Depth Stagger"); removeFx(pivot, "Orient X (3D only)"); removeFx(pivot, "Orient Y (3D only)");
             }
+            
             ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
+
+            // LƯU TRỤC XOAY TOÀN CẦU CHỐNG LỖI NGÔN NGỮ
+            var axisNum = 2; // Mặc định Z
+            if (make3D) {
+                if (axisX.value) axisNum = 0;
+                else if (axisY.value) axisNum = 1;
+                else axisNum = 2;
+            }
+            ensureControl(pivot, "Axis Rotate", "ADBE Slider Control", axisNum);
+            pivot.property("Effects").property("Axis Rotate").property(1).expression = axisNum.toString();
+
+            // 3. APPLY LẠI EXPRESSION MỚI CHO CLONE
 
             var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
             for(var p=0; p<pProps.length; p++) { var pProp = getSafeProp(pivot, pProps[p]); if(pProp && pProp.canSetExpression) pProp.expression = ""; }
@@ -1688,6 +1701,31 @@
 
                 app.beginUndoGroup("Rig to Circular");
                 try {
+                    // --- ĐỒNG BỘ UI TỪ NULL CONTROL SẴN CÓ ĐỂ KẾT NẠP ĐÚNG SETTING ---
+                    if (isAppending && pivot) {
+                        var pFx = pivot.property("Effects");
+                        if (pFx) {
+                            var has3D = pivot.threeDLayer;
+                            if (mode3DCheckbox.value !== has3D) { mode3DCheckbox.value = has3D; mode3DCheckbox.children[1].visible = has3D; axisGroup.visible = has3D; }
+                            
+                            // ĐỌC BIẾN AXIS ROTATE VÀ PHÒNG THỦ LỖI NGÔN NGỮ
+                            var axisVal = 1; // Dự phòng mặc định trục Y (1) theo yêu cầu
+                            if (pFx.property("Axis Rotate") !== null) {
+                                axisVal = Math.round(pFx.property("Axis Rotate").property(1).value);
+                                if (axisVal !== 0 && axisVal !== 1 && axisVal !== 2) axisVal = 1; // Ép về Y nếu lỗi giá trị rác
+                            }
+                            
+                            if (has3D) {
+                                if (axisVal === 0) { axisGroup.value = "X"; axisX.value = true; axisY.value = false; axisZ.value = false; }
+                                else if (axisVal === 1) { axisGroup.value = "Y"; axisX.value = false; axisY.value = true; axisZ.value = false; }
+                                else { axisGroup.value = "Z"; axisX.value = false; axisY.value = false; axisZ.value = true; }
+                            }
+
+                            var hasTwist = pFx.property("Twisted Angle") !== null;
+                            if (tronTwistedCheckbox.value !== hasTwist) { tronTwistedCheckbox.value = hasTwist; tronTwistedCheckbox.children[1].visible = hasTwist; }
+                        }
+                    }
+
                     var make3D = mode3DCheckbox.value; var normalize = normalizeCheckbox.value; var isTwisted = tronTwistedCheckbox.value;
                     var axis = "Z"; if (make3D) axis = axisGroup.value; 
                     var startIndex = 0; var lastRot = pivot; var lastKid = null;
@@ -1756,14 +1794,16 @@
                         ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex);
 
                         var rotPropName = make3D ? (axis + " Rotation") : "Rotation";
-                        getSafeProp(rot, rotPropName).expression = 'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")(1);\nos = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\nidx = effect("Clone Index")(1);\nvalue + (ctrl * idx) + os;';
-                        var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")(1);\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")(1);\ntIdx = effect("Clone Index")(1);\ntwistVal = tAngle * tRate * tIdx;\n' : '';
+                        rot.property("Transform").property(rotPropName).expression = 'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")(1);\nos = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\nidx = effect("Clone Index")("Slider");\nvalue + (ctrl * idx) + os;';
+                        var twistStr = isTwisted ? 'tAngle = thisComp.layer("' + pivot.name + '").effect("Twisted Angle")(1);\ntRate = thisComp.layer("' + pivot.name + '").effect("Twisted Rate")(1);\ntIdx = effect("Clone Index")("Slider");\ntwistVal = tAngle * tRate * tIdx;\n' : '';
                         var baseKidExpr = 'value'; if (normalize) { var aePropName = make3D ? axis.toLowerCase() + "Rotation" : "rotation"; baseKidExpr += ' - parent.transform.' + aePropName + ' - thisComp.layer("' + pivot.name + '").transform.' + aePropName; } if (isTwisted) baseKidExpr += ' + twistVal';
-                        if (make3D) { getSafeProp(kid, "X Rotation").expression = (axis === "X" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")(1);'; getSafeProp(kid, "Y Rotation").expression = (axis === "Y" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")(1);'; getSafeProp(kid, "Z Rotation").expression = (axis === "Z" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")(1);'; } 
-                        else { getSafeProp(kid, "Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")(1);'; }
+                        if (make3D) { kid.property("Transform").property("X Rotation").expression = (axis === "X" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")(1);'; kid.property("Transform").property("Y Rotation").expression = (axis === "Y" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")(1);'; kid.property("Transform").property("Z Rotation").expression = (axis === "Z" ? twistStr + baseKidExpr : "value") + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")(1);'; } 
+                        else { kid.property("Transform").property("Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")(1);'; }
 
+                        // V3.3 + GLOBAL FIX: KHÔI PHỤC TOÀN BỘ CÔNG THỨC 3D VÀ DEPTH STAGGER AN TOÀN ĐA NGÔN NGỮ
                         var rScaleStr = 'rScale = Math.max(0, 1 - (1 - rStag) * mathIdx);\n';
-                        var posExpr = '' + 'axis = "' + axis + '";\n' + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n' + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n' + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1) / 100;\n' : 'dStag = 1;\n') + 'idx = effect("Clone Index")(1);\n' + 'mathIdx = idx + 1;\n' + rScaleStr + 'dScale = Math.max(0, 1 - (1 - dStag) * mathIdx);\n' + 'orig = ' + origVecStr + ';\n' + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; depthVec = [orig[0], 0, 0]; }\n' + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; depthVec = [0, 0, orig[2]]; }\n' + 'else { planeVec = [orig[0], orig[1], 0]; depthVec = [0, 0, orig[2]]; }\n' + 'planeLen = length(planeVec);\n' + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n' + 'newPlane = planeDir * rad * rScale;\n' + 'newDepth = depthVec * dScale;\n' + 'offset = newPlane + newDepth;\n' + (make3D ? '(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [offset[0], offset[1]];');
+                        var posExpr = '' + 'axis = "' + axis + '";\n' + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n' + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n' + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1) / 100;\n' : 'dStag = 1;\n') + 'idx = effect("Clone Index")("Slider");\n' + 'mathIdx = idx + 1;\n' + rScaleStr + 'dScale = Math.max(0, 1 - (1 - dStag) * mathIdx);\n' + 'orig = ' + origVecStr + ';\n' + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; depthVec = [orig[0], 0, 0]; }\n' + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; depthVec = [0, orig[1], 0]; }\n' + 'else { planeVec = [orig[0], orig[1], 0]; depthVec = [0, 0, orig[2]]; }\n' + 'planeLen = length(planeVec);\n' + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n' + 'newPlane = planeDir * rad * rScale;\n' + 'newDepth = depthVec * dScale;\n' + 'offset = newPlane + newDepth;\n' + (make3D ? '(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [offset[0], offset[1]];');
+                        
                         kid.transform.position.expression = posExpr; rot.shy = true;
                     }
                     pivot.shy = false; comp.hideShyLayers = false; comp.hideShyLayers = true;
@@ -1787,6 +1827,23 @@
 
                 app.beginUndoGroup("Rig to Path");
                 try {
+                    // --- ĐỒNG BỘ UI TỪ NULL CONTROL SẴN CÓ ĐỂ KẾT NẠP ĐÚNG SETTING ---
+                    if (isAppending && pivot) {
+                        var pFx = pivot.property("Effects");
+                        if (pFx) {
+                            var has3D = pivot.threeDLayer;
+                            if (path3DCheckbox.value !== has3D) { path3DCheckbox.value = has3D; path3DCheckbox.children[1].visible = has3D; }
+                            var hasTaper = pFx.property("Start Scale") !== null;
+                            if (pathTaperCheckbox.value !== hasTaper) { pathTaperCheckbox.value = hasTaper; pathTaperCheckbox.children[1].visible = hasTaper; }
+                            var hasTrim = pFx.property("Limit Start") !== null;
+                            if (pathTrimCheckbox.value !== hasTrim) { pathTrimCheckbox.value = hasTrim; pathTrimCheckbox.children[1].visible = hasTrim; }
+                            var hasTwist = pFx.property("Twisted Angle") !== null;
+                            if (pathTwistedCheckbox.value !== hasTwist) { pathTwistedCheckbox.value = hasTwist; pathTwistedCheckbox.children[1].visible = hasTwist; }
+                            var hasDelay = pFx.property("Delay Frames") !== null;
+                            if (pathDelayCheckbox.value !== hasDelay) { pathDelayCheckbox.value = hasDelay; pathDelayCheckbox.children[1].visible = hasDelay; }
+                        }
+                    }
+
                     var useOrient = pathOrientCheckbox.value; var useTaper = pathTaperCheckbox.value; var useTrim = pathTrimCheckbox.value; var isTwisted = pathTwistedCheckbox.value; var isDelayed = pathDelayCheckbox.value; var make3D = path3DCheckbox.value;
                     var startIndex = 0; var lastRot = pivot; var lastKid = null;
 
@@ -2023,6 +2080,16 @@
                     ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
                 }
                 ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
+
+                // KHỞI TẠO VÀ KHÓA CỨNG TRỤC XOAY BAN ĐẦU CHỐNG SAI LỆCH
+                var axisNum = 2;
+                if (make3D) {
+                    if (axisX.value) axisNum = 0;
+                    else if (axisY.value) axisNum = 1;
+                    else axisNum = 2;
+                }
+                ensureControl(pivot, "Axis Rotate", "ADBE Slider Control", axisNum);
+                pivot.property("Effects").property("Axis Rotate").property(1).expression = axisNum.toString();
 
                 if (isTwisted) {
                     ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5);
