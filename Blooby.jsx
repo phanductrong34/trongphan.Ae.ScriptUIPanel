@@ -10,28 +10,69 @@
     var ValType2DS = PropertyValueType.TwoD_SPATIAL;
 
     // --- 1. TẠO GIAO DIỆN (UI PANEL) ---
+    var globalListPanel; // Lưu biến global để dễ reload
     function buildUI(thisObj) {
         var win = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Blooby Tool", undefined, {resizeable: true});
         win.orientation = "column";
-        win.alignChildren = ["center", "top"];
-        win.spacing = 10;
-        win.margins = 16;
+        win.alignChildren = ["fill", "top"];
+        win.spacing = 8;
+        win.margins = 12;
 
-        var btn = win.add("button", undefined, "Blooby!");
-        btn.size = [140, 40];
+        // Group chính
+        var topGroup = win.add("group");
+        topGroup.orientation = "column";
+        topGroup.alignChildren = ["center", "top"];
+        
+        var btn = topGroup.add("button", undefined, "Blooby!");
+        btn.size = [140, 35];
 
-        // Checkbox xoá shape gốc
-        var clearOriginalCb = win.add("checkbox", undefined, "Clear Original Shape");
-        clearOriginalCb.value = false; // Mặc định không xóa
+        var clearOriginalCb = topGroup.add("checkbox", undefined, "Clear Original Shape");
+        clearOriginalCb.value = false; 
 
+        var sep = win.add("panel");
+        sep.minimumSize.height = 2;
 
-        btn.onClick = function() {
-            createBlooby(clearOriginalCb.value);
+        // Group Quản lý Danh sách
+        var listHeader = win.add("group");
+        listHeader.orientation = "row";
+        listHeader.alignment = ["fill", "center"]; // Giữ form giãn hết chiều ngang
+        listHeader.alignChildren = ["left", "center"];
+        
+        var listTitle = listHeader.add("statictext", undefined, "Blooby Contents:");
+        listTitle.preferredSize.width = 100;
+
+        var reloadBtn = listHeader.add("button", undefined, "↻");
+        reloadBtn.size = [25, 25];
+        reloadBtn.helpTip = "Chọn layer BLOOBY và nhấn để Load danh sách";
+
+        var clearListBtn = listHeader.add("button", undefined, "x");
+        clearListBtn.size = [25, 25];
+        clearListBtn.helpTip = "Xoá hiển thị danh sách trong UI này";
+
+        var addBtn = listHeader.add("button", undefined, "+");
+        addBtn.size = [25, 25];
+        addBtn.helpTip = "Chọn các Shape cần thêm và layer BLOOBY, sau đó nhấn +";
+
+        // Panel chứa danh sách các layer (Scrollable)
+        globalListPanel = win.add("panel", undefined, "");
+        globalListPanel.orientation = "column";
+        globalListPanel.alignment = ["fill", "top"]; // Bắt buộc panel fill full width
+        globalListPanel.alignChildren = ["fill", "top"];
+        globalListPanel.maximumSize.height = 150;
+        globalListPanel.margins = 5;
+
+        // Events
+        btn.onClick = function() { createBlooby(clearOriginalCb.value); };
+        reloadBtn.onClick = function() { reloadList(globalListPanel); };
+        addBtn.onClick = function() { addToBlooby(clearOriginalCb.value); };
+        clearListBtn.onClick = function() { 
+            while (globalListPanel.children.length > 0) {
+                globalListPanel.remove(globalListPanel.children[0]);
+            }
+            globalListPanel.parent.layout.layout(true);
         };
 
-        win.onResizing = win.onResize = function() {
-            this.layout.resize();
-        };
+        win.onResizing = win.onResize = function() { this.layout.resize(); };
 
         if (win instanceof Window) {
             win.center();
@@ -102,7 +143,7 @@
         // THÊM SLIDER CONTROL "Blob Amount"
         var sliderFx = bloobyLayer.property("ADBE Effect Parade").addProperty("ADBE Slider Control");
         sliderFx.name = "Blob Amount";
-        sliderFx.property(1).setValue(20);
+        sliderFx.property(1).setValue(50); // Mặc định là 50
 
         var lastMovedLayer = bloobyLayer;
         var layersToRemove = [];
@@ -181,15 +222,18 @@
             }
         }
 
-        // TẠO HIỆU ỨNG BLOOBY
+        // TẠO HIỆU ỨNG BLOOBY VÀ ĐỔI TÊN THÀNH FX 1, 2, 3
         var mergePaths = bloobyContents.addProperty("ADBE Vector Filter - Merge");
+        mergePaths.name = "FX 1";
         mergePaths.property("ADBE Vector Merge Type").setValue(1);
 
         var offset1 = bloobyContents.addProperty("ADBE Vector Filter - Offset");
+        offset1.name = "FX 2";
         offset1.property("ADBE Vector Offset Amount").expression = "effect('Blob Amount')('Slider');";
         offset1.property("ADBE Vector Offset Line Join").setValue(2); 
 
         var offset2 = bloobyContents.addProperty("ADBE Vector Filter - Offset");
+        offset2.name = "FX 3";
         offset2.property("ADBE Vector Offset Amount").expression = "effect('Blob Amount')('Slider') * -1;";
         offset2.property("ADBE Vector Offset Line Join").setValue(2); 
 
@@ -206,7 +250,170 @@
 
         app.endUndoGroup();
     }
+// --- CÁC HÀM QUẢN LÝ DANH SÁCH (RELOAD, ADD, REMOVE) ---
+    function reloadList(listPanel) {
+        var comp = app.project.activeItem;
+        if (!comp) return;
+        var selLayers = comp.selectedLayers;
+        if (selLayers.length !== 1 || !selLayers[0].property("ADBE Effect Parade").property("Blob Amount")) {
+            alert("Vui lòng chọn duy nhất 1 layer BLOOBY để tải danh sách!");
+            return;
+        }
 
+        var bloobyLayer = selLayers[0];
+        var contents = bloobyLayer.property("ADBE Root Vectors Group");
+
+        // Xóa sạch UI cũ
+        while (listPanel.children.length > 0) {
+            listPanel.remove(listPanel.children[0]);
+        }
+
+        var indexCount = 1;
+        for (var i = 1; i <= contents.numProperties; i++) {
+            var prop = contents.property(i);
+            // Chỉ lấy các Group con (bỏ qua FX và Fill)
+            if (prop.matchName === "ADBE Vector Group") {
+                var row = listPanel.add("group");
+                row.orientation = "row";
+                row.alignChildren = ["left", "center"];
+                
+                var txt = row.add("statictext", undefined, indexCount + ". " + prop.name);
+                txt.preferredSize.width = 100;
+                
+                var delBtn = row.add("button", undefined, "-");
+                delBtn.size = [25, 20];
+                delBtn.propName = prop.name; // Lưu lại tên để xoá
+                
+                delBtn.onClick = function() {
+                    removeFromBlooby(bloobyLayer, this.propName);
+                    reloadList(listPanel); // Cập nhật lại UI sau khi xoá
+                };
+                indexCount++;
+            }
+        }
+        listPanel.parent.layout.layout(true);
+    }
+
+    function addToBlooby(clearOriginal) {
+        var comp = app.project.activeItem;
+        if (!comp) return;
+        var selLayers = comp.selectedLayers;
+        
+        var bloobyLayer = null;
+        var shapeLayers = [];
+
+        // Phân loại: Đâu là BLOOBY, đâu là Shape thường
+        for (var i = 0; i < selLayers.length; i++) {
+            var l = selLayers[i];
+            if (l.property("ADBE Effect Parade") && l.property("ADBE Effect Parade").property("Blob Amount")) {
+                bloobyLayer = l;
+            } else if (l instanceof ShapeLayer) {
+                shapeLayers.push(l);
+            }
+        }
+
+        if (!bloobyLayer || shapeLayers.length === 0) {
+            alert("Hãy chọn các Shape cần thêm VÀ 1 layer BLOOBY đang có!");
+            return;
+        }
+
+        app.beginUndoGroup("Add To Blooby");
+        var bloobyContents = bloobyLayer.property("ADBE Root Vectors Group");
+        var layersToRemove = [];
+
+        for (var i = 0; i < shapeLayers.length; i++) {
+            var src = shapeLayers[i];
+
+            // 1. Tính tâm Shape
+            var srcRect = src.sourceRectAtTime(comp.time, false);
+            var cx = srcRect.left + srcRect.width / 2;
+            var cy = srcRect.top + srcRect.height / 2;
+            
+            var tNull = comp.layers.addNull();
+            tNull.parent = src;
+            tNull.property("ADBE Transform Group").property("ADBE Position").setValue([cx, cy]);
+            tNull.parent = null; 
+            var worldCenter = tNull.property("ADBE Transform Group").property("ADBE Position").value;
+            tNull.remove();
+
+            // 2. Tạo Null
+            var nullLayer = comp.layers.addNull();
+            nullLayer.name = "Null - " + src.name; 
+            nullLayer.moveAfter(bloobyLayer);
+
+            var nullTransform = nullLayer.property("ADBE Transform Group");
+            var srcTransform = src.property("ADBE Transform Group");
+
+            nullTransform.property("ADBE Anchor Point").setValue([50, 50]);
+            nullLayer.parent = bloobyLayer;
+            
+            // Dùng dummy Point Control để tính Local Pos cho Null
+            var dummyFx = bloobyLayer.property("ADBE Effect Parade").addProperty("ADBE Point Control");
+            dummyFx.property(1).expression = "thisComp.layer('" + bloobyLayer.name + "').fromComp([" + worldCenter[0] + ", " + worldCenter[1] + "]);";
+            nullTransform.property("ADBE Position").setValue(dummyFx.property(1).valueAtTime(comp.time, false));
+            dummyFx.remove();
+
+            nullTransform.property("ADBE Scale").setValue(srcTransform.property("ADBE Scale").valueAtTime(comp.time, false));
+            nullTransform.property("ADBE Rotate Z").setValue(srcTransform.property("ADBE Rotate Z").valueAtTime(comp.time, false));
+
+            // 3. Clone Shape
+            var cloneGroup = bloobyContents.addProperty("ADBE Vector Group");
+            cloneGroup.name = src.name;
+            duplicateShapeContents(src, cloneGroup);
+            
+            // Đẩy cloneGroup lên trên cùng (trên các FX 1, FX 2...)
+            cloneGroup.moveTo(1);
+
+            // 4. Rigging
+            var cloneTransform = cloneGroup.property("ADBE Vector Transform Group");
+            var safeNullName = nullLayer.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+            cloneTransform.property("ADBE Vector Anchor").setValue([cx, cy]);
+            cloneTransform.property("ADBE Vector Position").expression = "L = thisComp.layer('" + safeNullName + "'); L.toComp(L.transform.anchorPoint);";
+            cloneTransform.property("ADBE Vector Rotation").expression = "L = thisComp.layer('" + safeNullName + "'); u = L.toWorldVec([1,0]); Math.atan2(u[1],u[0]) * 180 / Math.PI;";
+            cloneTransform.property("ADBE Vector Scale").expression = "L = thisComp.layer('" + safeNullName + "'); u = L.toWorldVec([1,0]); v = L.toWorldVec([0,1]); [length(u), length(v)] * 100;";
+
+            // 5. Cleanup layer gốc
+            if (clearOriginal) {
+                layersToRemove.push(src); 
+            } else {
+                src.enabled = true; 
+                src.moveBefore(bloobyLayer); 
+                var isPosSeparated = srcTransform.property("ADBE Position").dimensionsSeparated;
+                if (isPosSeparated) srcTransform.property("ADBE Position").dimensionsSeparated = false; 
+                src.parent = nullLayer; 
+                if (isPosSeparated) srcTransform.property("ADBE Position").dimensionsSeparated = true;
+            }
+        }
+
+        for (var i = 0; i < layersToRemove.length; i++) layersToRemove[i].remove();
+        if (globalListPanel) reloadList(globalListPanel);
+        
+        app.endUndoGroup();
+    }
+
+    function removeFromBlooby(bloobyLayer, propName) {
+        var comp = app.project.activeItem;
+        app.beginUndoGroup("Remove from Blooby");
+        
+        // Xoá clone bên trong Blooby
+        var contents = bloobyLayer.property("ADBE Root Vectors Group");
+        for (var i = 1; i <= contents.numProperties; i++) {
+            if (contents.property(i).name === propName) {
+                contents.property(i).remove();
+                break;
+            }
+        }
+
+        // Xoá Null tương ứng (Nếu xoá Null, AE tự động bỏ parent của Shape gốc về Composition và GIỮ NGUYÊN world transform)
+        for (var i = 1; i <= comp.numLayers; i++) {
+            if (comp.layer(i).name === "Null - " + propName) {
+                comp.layer(i).remove();
+                break;
+            }
+        }
+        app.endUndoGroup();
+    }
+    
     // --- 3. CÁC HÀM "DEEP COPY" XỬ LÝ SHAPE KHÔNG BỊ TRỐNG ---
     function duplicateShapeContents(srcLayer, targetGroup) {
         var srcContents = srcLayer.property("ADBE Root Vectors Group");
