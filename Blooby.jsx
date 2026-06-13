@@ -23,8 +23,14 @@
         topGroup.orientation = "column";
         topGroup.alignChildren = ["center", "top"];
         
-        var btn = topGroup.add("button", undefined, "Blooby!");
+        var btnGroup = topGroup.add("group");
+        btnGroup.orientation = "row";
+
+        var btn = btnGroup.add("button", undefined, "Blooby!");
         btn.size = [140, 35];
+
+        var toggleOffsetBtn = btnGroup.add("button", undefined, "Toggle Offset Path");
+        toggleOffsetBtn.size = [140, 35];
 
         var clearOriginalCb = topGroup.add("checkbox", undefined, "Clear Original Shape");
         clearOriginalCb.value = false; 
@@ -63,6 +69,7 @@
 
         // Events
         btn.onClick = function() { createBlooby(clearOriginalCb.value); };
+        toggleOffsetBtn.onClick = function() { toggleOffsetPath(); };
         reloadBtn.onClick = function() { reloadList(globalListPanel); };
         addBtn.onClick = function() { addToBlooby(clearOriginalCb.value); };
         clearListBtn.onClick = function() { 
@@ -83,6 +90,56 @@
     }
 
     // --- 2. HÀM XỬ LÝ CHÍNH (CORE LOGIC) ---
+    function toggleOffsetPath() {
+        var comp = app.project.activeItem;
+        if (!comp || !(comp instanceof CompItem)) return;
+        
+        var selLayers = comp.selectedLayers;
+        var bloobyLayer = null;
+        for (var i = 0; i < selLayers.length; i++) {
+            if (selLayers[i].name === "BLOOBY" || (selLayers[i].property("ADBE Effect Parade") && selLayers[i].property("ADBE Effect Parade").property("Blob Amount"))) {
+                bloobyLayer = selLayers[i];
+                break;
+            }
+        }
+        
+        if (!bloobyLayer) {
+            alert("Vui lòng chọn layer BLOOBY để thêm/bớt Offset Path!");
+            return;
+        }
+
+        app.beginUndoGroup("Toggle Offset Path");
+        
+        var contents = bloobyLayer.property("ADBE Root Vectors Group");
+        var effects = bloobyLayer.property("ADBE Effect Parade");
+        
+        var existingOffset = contents.property("Offset Blooby");
+        var existingSlider = effects.property("Offset Amount");
+        
+        if (existingOffset) {
+            // Nếu đã có thì Xoá
+            existingOffset.remove();
+            if (existingSlider) existingSlider.remove();
+        } else {
+            // Nếu chưa có thì Thêm vào
+            if (!existingSlider) {
+                existingSlider = effects.addProperty("ADBE Slider Control");
+                existingSlider.name = "Offset Amount";
+                existingSlider.property(1).setValue(50); // Đã đổi mặc định thành 50
+            }
+            
+            var newOffset = contents.addProperty("ADBE Vector Filter - Offset");
+            newOffset.name = "Offset Blooby";
+            newOffset.property("ADBE Vector Offset Line Join").setValue(2); // Round Join
+            newOffset.property("ADBE Vector Offset Amount").expression = "effect('Offset Amount')('Slider');";
+            
+            // Di chuyển Offset Path mới này xuống dưới cùng danh sách shape
+            newOffset.moveTo(contents.numProperties);
+        }
+        
+        app.endUndoGroup();
+    }
+
     function createBlooby(clearOriginal) {
         var comp = app.project.activeItem;
         if (!comp || !(comp instanceof CompItem)) {

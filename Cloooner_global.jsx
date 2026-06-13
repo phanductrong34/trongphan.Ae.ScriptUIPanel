@@ -631,7 +631,7 @@
                 removeFx(pivot, "Twisted Angle"); removeFx(pivot, "Twisted Rate");
             }
             if (make3D) {
-                ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);
+                ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 0);
                 ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
                 ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
             } else {
@@ -683,6 +683,34 @@
                 } else {
                     getSafeProp(kid, "Rotation").expression = twistStr + baseKidExpr + ' + thisComp.layer("' + pivot.name + '").effect("Orient Z")(1);';
                 }
+
+                // Rebuild position expression với axis mới và mode 3D/2D mới
+                var kidPosProp = getSafeProp(kid, "Position");
+                var origVecStr = "[0, -1, 0]";
+                if (kidPosProp && kidPosProp.expression) {
+                    var origMatch = kidPosProp.expression.match(/orig\s*=\s*(\[[\d\s\.\-,]+\])/);
+                    if (origMatch) origVecStr = origMatch[1];
+                }
+                kid.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
+                var updatedPosExpr = ''
+                    + 'axis = "' + axis + '";\n'
+                    + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n'
+                    + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n'
+                    + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1);\n' : '')
+                    + 'idx = effect("Clone Index")(1);\n'
+                    + 'mathIdx = idx + 1;\n'
+                    + 'rScale = Math.max(0, 1 - (1 - rStag) * mathIdx);\n'
+                    + 'orig = ' + origVecStr + ';\n'
+                    + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; }\n'
+                    + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; }\n'
+                    + 'else { planeVec = [orig[0], orig[1], 0]; }\n'
+                    + 'planeLen = length(planeVec);\n'
+                    + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n'
+                    + 'newPlane = planeDir * rad * rScale;\n'
+                    + (make3D
+                        ? 'depthAxisDir = (axis == "X") ? [1,0,0] : ((axis == "Y") ? [0,1,0] : [0,0,1]);\nnewDepth = depthAxisDir * dStag * idx;\noffset = newPlane + newDepth;\n(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];'
+                        : 'value + [newPlane[0], newPlane[1]];');
+                if (kidPosProp && kidPosProp.canSetExpression) kidPosProp.expression = updatedPosExpr;
             }
         }
 
@@ -1767,7 +1795,7 @@
 
                         ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones); pivot.property("Effects").property("Total Clones").property(1).expression = totalClones.toString();
                         ensureControl(pivot, "Angle", "ADBE Angle Control", 30); ensureControl(pivot, "Offset", "ADBE Angle Control", 0); ensureControl(pivot, "Radius", "ADBE Slider Control", avgRadius); ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100);
-                        if (make3D) { ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100); ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); }
+                        if (make3D) { ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 0); ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); }
                         ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                         if (isTwisted) { ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5); ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1); }
                         lastRot = pivot; 
@@ -1802,7 +1830,7 @@
 
                         // V3.3 + GLOBAL FIX: KHÔI PHỤC TOÀN BỘ CÔNG THỨC 3D VÀ DEPTH STAGGER AN TOÀN ĐA NGÔN NGỮ
                         var rScaleStr = 'rScale = Math.max(0, 1 - (1 - rStag) * mathIdx);\n';
-                        var posExpr = '' + 'axis = "' + axis + '";\n' + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n' + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n' + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1) / 100;\n' : 'dStag = 1;\n') + 'idx = effect("Clone Index")("Slider");\n' + 'mathIdx = idx + 1;\n' + rScaleStr + 'dScale = Math.max(0, 1 - (1 - dStag) * mathIdx);\n' + 'orig = ' + origVecStr + ';\n' + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; depthVec = [orig[0], 0, 0]; }\n' + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; depthVec = [0, orig[1], 0]; }\n' + 'else { planeVec = [orig[0], orig[1], 0]; depthVec = [0, 0, orig[2]]; }\n' + 'planeLen = length(planeVec);\n' + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n' + 'newPlane = planeDir * rad * rScale;\n' + 'newDepth = depthVec * dScale;\n' + 'offset = newPlane + newDepth;\n' + (make3D ? '(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [offset[0], offset[1]];');
+                        var posExpr = '' + 'axis = "' + axis + '";\n' + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n' + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n' + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1);\n' : '') + 'idx = effect("Clone Index")("Slider");\n' + 'mathIdx = idx + 1;\n' + rScaleStr + 'orig = ' + origVecStr + ';\n' + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; }\n' + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; }\n' + 'else { planeVec = [orig[0], orig[1], 0]; }\n' + 'planeLen = length(planeVec);\n' + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n' + 'newPlane = planeDir * rad * rScale;\n' + (make3D ? 'depthAxisDir = (axis == "X") ? [1,0,0] : ((axis == "Y") ? [0,1,0] : [0,0,1]);\nnewDepth = depthAxisDir * dStag * idx;\noffset = newPlane + newDepth;\n(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [newPlane[0], newPlane[1]];');
                         
                         kid.transform.position.expression = posExpr; rot.shy = true;
                     }
@@ -2075,7 +2103,7 @@
                 ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100); 
                 
                 if (make3D) {
-                    ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 100);  
+                    ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 0);
                     ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
                     ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
                 }
@@ -2183,21 +2211,20 @@
                         + 'axis = "' + axis + '";\n'
                         + 'rad = thisComp.layer("' + pivot.name + '").effect("Radius")(1);\n'
                         + 'rStag = thisComp.layer("' + pivot.name + '").effect("Radius Stagger")(1) / 100;\n'
-                        + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1) / 100;\n' : 'dStag = 1;\n')
+                        + (make3D ? 'dStag = thisComp.layer("' + pivot.name + '").effect("Depth Stagger")(1);\n' : '')
                         + 'idx = effect("Clone Index")(1);\n'
                         + 'mathIdx = idx + 1;\n'
                         + 'rScale = Math.max(0, 1 - (1 - rStag) * mathIdx);\n'
-                        + 'dScale = Math.max(0, 1 - (1 - dStag) * mathIdx);\n'
                         + 'orig = ' + origVecStr + ';\n'
-                        + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; depthVec = [orig[0], 0, 0]; }\n'
-                        + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; depthVec = [0, orig[1], 0]; }\n'
-                        + 'else { planeVec = [orig[0], orig[1], 0]; depthVec = [0, 0, orig[2]]; }\n'
+                        + 'if (axis == "X") { planeVec = [0, orig[1], orig[2]]; }\n'
+                        + 'else if (axis == "Y") { planeVec = [orig[0], 0, orig[2]]; }\n'
+                        + 'else { planeVec = [orig[0], orig[1], 0]; }\n'
                         + 'planeLen = length(planeVec);\n'
                         + 'planeDir = (planeLen == 0) ? ((axis == "X") ? [0,-1,0] : ((axis == "Y") ? [-1,0,0] : [0,-1,0])) : normalize(planeVec);\n'
                         + 'newPlane = planeDir * rad * rScale;\n'
-                        + 'newDepth = depthVec * dScale;\n'
-                        + 'offset = newPlane + newDepth;\n'
-                        + (make3D ? '(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];' : 'value + [offset[0], offset[1]];');
+                        + (make3D
+                            ? 'depthAxisDir = (axis == "X") ? [1,0,0] : ((axis == "Y") ? [0,1,0] : [0,0,1]);\nnewDepth = depthAxisDir * dStag * idx;\noffset = newPlane + newDepth;\n(value.length == 3) ? value + offset : [value[0] + offset[0], value[1] + offset[1]];'
+                            : 'value + [newPlane[0], newPlane[1]];');
 
                     kid.transform.position.expression = posExpr;
                     rot.shy = true; // FIX: BẬT CHẾ ĐỘ ẨN CHO NULL PHỤ
