@@ -1150,7 +1150,7 @@
         creditGroup.orientation = "row";
         creditGroup.alignment = ["right", "center"];
         creditGroup.spacing = 5;
-        creditGroup.add("statictext", undefined, "v3.1");
+        creditGroup.add("statictext", undefined, "v3.3");
        
         
 

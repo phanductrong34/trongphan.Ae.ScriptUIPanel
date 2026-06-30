@@ -77,6 +77,17 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
     var kProject2DPluginMatchName = "Mettle SkyBox Project 2D";
     var kAdobeTrackerMatchName = "ADBE 3D Tracker";
 
+    // Renderer match names as returned by CompItem.renderer in the scripting API.
+    // Note: Classic 3D is registered internally as "ADBE Escher" but the scripting API
+    // exposes it as "ADBE Advanced 3d" via DemystifyRendererMatchName().
+    var kRendererMatchName_Classic3D  = "ADBE Advanced 3d"; // Classic 3D renderer (Escher)
+    var kRendererMatchName_Advanced3D = "ADBE Calder";      // Advanced 3D renderer (Calder)
+    // Cinema 4D ("ADBE Ernst") has no DOF or Iris support; it receives zoom only (see below).
+
+    // Beta feature ID for Advanced 3D depth of field support (kAEA3DDepthOfFieldFeatureID in BEE_BetaFeatures.cpp).
+    // When enabled, Calder supports depthOfField, focusDistance, and aperture camera controls.
+    var kBetaFeatureID_CalderDOF = "3D.A3DDepthOfField";
+
     // pref related
     var kMainPrefSection = "Main Pref Section";
     var kPrefScriptingFileNetworkSecurity = "Pref_SCRIPTING_FILE_NETWORK_SECURITY";
@@ -1364,7 +1375,7 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
         skyboxPanel.size_input.selection = 1;
         skyboxPanel.fps_input = skyboxPanel.add ("dropdownlist", [202,119,296,139], ["8", "12", "15", "23,976", "24", "25", "29,97", "30", "50", "59,94", "60"]); 
         skyboxPanel.fps_input.selection = 6;
-        skyboxPanel.duration_input = skyboxPanel.add ("edittext", [202,149,296,189], "0:00:30:00"); 
+        skyboxPanel.duration_input = skyboxPanel.add ("edittext", [202,149,296,172], "0:00:30:00"); 
         
         skyboxPanel.btnCreateMaster = skyboxPanel.add("button", [13,179,297,209], localize("$$$/AE/Script/VR/CreateMaster=Create VR Master")); // REVIEW change
         skyboxPanel.btnCreateMaster.onClick = function()
@@ -1393,7 +1404,7 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
             updateDynamicControls();
         }
     
-        skyboxPanel.cameraOptions = skyboxPanel.add("panel", [13, 244, 297, 324], kCameraSettingsStr);
+        skyboxPanel.cameraOptions = skyboxPanel.add("panel", [13, 249, 297, 331], kCameraSettingsStr);
         
         skyboxPanel.checkboxTwoNodeCamera = skyboxPanel.cameraOptions.add("checkbox", [75,10,240,30], kUse2NodeCamStr );
         skyboxPanel.checkboxTwoNodeCamera.value = true;
@@ -1404,7 +1415,7 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
         skyboxPanel.checkboxCenterCamera = skyboxPanel.cameraOptions.add("checkbox", [75,50,240,70], kCenterCameraStr );
         skyboxPanel.checkboxCenterCamera.value = false;
         
-        skyboxPanel.advancedOptions = skyboxPanel.add("panel", [13, 329, 297, 389], kAdvancedSettingsStr);
+        skyboxPanel.advancedOptions = skyboxPanel.add("panel", [13, 335, 297, 397], kAdvancedSettingsStr);
 
         skyboxPanel.checkbox3dPlugins = skyboxPanel.advancedOptions.add("checkbox", [75,10,240,30], kIAmUsing3DPlugStr);
         skyboxPanel.checkbox3dPlugins.value = false;
@@ -2891,20 +2902,35 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
                 camera.transform.orientation.expression = ("[0,0,0]");
              
             /* Link camera properties to Master Camera */
-            
-            camera.cameraOption.zoom.expression =  ""+lyrex+"mc.cameraOption.zoom";            
-            camera.cameraOption.depthOfField.expression =  ""+lyrex+"mc.cameraOption.depthOfField";
-            camera.cameraOption.focusDistance.expression =  ""+lyrex+"mc.cameraOption.focusDistance";
-            camera.cameraOption.aperture.expression =  ""+lyrex+"mc.cameraOption.aperture";
-            camera.cameraOption.blurLevel.expression =  ""+lyrex+"mc.cameraOption.blurLevel";
-            camera.cameraOption("ADBE Iris Shape").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Shape')";
-            camera.cameraOption("ADBE Iris Rotation").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Rotation')";
-            camera.cameraOption("ADBE Iris Roundness").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Roundness')";
-            camera.cameraOption("ADBE Iris Aspect Ratio").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Aspect Ratio')";
-            camera.cameraOption("ADBE Iris Diffraction Fringe").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Diffraction Fringe')";
-            camera.cameraOption("ADBE Iris Highlight Gain").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Highlight Gain')";
-            camera.cameraOption("ADBE Iris Highlight Threshold").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Highlight Threshold')";
-            camera.cameraOption("ADBE Iris Hightlight Saturation").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Hightlight Saturation')";
+
+            camera.cameraOption.zoom.expression =  ""+lyrex+"mc.cameraOption.zoom";
+
+            var isClassicRenderer = (selectedComp.renderer === kRendererMatchName_Classic3D);
+            var isCalderWithDOF   = (selectedComp.renderer === kRendererMatchName_Advanced3D) &&
+                                    app.isBetaFeatureEnabled(kBetaFeatureID_CalderDOF);
+
+            // depthOfField, focusDistance, and aperture: supported by Classic 3D always, and by
+            // Advanced 3D (Calder) when the "Depth of Field in Advanced 3D" beta feature is enabled.
+            if (isClassicRenderer || isCalderWithDOF)
+            {
+                camera.cameraOption.depthOfField.expression =  ""+lyrex+"mc.cameraOption.depthOfField";
+                camera.cameraOption.focusDistance.expression =  ""+lyrex+"mc.cameraOption.focusDistance";
+                camera.cameraOption.aperture.expression =  ""+lyrex+"mc.cameraOption.aperture";
+            }
+
+            // blurLevel and all Iris controls are Classic 3D-only; Calder and Cinema 4D ("ADBE Ernst") ignore them.
+            if (isClassicRenderer)
+            {
+                camera.cameraOption.blurLevel.expression =  ""+lyrex+"mc.cameraOption.blurLevel";
+                camera.cameraOption("ADBE Iris Shape").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Shape')";
+                camera.cameraOption("ADBE Iris Rotation").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Rotation')";
+                camera.cameraOption("ADBE Iris Roundness").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Roundness')";
+                camera.cameraOption("ADBE Iris Aspect Ratio").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Aspect Ratio')";
+                camera.cameraOption("ADBE Iris Diffraction Fringe").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Diffraction Fringe')";
+                camera.cameraOption("ADBE Iris Highlight Gain").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Highlight Gain')";
+                camera.cameraOption("ADBE Iris Highlight Threshold").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Highlight Threshold')";
+                camera.cameraOption("ADBE Iris Hightlight Saturation").expression =  ""+lyrex+"mc.cameraOption('ADBE Iris Hightlight Saturation')";
+            }
             
             
             if(useEdgeBlending)
@@ -3869,7 +3895,7 @@ function mettleSkyBoxComposer(script_type, rootObject) // declare the function i
 
     if(canWriteFilesAndAccessNetwork)
     {
-        if(script_type==METTLE_SCRIPT_TYPE.CREATOR) skyboxPanel = (rootObject instanceof Panel) ? rootObject : new Window("palette", localize("$$$/AE/Script/VR/CreatorDlg=Create VR Environment"),[0,0,310,402]);  //REVIEW name
+        if(script_type==METTLE_SCRIPT_TYPE.CREATOR) skyboxPanel = (rootObject instanceof Panel) ? rootObject : new Window("palette", localize("$$$/AE/Script/VR/CreatorDlg=Create VR Environment"),[0,0,310,410]);  //REVIEW name
         else if(script_type==METTLE_SCRIPT_TYPE.EXTRACTOR) skyboxPanel = (rootObject instanceof Panel) ? rootObject : new Window("palette", localize("$$$/AE/Script/VR/ExtractorDlg=VR Extract Cubemap"),[0,0,310,214]); // Review name
         else if (script_type == METTLE_SCRIPT_TYPE.COMPOSER) {
             // pane with scrollbar
