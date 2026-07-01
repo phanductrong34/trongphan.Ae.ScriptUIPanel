@@ -19,33 +19,50 @@
         return null;
     }
 
-    // Đoạn expression tính tâm chiếu C (nodal point) của camera.
-    // Có camera layer  -> dùng vị trí thật của camera.
-    // Không có camera   -> dựng lại camera mặc định của AE (50mm / film 36mm,
-    //                      đặt tại tâm comp, Z = -width*50/36) để vẫn bù đúng.
-    var CAM_SNIPPET =
-        "var cam = thisComp.activeCamera;\n" +
-        "var C;\n" +
-        "if (cam == null) {\n" +
-        "  var zoom = thisComp.width * 50/36;\n" +
-        "  C = [thisComp.width/2, thisComp.height/2, -zoom];\n" +
-        "} else {\n" +
-        "  C = cam.toWorld([0,0,0]);\n" +
-        "}\n";
+    // Tên camera người dùng đã chọn (rỗng = tự dò activeCamera / camera mặc định).
+    var selectedCamName = "";
 
-    function buildPosExpr(P0) {
-        // Giữ nguyên X, Y gốc; chỉ trục Z chạy theo slider "Z Space".
+    function escStr(s) { return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"'); }
+
+    // Đoạn expression tính tâm chiếu C (vị trí world của camera).
+    //  - Nếu có chỉ định camera: dùng thisComp.layer("tên").toWorld([0,0,0])
+    //    -> tự cộng cả transform của Null cha (nếu camera được parent vào Null).
+    //  - Nếu camera đó không tồn tại / chưa chọn: fallback sang activeCamera,
+    //    cuối cùng dựng camera mặc định AE (50mm / film 36mm) để vẫn bù được.
+    function camSnippet(camName) {
+        var named = "";
+        if (camName) {
+            named =
+                "try { C = thisComp.layer(\"" + escStr(camName) + "\").toWorld([0,0,0]); } catch(err) { C = null; }\n";
+        }
         return "" +
-            "var s = effect(\"" + CTRL_NAME + "\")(\"Slider\");\n" +
-            "[" + num(P0[0]) + ", " + num(P0[1]) + ", s];";
+            "var C = null;\n" +
+            named +
+            "if (C == null) {\n" +
+            "  var cam = thisComp.activeCamera;\n" +
+            "  if (cam != null) { C = cam.toWorld([0,0,0]); }\n" +
+            "  else { var zoom = thisComp.width * 50/36; C = [thisComp.width/2, thisComp.height/2, -zoom]; }\n" +
+            "}\n";
     }
 
-    function buildScaleExpr(P0, S0) {
+    function buildPosExpr(P0, camName) {
+        // Layer di chuyển trên đường thẳng nối camera (C) và vị trí gốc (P0).
+        // Z chạy theo slider; X, Y bù theo tia để giữ nguyên vị trí trên màn hình.
+        return "" +
+            "var s = effect(\"" + CTRL_NAME + "\")(\"Slider\");\n" +
+            "var P0 = [" + num(P0[0]) + ", " + num(P0[1]) + ", " + num(P0[2]) + "];\n" +
+            camSnippet(camName) +
+            "var d = P0[2] - C[2];\n" +
+            "var t = (d == 0) ? 1 : (s - C[2]) / d;\n" +
+            "[C[0] + t*(P0[0]-C[0]), C[1] + t*(P0[1]-C[1]), s];";
+    }
+
+    function buildScaleExpr(P0, S0, camName) {
         return "" +
             "var s = effect(\"" + CTRL_NAME + "\")(\"Slider\");\n" +
             "var Z0 = " + num(P0[2]) + ";\n" +
             "var S0 = [" + num(S0[0]) + ", " + num(S0[1]) + ", " + num(S0[2]) + "];\n" +
-            CAM_SNIPPET +
+            camSnippet(camName) +
             "var d = Z0 - C[2];\n" +
             "var t = (d == 0) ? 1 : (s - C[2]) / d;\n" +
             "[S0[0]*t, S0[1]*t, S0[2]*t];";
@@ -92,9 +109,9 @@
                 fx.name = CTRL_NAME;
                 fx.property(1).setValue(P0[2]); // slider = Z hiện tại -> t = 1, không nhảy
 
-                // gắn expression
-                posProp.expression = buildPosExpr(P0);
-                sclProp.expression = buildScaleExpr(P0, S0);
+                // gắn expression (dựa vào camera đã chọn nếu có)
+                posProp.expression = buildPosExpr(P0, selectedCamName);
+                sclProp.expression = buildScaleExpr(P0, S0, selectedCamName);
 
                 done++;
             }
@@ -157,6 +174,30 @@
         }
     }
 
+    // ---- chọn camera -------------------------------------------------
+
+    var camNameText;
+
+    function doSetCamera() {
+        var comp = app.project.activeItem;
+        if (!(comp && comp instanceof CompItem)) { alert("Hãy mở một composition."); return; }
+        var sel = comp.selectedLayers;
+        var cam = null;
+        for (var i = 0; i < sel.length; i++) {
+            if (sel[i] instanceof CameraLayer) { cam = sel[i]; break; }
+        }
+        if (!cam) { alert("Hãy chọn 1 layer Camera trước."); return; }
+        selectedCamName = cam.name;
+        if (camNameText) camNameText.text = "Camera: " + selectedCamName;
+        if (statusText) statusText.text = "Đã chọn camera: " + selectedCamName;
+    }
+
+    function doClearCamera() {
+        selectedCamName = "";
+        if (camNameText) camNameText.text = "Camera: (tự dò active)";
+        if (statusText) statusText.text = "Đã bỏ chọn camera (dùng active camera).";
+    }
+
     // ---- UI ----------------------------------------------------------
 
     var statusText;
@@ -176,9 +217,23 @@
         try { title.graphics.font = ScriptUI.newFont(title.graphics.font.name, "BOLD", 14); } catch (e) {}
 
         var info = pal.add("statictext", undefined,
-            "Lock: gắn expression + slider 'Z Space'.\nKéo slider để đổi độ sâu Z (giữ nguyên góc nhìn camera).\nRelease: bake giá trị & gỡ expression.",
+            "1. Chọn layer Camera rồi bấm 'Set Camera'.\n2. Chọn layer cần lock rồi bấm LOCK.\nKéo slider 'Z Space' để đổi độ sâu Z;\nX,Y & Scale tự bù theo tia camera.\nRelease: bake giá trị & gỡ expression.",
             { multiline: true });
-        info.preferredSize.height = 56;
+        info.preferredSize.height = 78;
+
+        var camGroup = pal.add("group");
+        camGroup.orientation = "row";
+        camGroup.alignChildren = ["fill", "center"];
+        camGroup.spacing = 4;
+        var btnSetCam = camGroup.add("button", undefined, "Set Camera");
+        btnSetCam.onClick = doSetCamera;
+        var btnClearCam = camGroup.add("button", undefined, "✕");
+        btnClearCam.preferredSize.width = 28;
+        btnClearCam.helpTip = "Bỏ chọn camera (dùng active camera)";
+        btnClearCam.onClick = doClearCamera;
+
+        camNameText = pal.add("statictext", undefined, "Camera: (tự dò active)");
+        camNameText.alignment = ["fill", "top"];
 
         var btnLock = pal.add("button", undefined, "LOCK");
         btnLock.onClick = doLock;
