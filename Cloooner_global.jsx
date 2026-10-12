@@ -264,8 +264,12 @@
                             "This mode helps you quickly duplicate layers in place.\n\n" +
                             "🔸 QUANTITY: Enter the number of copies you want to create.\n" +
                             "🔸 CLOOONER BUTTON: Click to start duplicating.\n" +
-                            "🔸 🛅 TRUE CLONE (Submarine): Duplicates deeply into pre-comps, creating independent copies.\n" +
-                            "🔸 🗑️ RESET BUTTON: Permanently delete layers and comps from the project."
+                            "🔸 🛅 TRUE CLONE (Submarine): Duplicates deeply into pre-comps, creating independent copies.\n\n" +
+                            "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
+                            "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
+                            "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
                         );
                     };
                 } else if (activeGroup === tabGrid) {
@@ -273,12 +277,35 @@
                     helpBtnUI.onClick = function() {
                         alert(
                             "\ud83d\udca1 GRID CLONE GUIDE\n\n" +
-                            "\ud83d\udd38 GRID: Enter Columns x Rows to define the grid size.\n\n" +
-                            "\ud83d\udd38 MODES:\n" +
-                            "   \u2022 3D Mode: Builds the grid in 3D space.\n" +
-                            "   \u2022 Pivot: Choose where the grid anchor sits - First (top-left cell) or Center (middle of the grid).\n" +
-                            "   \u2022 Randomize: Scatters the clones around their grid slots.\n\n" +
-                            "\ud83d\udd38 UPDATE MODES: Select the Control Null and click to re-apply the modes above."
+                            "\ud83d\udccc CLOOONER: select exactly 1 layer, set Columns x Rows, then press Cloooner.\n" +
+                            "\ud83d\udccc RIG TO GRID: select 2 or more existing layers and press Rig to Grid - they get rigged into the grid in selection order. Rows are added automatically if the layers do not fit.\n" +
+                            "\ud83d\udc49 To add into an EXISTING grid: select the Grid Control FIRST or LAST, with the new layers in between.\n" +
+                            "\ud83d\udc49 Layout runs LEFT to RIGHT, TOP to BOTTOM. The first clone (Row 1, Col 1) keeps the original layer's spot and acts as the pivot.\n\n" +
+                            "\ud83d\udd38 CONTROL NULL (\"Grid Control\"):\n" +
+                            "   \u2022 Grid: 2D point = Columns x Rows, always whole numbers. Change it and the grid redistributes live.\n" +
+                            "   \u2022 Wide Gap / Height Gap: spacing between clones.\n" +
+                            "   \u2022 Rotation Z: one rotation for every clone.\n" +
+                            "   \u2022 Serpentine: ON makes odd rows count from the RIGHT instead of the left, so Gap Stagger and Index Stagger spread out to BOTH sides instead of one.\n\n" +
+                            "\ud83d\udd38 STAGGER:\n" +
+                            "   \u2022 Gap Stagger (2D): spacing grows from the very first gap onward.\n" +
+                            "   \u2022 Index Stagger (2D): offset grows with the Clone Index.\n" +
+                            "   \u2022 Rotation Stagger (2D): [per Column, per Row] degrees.\n\n" +
+                            "\ud83d\udd38 OFFSET (shuffle / rubik look):\n" +
+                            "   \u2022 Row Offset: odd and even ROWS slide sideways in opposite directions.\n" +
+                            "   \u2022 Col Offset: odd and even COLUMNS slide up and down in opposite directions.\n\n" +
+                            "\ud83d\udd38 CROP OUT: shrink Grid below the clone count and the leftover clones fade to Opacity 0 instead of piling up. Grow it back and they return.\n\n" +
+                            "\ud83d\udd38 HELPER NULLS carry Clone Index plus Row and Col, all computed from the Grid value.\n\n" +
+                            "\ud83d\udd38 3D MODE: turns the whole system 3D so you can orbit it with a camera. It adds three controls:\n" +
+                            "   \u2022 Depth Stagger (2D): [per Column, per Row] push in Z - tilt or fold the grid in depth.\n" +
+                            "   \u2022 Orient X / Orient Y (3D only): global X and Y rotation for every clone.\n" +
+                            "\ud83d\udc49 Toggle 3D Mode then press UPDATE MODES to convert an existing grid either way.\n\n" +
+                            "\ud83d\udd38 UPDATE MODES: select the Grid Control to rebuild every expression (also repairs things after renaming the Control Null).\n\n" +
+                            "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
+                            "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
+                            "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)." +
+                            "\n\n\u26a0\ufe0f Pivot (First / Center) and Randomize are UI only for now - not wired up yet."
                         );
                     };
                 } else if (activeGroup === tabTron) {
@@ -288,12 +315,12 @@
                             "💡 CIRCULAR CLONE GUIDE\n\n" +
                             "📌 USAGE: Select 1 Pivot Null and 1 Layer to duplicate (Null must be FIRST or LAST in selection).\n" +
                             "👉 The tool uses the Layer's coordinates as the starting point and calculates offsets to create a perfect circle.\n\n" +
-                            "🔸 🧹 SAFE CLEAN (Delete/Detach):\n" +
-                            "   • Select Main Null: Keeps all layers, removes parenting and rigging.\n" +
-                            "   • Select Helper Null: Detaches that specific layer (Bakes coordinates).\n" +
-                            "   • Select Clone Layer: Permanently deletes that specific layer.\n" +
-                            "👉 The system AUTOMATICALLY RE-INDEXES to fill the gap!\n\n" +
-                            "🔸 🗑️ RESET: Deletes the rigging system and returns the original layer to its starting position."
+                            "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
+                            "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
+                            "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
+                            + "\n\ud83d\udc49 The system AUTOMATICALLY RE-INDEXES to fill the gap!"
                         );
                     };
                 } else if (activeGroup === tabPath) {
@@ -305,9 +332,12 @@
                             "👉 Tool converts shapes to Bezier Paths and links them to a Control Null.\n\n" +
                             "🔸 ADVANCED MODES:\n" +
                             "   • Auto Orient / Taper / TrimPath / Twisted / Delay Offset.\n\n" +
-                            "🔸 🧹 SAFE CLEAN (Delete/Detach):\n" +
-                            "   Works identically to the Circular tab. Supports local detaching or gap-filling re-indexing.\n\n" +
-                            "🔸 🗑️ RESET: Deletes the rigging system and returns the original layer to its starting position."
+                            "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
+                            "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
+                            "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
+                            + "\n\ud83d\udc49 The system AUTOMATICALLY RE-INDEXES to fill the gap!"
                         );
                     };
                 } else if (activeGroup === tabTools) {
@@ -323,7 +353,12 @@
                             "   • Add to Existing: Select old Control Null at FIRST/LAST, new layers in between.\n\n" +
                             "🔸 REORDER LAYERS:\n" +
                             "   • Reverse: Reverses the Z-index display order on the Timeline.\n" +
-                            "   • Shuffle: Randomly swaps clone positions on the trajectory and timeline."
+                            "   • Shuffle: Randomly swaps clone positions on the trajectory and timeline.\n\n" +
+                            "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
+                            "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
+                            "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
                         );
                     };
                 }
@@ -970,6 +1005,234 @@
 
         
 
+
+        // ==========================================
+        // ĐỘNG CƠ GRID CLOOONER (2D - ĐÃ CHỪA SẴN CHỖ CHO 3D)
+        // ==========================================
+        // Quy ước: Clone Index chạy từ 0 (đồng bộ với Tròn/Path để Safe Clean,
+        // Reset, Shuffle, Add More Clones dùng chung được). Row/Col hiển thị từ 1.
+        // Đếm từ TRÁI sang PHẢI, TRÊN xuống DƯỚI -> ô đầu tiên là Row 1, Col 1.
+
+        // Khối đầu dùng chung cho mọi Expression của Grid: lấy ctrl, cols, idx, c, r
+        function gridHeadExpr(pivotName) {
+            return ''
+                + '  ctrl = thisComp.layer("' + pivotName + '");\n'
+                + '  g = ctrl.effect("Grid")(1);\n'
+                + '  cols = Math.max(1, Math.round(g[0]));\n'
+                + '  rows = Math.max(1, Math.round(g[1]));\n'
+                + '  idx = effect("Clone Index")(1);\n'
+                + '  c = idx % cols;\n'
+                + '  r = Math.floor(idx / cols);\n'
+                // Serpentine doc rieng trong try de he Grid cu (chua co control nay) van chay
+                + '  serp = 0;\n'
+                + '  try { serp = ctrl.effect("Serpentine")(1); } catch(e2) { serp = 0; }\n'
+                // Hang le dem nguoc tu phai sang trai -> cot hieu dung bi lat guong
+                + '  flip = (serp > 0 && (r % 2 == 1));\n'
+                + '  ce = flip ? (cols - 1 - c) : c;\n';
+        }
+
+        function buildGridRowExpr(pivotName) {
+            return 'try {\n' + gridHeadExpr(pivotName) + '  r + 1;\n} catch(e) { value; }';
+        }
+
+        // Col hien thi theo vi tri THUC TE tren luoi (da tinh ca Serpentine)
+        function buildGridColExpr(pivotName) {
+            return 'try {\n' + gridHeadExpr(pivotName) + '  ce + 1;\n} catch(e) { value; }';
+        }
+
+        // Vị trí của Null phụ: gap cơ bản + gap stagger (cộng dồn) + index stagger + offset chẵn/lẻ
+        function buildGridPosExpr(pivotName) {
+            return 'try {\n'
+                + gridHeadExpr(pivotName)
+                + '  wGap = ctrl.effect("Wide Gap")(1);\n'
+                + '  hGap = ctrl.effect("Height Gap")(1);\n'
+                + '  gStag = ctrl.effect("Gap Stagger")(1);\n'
+                + '  iStag = ctrl.effect("Index Stagger")(1);\n'
+                + '  rOff = ctrl.effect("Row Offset")(1);\n'
+                + '  cOff = ctrl.effect("Col Offset")(1);\n'
+                // Gap Stagger cong don: n*(n+1)/2 de khoang cach GIAN NGAY TU O THU 2
+                + '  x = ce * wGap + gStag[0] * (ce * (ce + 1) / 2);\n'
+                + '  y = r * hGap + gStag[1] * (r * (r + 1) / 2);\n'
+                // Index Stagger: Serpentine lam hang le day nguoc chieu -> gian ra CA HAI BEN
+                + '  x = x + iStag[0] * idx * (flip ? -1 : 1);\n'
+                + '  y = y + iStag[1] * idx;\n'
+                // Row Offset: hàng chẵn / lẻ trượt ngang ngược chiều nhau
+                + '  x = x + ((r % 2 == 0) ? rOff / 2 : -rOff / 2);\n'
+                // Col Offset: cột chẵn / lẻ trượt dọc ngược chiều nhau
+                + '  y = y + ((ce % 2 == 0) ? cOff / 2 : -cOff / 2);\n'
+                // 3D: Depth Stagger day clone ra xa theo cot / hang. Doc trong try rieng
+                // de he Grid 2D (chua co control nay) van chay binh thuong.
+                + '  z = 0;\n'
+                + '  try { dStag = ctrl.effect("Depth Stagger")(1); z = dStag[0] * ce + dStag[1] * r; } catch(e3) { z = 0; }\n'
+                + '  (value.length == 3) ? [value[0] + x, value[1] + y, value[2] + z] : [value[0] + x, value[1] + y];\n'
+                + '} catch(e) { value; }';
+        }
+
+        // Xoay của Clone: Rotation Z chung + Rotation Stagger theo cột / hàng
+        function buildGridRotExpr(pivotName) {
+            return 'try {\n'
+                + gridHeadExpr(pivotName)
+                + '  rs = ctrl.effect("Rotation Stagger")(1);\n'
+                + '  value + ctrl.effect("Rotation Z")(1) + rs[0] * ce + rs[1] * r;\n'
+                + '} catch(e) { value; }';
+        }
+
+        // CROP OUT: clone nam ngoai suc chua cols*rows thi tat Opacity ve 0
+        function buildGridOpacityExpr(pivotName) {
+            return 'try {\n'
+                + gridHeadExpr(pivotName)
+                + '  (idx < cols * rows) ? value : 0;\n'
+                + '} catch(e) { value; }';
+        }
+
+        // Gán Expression cho 1 effect control theo tên (property(1) nên an toàn đa ngôn ngữ)
+        function setFxExpr(layer, fxName, expr) {
+            try {
+                var fx = layer.property("ADBE Effect Parade").property(fxName);
+                if (fx) fx.property(1).expression = expr;
+            } catch (e) {}
+        }
+
+        // Tạo đủ bộ Effect Control trên Null điều khiển của Grid
+        function ensureGridControls(pivot, cols, rows, totalClones, defW, defH, make3D) {
+            var fx = pivot.property("ADBE Effect Parade");
+            if (!fx.property("isClooonerGrid")) fx.addProperty("ADBE Checkbox Control").name = "isClooonerGrid";
+
+            function removeFx(layer, fxName) {
+                var fxProp = layer.property("ADBE Effect Parade").property(fxName);
+                if (fxProp) fxProp.remove();
+            }
+
+            ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
+            ensureControl(pivot, "Grid", "ADBE Point Control", [cols, rows]);
+            ensureControl(pivot, "Wide Gap", "ADBE Slider Control", defW);
+            ensureControl(pivot, "Height Gap", "ADBE Slider Control", defH);
+            ensureControl(pivot, "Rotation Z", "ADBE Angle Control", 0);
+
+            // Serpentine (direction xen ke): hang le dem nguoc tu phai sang trai.
+            // Lam Gap Stagger / Index Stagger gian ra CA HAI BEN thay vi mot ben.
+            ensureControl(pivot, "Serpentine", "ADBE Checkbox Control", 0);
+
+            // Nhóm Stagger
+            ensureControl(pivot, "Gap Stagger", "ADBE Point Control", [0, 0]);
+            ensureControl(pivot, "Index Stagger", "ADBE Point Control", [0, 0]);
+            ensureControl(pivot, "Rotation Stagger", "ADBE Point Control", [0, 0]);
+
+            // Nhóm Offset (hiệu ứng shuffle / rubik)
+            ensureControl(pivot, "Row Offset", "ADBE Slider Control", 0);
+            ensureControl(pivot, "Col Offset", "ADBE Slider Control", 0);
+
+            // --- 3D MODE: them / bo bo control chieu sau va huong xoay ---
+            if (make3D) {
+                ensureControl(pivot, "Depth Stagger", "ADBE Point Control", [0, 0]);
+                ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0);
+                ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0);
+            } else {
+                removeFx(pivot, "Depth Stagger");
+                removeFx(pivot, "Orient X (3D only)");
+                removeFx(pivot, "Orient Y (3D only)");
+            }
+            pivot.threeDLayer = make3D ? true : false;
+
+            // Ép ô Grid LUÔN là số nguyên >= 1, user vẫn kéo / gõ bình thường
+            setFxExpr(pivot, "Grid", '[Math.max(1, Math.round(value[0])), Math.max(1, Math.round(value[1]))];');
+        }
+
+        // Gắn toàn bộ Expression cho 1 cặp Null phụ + Clone theo index
+        function applyGridRig(pivot, rot, kid, idx, make3D) {
+            if (make3D !== undefined) { rot.threeDLayer = kid.threeDLayer = make3D ? true : false; }
+            ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1);
+            setLockedIndex(rot, idx);
+            setLockedIndex(kid, idx);
+            ensureControl(kid, "Clone Index", "ADBE Slider Control", idx);
+
+            // Row / Col tự tính ra từ Clone Index + ô Grid của Controller
+            ensureControl(rot, "Row", "ADBE Slider Control", 1);
+            ensureControl(rot, "Col", "ADBE Slider Control", 1);
+            setFxExpr(rot, "Row", buildGridRowExpr(pivot.name));
+            setFxExpr(rot, "Col", buildGridColExpr(pivot.name));
+
+            var posProp = getSafeProp(rot, "Position");
+            if (posProp && posProp.canSetExpression) posProp.expression = buildGridPosExpr(pivot.name);
+
+            // Xoa sach Expression xoay cu truoc khi ghi lai -> doi 2D <-> 3D khong de lai rac
+            var rProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
+            for (var pr = 0; pr < rProps.length; pr++) {
+                var old = getSafeProp(kid, rProps[pr]);
+                if (old && old.canSetExpression) old.expression = "";
+            }
+
+            if (kid.threeDLayer) {
+                getSafeProp(kid, "X Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")(1);';
+                getSafeProp(kid, "Y Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")(1);';
+                getSafeProp(kid, "Z Rotation").expression = buildGridRotExpr(pivot.name);
+            } else {
+                getSafeProp(kid, "Rotation").expression = buildGridRotExpr(pivot.name);
+            }
+
+            // Crop out: clone vuot qua suc chua cols*rows se bi tat Opacity ve 0
+            var opaProp = getSafeProp(kid, "Opacity");
+            if (opaProp && opaProp.canSetExpression) opaProp.expression = buildGridOpacityExpr(pivot.name);
+        }
+
+        // --- HÀM LÕI UPDATE MODE GRID ---
+        // Quét lại toàn hệ thống và viết lại Expression theo tên Controller hiện tại.
+        // Dùng khi bấm Update Modes, hoặc sau khi đổi tên Null điều khiển.
+        function forceUpdateGrid(pivot, comp) {
+            var pFx = pivot.property("ADBE Effect Parade");
+            var gVal = [5, 5];
+            try { gVal = pFx.property("Grid").property(1).value; } catch (e) {}
+            var curTotal = 0;
+            try { curTotal = parseInt(pFx.property("Total Clones").property(1).value); } catch (e) {}
+
+            var make3D = grid3DCheckbox.value;
+
+            ensureGridControls(pivot,
+                Math.max(1, Math.round(gVal[0])),
+                Math.max(1, Math.round(gVal[1])),
+                curTotal > 0 ? curTotal : 1,
+                100, 100, make3D);
+
+            for (var i = 1; i <= comp.numLayers; i++) {
+                var l = comp.layer(i);
+                if (l.parent === pivot) {
+                    var lFx = l.property("ADBE Effect Parade");
+                    if (!lFx || lFx.property("Clone Index") === null) continue;
+                    var kidFound = null;
+                    for (var j = 1; j <= comp.numLayers; j++) {
+                        if (comp.layer(j).parent === l) { kidFound = comp.layer(j); break; }
+                    }
+                    if (!kidFound) continue;
+                    var idx = parseInt(lFx.property("Clone Index").property(1).value);
+
+                    // Doi 2D <-> 3D: dua Position ve dung so chieu roi moi gan lai Expression
+                    l.threeDLayer = kidFound.threeDLayer = make3D ? true : false;
+                    var zeroVec = make3D ? [0, 0, 0] : [0, 0];
+                    try { l.transform.position.setValue(zeroVec); } catch (e) {}
+                    try { kidFound.transform.position.setValue(zeroVec); } catch (e) {}
+
+                    applyGridRig(pivot, l, kidFound, idx, make3D);
+                }
+            }
+        }
+
+        btnUpdateGrid.onClick = function() {
+            ensureJavaScriptEngine();
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
+            var sel = comp.selectedLayers;
+            if (sel.length !== 1) return alert("Please select exactly 1 Control Null (Grid) to Update Mode.");
+            var pivot = sel[0]; var pivotFx = pivot.property("ADBE Effect Parade");
+            if (!pivotFx || pivotFx.property("isClooonerGrid") === null) {
+                if (pivot.name.indexOf("Grid Control") === -1 && (!pivot.nullLayer || !pivotFx || !pivotFx.property("Total Clones"))) {
+                    if (!confirm("This layer doesn't look like a standard Grid Control Null. Continue anyway?")) return;
+                }
+            }
+            app.beginUndoGroup("Update Grid Mode");
+            try { forceUpdateGrid(pivot, comp); } catch(e) { alert("Error Updating Grid Mode: " + e.toString()); }
+            app.endUndoGroup();
+        };
+
         // === TAB 4: TOOLS ===
         tabTools.spacing = 12;
         tabTools.margins = 10;
@@ -1031,8 +1294,9 @@
                 var pivotFx = pivot.property("ADBE Effect Parade");
                 var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("Clone on Path Control") !== -1;
                 var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("Grid Control") !== -1;
                 
-                if (isPathControl || isCircularControl) {
+                if (isPathControl || isCircularControl || isGridControl) {
                     // Thu thập toàn bộ Null phụ và Clone Layer thuộc hệ thống này
                     for (var i = 1; i <= comp.numLayers; i++) {
                         var l = comp.layer(i);
@@ -1090,9 +1354,9 @@
             for (var s = 0; s < sel.length; s++) {
                 var l = sel[s];
                 var fx = l.property("ADBE Effect Parade");
-                if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null)) {
+                if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null || fx.property("isClooonerGrid") !== null)) {
                     pivot = l; break;
-                } else if (l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Clone on Path Control") !== -1) {
+                } else if (l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Clone on Path Control") !== -1 || l.name.indexOf("Grid Control") !== -1) {
                     pivot = l; break;
                 }
             }
@@ -1208,9 +1472,9 @@
             for (var s = 0; s < sel.length; s++) {
                 var l = sel[s];
                 var fx = l.property("ADBE Effect Parade");
-                if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null)) {
+                if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null || fx.property("isClooonerGrid") !== null)) {
                     pivot = l; break;
-                } else if (l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Clone on Path Control") !== -1) {
+                } else if (l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Clone on Path Control") !== -1 || l.name.indexOf("Grid Control") !== -1) {
                     pivot = l; break;
                 }
             }
@@ -1304,13 +1568,16 @@
         toolsActionGroup.alignChildren = ["right", "fill"];
         toolsActionGroup.spacing = 5;
 
+        // MOT NUT CHOI DUY NHAT - tu doi hanh vi theo thu dang duoc chon
         var cleanBtn = toolsActionGroup.add("button", undefined, "🧹");
-        cleanBtn.preferredSize = [35, 30]; 
-        cleanBtn.helpTip = "Safe Clean: \n- Select Main Null: Detach system and keep layers.\n- Select Helper Null: Detach that specific layer.\n- Select Clone Layer: Permanently delete layer.\n(Tool automatically re-indexes to fill gaps).";
-
-        var clearBtn = toolsActionGroup.add("button", undefined, "🗑");
-        clearBtn.preferredSize = [35, 30]; 
-        clearBtn.helpTip = "Reset System:\nDelete all clones and helpers, remove parenting, and restore original layer.";
+        cleanBtn.preferredSize = [35, 30];
+        cleanBtn.helpTip =
+            "CLEAN - one broom, the action follows your selection:\n\n" +
+            "\u2022 CONTROL NULL  -> asks you: RELEASE all clones (keep every layer, just unrig)\n" +
+            "   or DELETE all clones (keep only the original layer).\n\n" +
+            "\u2022 CLONE LAYER(S)  -> delete just those clones. The rest re-index and close the gap.\n\n" +
+            "\u2022 HELPER NULL(S)  -> detach that clone, bake its position, then re-index the rest.\n\n" +
+            "\u2022 NORMAL LAYER(S)  -> permanently delete the layers AND their source comps (asks first).";
 
         var sepBottom = bottomGroup.add("panel");
         sepBottom.alignment = ["fill", "top"];
@@ -1340,7 +1607,7 @@
         creditGroup.orientation = "row";
         creditGroup.alignment = ["right", "center"];
         creditGroup.spacing = 5;
-        creditGroup.add("statictext", undefined, "v3.4");
+        creditGroup.add("statictext", undefined, "v3.7");
        
         
 
@@ -1673,7 +1940,7 @@
         }
 
 // --- 🧹 CLEAN BUTTON LOGIC (SAFE CLEAN VÀ DỌN RÁC PROJECT PANEL) ---
-        cleanBtn.onClick = function () {
+        function doSafeClean() {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
             var sel = comp.selectedLayers;
@@ -1721,8 +1988,9 @@
                 var pivotFx = pivot.property("ADBE Effect Parade");
                 var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("Clone on Path Control") !== -1;
                 var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("Grid Control") !== -1;
                 
-                if (isPathControl || isCircularControl) {
+                if (isPathControl || isCircularControl || isGridControl) {
                     
                     if (!isSpecificClean) {
                         // ================= CLEAN ALL =================
@@ -1751,8 +2019,8 @@
                             }
                         }
                         // Reset Pivot
-                        if (isPathControl) {
-                            try { collectSource(pivot); pivot.remove(); } catch(e) {} // Path thì xoá luôn Pivot
+                        if (isPathControl || isGridControl) {
+                            try { collectSource(pivot); pivot.remove(); } catch(e) {} // Path / Grid thì xoá luôn Controller
                         } else {
                             if (pivotFx) { for (var e = pivotFx.numProperties; e > 0; e--) pivotFx.property(e).remove(); }
                             var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
@@ -1854,6 +2122,9 @@
                         if (pivotFx && pivotFx.property("Total Clones")) {
                             pivotFx.property("Total Clones").property(1).expression = validPairs.length.toString();
                         }
+
+                        // GRID: viet lai toan bo Expression de luoi don lai khong bi vo cau truc
+                        if (isGridControl) { try { forceUpdateGrid(pivot, comp); } catch(e) {} }
                     }
 
                     // *** XOÁ SOURCE RÁC TRONG PROJECT PANEL NẾU KHÔNG CÒN AI DÙNG ***
@@ -1866,16 +2137,16 @@
                     }
 
                 } else {
-                    alert("The Clean 🧹 function only works with Pivot Nulls / Control Nulls of a Circular or Path system.");
+                    alert("The Clean 🧹 function only works on a Cloooner system (Grid / Circular / Path).");
                 }
             } catch (error) {
                 alert("Error during Safe Clean: " + error.toString());
             }
             app.endUndoGroup();
-        };
+        }
 
 // --- 🗑️ RESET BUTTON LOGIC (XOÁ SẠCH SẼ HỆ THỐNG VÀ SOURCE RÁC) ---
-        clearBtn.onClick = function () {
+        function doResetSystem() {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
             var sel = comp.selectedLayers;
@@ -1887,6 +2158,7 @@
                 var pivotFx = firstSel.property("ADBE Effect Parade");
                 var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || firstSel.name.indexOf("Clone on Path Control") !== -1;
                 var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (firstSel.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || firstSel.name.indexOf("Grid Control") !== -1;
                 
                 var sourcesToClean = []; // Mảng gom các Source rác để chuẩn bị huỷ diệt
                 
@@ -1898,7 +2170,7 @@
                     }
                 }
 
-                if (isPathControl || isCircularControl) {
+                if (isPathControl || isCircularControl || isGridControl) {
                     var pivot = firstSel;
                     
                     // Nhả Shape Path an toàn trước khi dọn dẹp
@@ -1957,8 +2229,8 @@
                     }
 
                     // 4. Giữ lại Pivot Null (Tròn) hoặc Xoá hoàn toàn (Path)
-                    if (isPathControl) {
-                        try { collectSource(pivot); pivot.remove(); } catch(e) {} // Path thì xoá luôn Pivot
+                    if (isPathControl || isGridControl) {
+                        try { collectSource(pivot); pivot.remove(); } catch(e) {} // Path / Grid thì xoá luôn Controller
                     } else {
                         if (pivotFx) {
                             for (var e = pivotFx.numProperties; e > 0; e--) {
@@ -1999,7 +2271,100 @@
                 alert("Error during Reset: " + error.toString());
             }
             app.endUndoGroup();
+        }
+        // ==========================================
+        // NUT CHOI GOP: TU NHAN DIEN SELECTION DE CHON DUNG HANH VI
+        // ==========================================
+
+        // Null dieu khien cua bat ky he Cloooner nao
+        function isAnyControlNull(layer) {
+            try {
+                if (!layer) return false;
+                var fx = layer.property("ADBE Effect Parade");
+                if (fx && (fx.property("isClooonerGrid") !== null ||
+                           fx.property("isClooonerCircular") !== null ||
+                           fx.property("isClooonerPath") !== null)) return true;
+                return layer.name && (layer.name.indexOf("Grid Control") !== -1 ||
+                                      layer.name.indexOf("Pivot Null") !== -1 ||
+                                      layer.name.indexOf("Clone on Path Control") !== -1);
+            } catch (e) { return false; }
+        }
+
+        // Hoi nguoi dung muon GIU hay XOA toan bo clone cua he thong
+        function askSystemAction(sysName) {
+            var result = null;
+            try {
+                var w = new Window("dialog", "Cloooner - Clean System");
+                w.orientation = "column"; w.alignChildren = ["fill", "top"]; w.spacing = 10; w.margins = 16;
+
+                var head = w.add("statictext", undefined, "What should happen to \"" + sysName + "\" ?");
+                try { head.graphics.font = ScriptUI.newFont(head.graphics.font.name, "BOLD", 13); } catch (e) {}
+
+                var t1 = w.add("statictext", undefined,
+                    "RELEASE  -  Keep every clone as a normal, free layer. Only the rig, the parenting and the expressions are removed.",
+                    { multiline: true });
+                t1.preferredSize.width = 360;
+
+                var t2 = w.add("statictext", undefined,
+                    "DELETE  -  Remove all clones and helper nulls, and put the original layer back the way it was.",
+                    { multiline: true });
+                t2.preferredSize.width = 360;
+
+                var row = w.add("group");
+                row.orientation = "row"; row.alignment = ["fill", "top"]; row.spacing = 8;
+                var bRel = row.add("button", undefined, "Release (keep layers)");
+                var bDel = row.add("button", undefined, "Delete (keep original)");
+                var bCan = row.add("button", undefined, "Cancel", { name: "cancel" });
+
+                bRel.onClick = function () { result = "release"; w.close(); };
+                bDel.onClick = function () { result = "delete";  w.close(); };
+                bCan.onClick = function () { result = null;      w.close(); };
+
+                w.center(); w.show();
+            } catch (e) { result = null; }
+            return result;
+        }
+
+        cleanBtn.onClick = function () {
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
+            var sel = comp.selectedLayers;
+            if (sel.length === 0) {
+                return alert("Nothing selected.\n\nSelect a Control Null, some Clone layers, some Helper Nulls, or plain layers - the broom adapts to what you pick (hover it for details).");
+            }
+
+            // Phan loai nhung gi dang duoc chon
+            var hasController = false, hasClone = false, hasHelper = false;
+            var firstController = null;
+            for (var i = 0; i < sel.length; i++) {
+                var l = sel[i];
+                if (isAnyControlNull(l)) {
+                    hasController = true;
+                    if (!firstController) firstController = l;
+                    continue;
+                }
+                var fx = null;
+                try { fx = l.property("ADBE Effect Parade"); } catch (e) {}
+                if (!fx) continue;
+                if (fx.property("isHelperNull") !== null) hasHelper = true;
+                else if (fx.property("Clone Index") !== null) hasClone = true;
+            }
+
+            // 1. Chi chon Null dieu khien -> hoi GIU hay XOA
+            if (hasController && !hasClone && !hasHelper) {
+                var choice = askSystemAction(firstController.name);
+                if (choice === "release") doSafeClean();
+                else if (choice === "delete") doResetSystem();
+                return;
+            }
+
+            // 2. Co Clone / Null phu -> don cuc bo roi re-index phan con lai
+            if (hasClone || hasHelper) { doSafeClean(); return; }
+
+            // 3. Layer thuong -> nhanh xoa han kem Source (van hoi xac nhan)
+            doResetSystem();
         };
+
 // ==========================================
         // SỨC MẠNH CỦA NÚT RIG DƯỚI ĐÁY (RIG TO CIRCULAR & PATH GỘP LẠI)
         // ==========================================
@@ -2009,7 +2374,163 @@
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
             var sel = comp.selectedLayers;
-            if (sel.length < 2) return alert("ERROR: Please select 1 Pivot Null/Layer (Circular) or 1 Shape Layer (Path) and the layers to rig.");
+            if (sel.length < 2) return alert("ERROR: Please select the layers to rig, plus 1 Pivot Null (Circular) / 1 Shape Layer (Path) / an existing Control Null.\nFor Grid: just select 2 or more layers.");
+
+            // ==========================================
+            // LOGIC RIG TO GRID (DOC SO COT / HANG TU UI TAB GRID)
+            // ==========================================
+            if (activeTab === "Grid") {
+                var gCols = parseInt(gridColsInput.text);
+                var gRows = parseInt(gridRowsInput.text);
+                if (isNaN(gCols) || gCols < 1) gCols = 1;
+                if (isNaN(gRows) || gRows < 1) gRows = 1;
+
+                var make3D = grid3DCheckbox.value;
+                var pivot = null; var targetLayers = []; var isAppending = false;
+                function checkAppendGrid(layer) {
+                    try {
+                        var fx = layer.property("ADBE Effect Parade");
+                        return (fx && fx.property("isClooonerGrid") !== null) || layer.name.indexOf("Grid Control") !== -1;
+                    } catch (e) { return false; }
+                }
+
+                if (checkAppendGrid(sel[0])) { isAppending = true; pivot = sel[0]; for (var i = 1; i < sel.length; i++) targetLayers.push(sel[i]); }
+                else if (checkAppendGrid(sel[sel.length - 1])) { isAppending = true; pivot = sel[sel.length - 1]; for (var i = 0; i < sel.length - 1; i++) targetLayers.push(sel[i]); }
+                else { for (var i = 0; i < sel.length; i++) targetLayers.push(sel[i]); }
+
+                if (targetLayers.length === 0) return alert("ERROR: Please select the layers you want to rig into the Grid.");
+
+                app.beginUndoGroup("Rig to Grid");
+                try {
+                    var startIndex = 0;
+                    var lastRot = pivot;
+                    var lastKid = null;
+
+                    if (isAppending) {
+                        // KET NAP THEM: noi tiep vao sau clone co index lon nhat, giu nguyen so cot cu
+                        var gvOld = pivot.property("ADBE Effect Parade").property("Grid").property(1).value;
+                        gCols = Math.max(1, Math.round(gvOld[0]));
+                        gRows = Math.max(1, Math.round(gvOld[1]));
+
+                        // Dong bo checkbox 3D tren panel theo he thong cu de ket nap dung setting
+                        var has3D = pivot.threeDLayer;
+                        if (grid3DCheckbox.value !== has3D) {
+                            grid3DCheckbox.value = has3D;
+                            grid3DCheckbox.children[1].visible = has3D;
+                        }
+                        make3D = has3D;
+
+                        var maxIndex = -1;
+                        for (var i = 1; i <= comp.numLayers; i++) {
+                            var l = comp.layer(i);
+                            var lFx = l.property("ADBE Effect Parade");
+                            if (l.parent === pivot && lFx && lFx.property("Clone Index") !== null) {
+                                var ix = parseInt(lFx.property("Clone Index").property(1).value);
+                                if (ix > maxIndex) { maxIndex = ix; lastRot = l; }
+                            }
+                        }
+                        startIndex = maxIndex + 1;
+                        if (startIndex < 0) startIndex = 0;
+                        if (lastRot) {
+                            for (var j = 1; j <= comp.numLayers; j++) {
+                                if (comp.layer(j).parent === lastRot) { lastKid = comp.layer(j); break; }
+                            }
+                        }
+                    } else {
+                        // TAO MOI: Pivot = First -> Controller dat ngay vi tri layer dau tien
+                        var firstLayer = targetLayers[0];
+                        var fPos = firstLayer.transform.position.value;
+
+                        var defW = 100, defH = 100;
+                        try {
+                            var rect = firstLayer.sourceRectAtTime(comp.time, false);
+                            if (rect && rect.width) defW = rect.width;
+                            if (rect && rect.height) defH = rect.height;
+                        } catch (e) {
+                            if (firstLayer.width) defW = firstLayer.width;
+                            if (firstLayer.height) defH = firstLayer.height;
+                        }
+                        try {
+                            var sc = firstLayer.transform.scale.value;
+                            defW = defW * (sc[0] / 100);
+                            defH = defH * (sc[1] / 100);
+                        } catch (e) {}
+                        defW = Math.round(defW * 100) / 100;
+                        defH = Math.round(defH * 100) / 100;
+
+                        pivot = comp.layers.addNull();
+                        pivot.name = uniqueName(comp, "Grid Control");
+                        pivot.label = 10;
+                        pivot.moveBefore(firstLayer);
+                        if (getSafeProp(pivot, "Anchor Point")) getSafeProp(pivot, "Anchor Point").setValue([0, 0]);
+                        pivot.transform.position.setValue([fPos[0], fPos[1]]);
+
+                        ensureGridControls(pivot, gCols, gRows, targetLayers.length, defW, defH, make3D);
+                        lastRot = pivot;
+                    }
+
+                    // Noi them hang cho du cho chua het layer, giu nguyen so cot user da chon
+                    var newTotal = startIndex + targetLayers.length;
+                    var neededRows = Math.ceil(newTotal / gCols);
+                    if (neededRows > gRows) gRows = neededRows;
+                    pivot.property("ADBE Effect Parade").property("Grid").property(1).setValue([gCols, gRows]);
+                    setFxExpr(pivot, "Total Clones", newTotal.toString());
+
+                    for (var i = 0; i < targetLayers.length; i++) {
+                        var kid = targetLayers[i];
+                        var rot;
+
+                        if (isAppending && lastRot && lastRot !== pivot) {
+                            rot = lastRot.duplicate();
+                            for (var j = comp.numLayers; j >= 1; j--) { if (comp.layer(j).parent === rot) comp.layer(j).remove(); }
+                        } else {
+                            rot = comp.layers.addNull();
+                        }
+
+                        var currentIndex = startIndex + i;
+                        var baseName = kid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
+                        rot.name = (currentIndex + 1) + " - Null " + baseName;
+                        kid.name = (currentIndex + 1) + " - " + baseName + " - Rig";
+
+                        rot.moveAfter(lastRot); lastRot = rot;
+                        if (lastKid) kid.moveAfter(lastKid); lastKid = kid;
+
+                        rot.threeDLayer = kid.threeDLayer = make3D ? true : false;
+                        var zeroVec = make3D ? [0, 0, 0] : [0, 0];
+
+                        rot.parent = pivot;
+                        if (getSafeProp(rot, "Anchor Point")) getSafeProp(rot, "Anchor Point").setValue(zeroVec);
+                        rot.transform.position.setValue(zeroVec);
+
+                        kid.parent = rot;
+                        kid.transform.position.setValue(zeroVec);
+
+                        rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+                        kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+                        if (make3D) {
+                            kid.transform.orientation.setValue([0, 0, 0]);
+                            kid.transform.xRotation.setValue(0);
+                            kid.transform.yRotation.setValue(0);
+                            kid.transform.zRotation.setValue(0);
+                        } else {
+                            kid.transform.rotation.setValue(0);
+                        }
+
+                        applyGridRig(pivot, rot, kid, currentIndex, make3D);
+                        rot.shy = true;
+                    }
+
+                    pivot.shy = false;
+                    comp.hideShyLayers = false;
+                    comp.hideShyLayers = true;
+
+                    for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
+                    pivot.selected = true;
+
+                } catch (e) { alert("Error Rigging Grid: " + e.toString()); }
+                app.endUndoGroup();
+                return;
+            }
             
             // LOGIC RIG TO CIRCULAR (ĐỌC TỪ UI TAB TRÒN)
             if (activeTab === "Circular") {
@@ -2284,6 +2805,133 @@
                 app.endUndoGroup();
                 return;
             }
+            // ==========================================
+            // LOGIC CHO TAB: GRID
+            // ==========================================
+            if (activeTab === "Grid") {
+                var gCols = parseInt(gridColsInput.text);
+                var gRows = parseInt(gridRowsInput.text);
+
+                if (isNaN(gCols) || gCols < 1 || isNaN(gRows) || gRows < 1) {
+                    alert("Please enter valid Grid numbers (Columns x Rows).");
+                    return;
+                }
+
+                var selG = comp.selectedLayers;
+                if (selG.length !== 1) {
+                    alert("Please select exactly 1 layer to build the Grid from.");
+                    return;
+                }
+
+                var child = selG[0];
+                var totalClones = gCols * gRows;
+
+                if (isTrueClone) {
+                    var proceedG = confirm(
+                        "You are about to True Clone " + totalClones + " times in a grid\n" +
+                        "- Grid: " + gCols + " columns x " + gRows + " rows\n" +
+                        "- Pivot: First clone (top-left)\n\n" +
+                        "Are you sure you want to continue?");
+                    if (!proceedG) return;
+                }
+
+                app.beginUndoGroup("Grid Cloooner");
+                try {
+                    var baseLayerName = child.name;
+                    var childPos = child.transform.position.value;
+
+                    // Khoảng cách mặc định = đúng kích thước thật của layer -> lưới khít nhau
+                    var defW = 100, defH = 100;
+                    try {
+                        var rect = child.sourceRectAtTime(comp.time, false);
+                        if (rect && rect.width) defW = rect.width;
+                        if (rect && rect.height) defH = rect.height;
+                    } catch (e) {
+                        if (child.width) defW = child.width;
+                        if (child.height) defH = child.height;
+                    }
+                    try {
+                        var sc = child.transform.scale.value;
+                        defW = defW * (sc[0] / 100);
+                        defH = defH * (sc[1] / 100);
+                    } catch (e) {}
+                    defW = Math.round(defW * 100) / 100;
+                    defH = Math.round(defH * 100) / 100;
+
+                    // --- NULL ĐIỀU KHIỂN ---
+                    // Pivot = First: đặt Controller ngay vị trí layer gốc để clone đầu tiên
+                    // nằm đúng chỗ cũ, các clone sau trải sang phải và xuống dưới.
+                    var pivot = comp.layers.addNull();
+                    pivot.name = uniqueName(comp, "Grid Control");
+                    pivot.label = 10;
+                    pivot.moveBefore(child);
+                    if (getSafeProp(pivot, "Anchor Point")) getSafeProp(pivot, "Anchor Point").setValue([0, 0]);
+                    pivot.transform.position.setValue([childPos[0], childPos[1]]);
+
+                    var make3D = grid3DCheckbox.value;
+                    ensureGridControls(pivot, gCols, gRows, totalClones, defW, defH, make3D);
+                    setFxExpr(pivot, "Total Clones", totalClones.toString());
+
+                    var lastRot = pivot;
+                    var lastKid = null;
+
+                    for (var i = 0; i < totalClones; i++) {
+                        var rot = comp.layers.addNull();
+                        var kid = (i === 0) ? child : child.duplicate();
+
+                        if (isTrueClone) applyTrueClone(kid);
+
+                        rot.name = (i + 1) + " - Null " + baseLayerName;
+                        kid.name = (i + 1) + " - " + baseLayerName + " - Clone";
+
+                        // Gom Null phụ thành 1 khối, Clone thành 1 khối phía dưới
+                        rot.moveAfter(lastRot);
+                        lastRot = rot;
+                        if (lastKid) kid.moveAfter(lastKid);
+                        lastKid = kid;
+
+                        rot.threeDLayer = kid.threeDLayer = make3D ? true : false;
+                        var zeroVec = make3D ? [0, 0, 0] : [0, 0];
+
+                        rot.parent = pivot;
+                        if (getSafeProp(rot, "Anchor Point")) getSafeProp(rot, "Anchor Point").setValue(zeroVec);
+                        rot.transform.position.setValue(zeroVec);
+
+                        kid.parent = rot;
+                        kid.transform.position.setValue(zeroVec);
+
+                        rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+                        kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
+                        if (make3D) {
+                            kid.transform.orientation.setValue([0, 0, 0]);
+                            kid.transform.xRotation.setValue(0);
+                            kid.transform.yRotation.setValue(0);
+                            kid.transform.zRotation.setValue(0);
+                        } else {
+                            kid.transform.rotation.setValue(0);
+                        }
+
+                        applyGridRig(pivot, rot, kid, i, make3D);
+
+                        rot.shy = true;
+                    }
+
+                    pivot.shy = false;
+                    comp.hideShyLayers = false;
+                    comp.hideShyLayers = true;
+
+                    // --- HIGHLIGHT NULL ĐIỀU KHIỂN TỰ ĐỘNG ---
+                    for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
+                    pivot.selected = true;
+
+                } catch (e) {
+                    alert("Error creating Grid Cloooner: " + e.toString());
+                }
+
+                app.endUndoGroup();
+                return;
+            }
+
 
             // ==========================================
             // LOGIC CHO TAB: TRÒN
@@ -2873,8 +3521,8 @@
                 try {
                     if (!layer) return false;
                     var fx = layer.property("ADBE Effect Parade");
-                    var hasFx = fx && (fx.property("isClooonerCircular") !== null || fx.property("isClooonerPath") !== null);
-                    var hasName = layer.name && (layer.name.indexOf("Pivot Null") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1);
+                    var hasFx = fx && (fx.property("isClooonerCircular") !== null || fx.property("isClooonerPath") !== null || fx.property("isClooonerGrid") !== null);
+                    var hasName = layer.name && (layer.name.indexOf("Pivot Null") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1 || layer.name.indexOf("Grid Control") !== -1);
                     return hasFx || hasName;
                 } catch(e) {
                     return false;
