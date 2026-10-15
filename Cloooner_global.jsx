@@ -227,11 +227,14 @@
 
             // Nho trang thai gap / mo qua cac lan mo AE
             var open = (startOpen === undefined) ? true : startOpen;
-            try {
-                if (app.settings.haveSetting("Cloooner", key)) {
-                    open = (app.settings.getSetting("Cloooner", key) === "1");
-                }
-            } catch (e) {}
+            // key = null -> khong nho trang thai, moi lan nap script deu mo san
+            if (key) {
+                try {
+                    if (app.settings.haveSetting("Cloooner", key)) {
+                        open = (app.settings.getSetting("Cloooner", key) === "1");
+                    }
+                } catch (e) {}
+            }
 
             // Chi dat .visible = false la CHUA DU - ScriptUI van giu cho trong cho no.
             // Phai ep han chieu cao ve 0 thi khung moi thuc su ngan lai.
@@ -271,7 +274,7 @@
                 lastTog = now;
                 open = !open;
                 paint();
-                try { app.settings.saveSetting("Cloooner", key, open ? "1" : "0"); } catch (e) {}
+                if (key) { try { app.settings.saveSetting("Cloooner", key, open ? "1" : "0"); } catch (e) {} }
                 relayout();
             }
             header.addEventListener("mousedown", toggle);
@@ -287,7 +290,7 @@
             wrap.relayout = relayout;
             wrap.setOpen = function (v) {
                 open = v; paint();
-                try { app.settings.saveSetting("Cloooner", key, open ? "1" : "0"); } catch (e) {}
+                if (key) { try { app.settings.saveSetting("Cloooner", key, open ? "1" : "0"); } catch (e) {} }
             };
             wrap.isOpen = function () { return open; };
             return wrap;
@@ -404,6 +407,7 @@
                             "🔸 QUANTITY: Enter the number of copies you want to create.\n" +
                             "🔸 CLOOONER BUTTON: Click to start duplicating.\n" +
                             "🔸 🛅 TRUE CLONE (Submarine): Duplicates deeply into pre-comps, creating independent copies.\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -451,8 +455,9 @@
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
                             "   \u2022 Select the Control Null and the mode buttons light up showing what that system already uses.\n" +
                             "   \u2022 Click a mode and it applies to that Control Null straight away.\n" +
-                            "   \u2022 With nothing selected the buttons go dim; clicking one then tells you to create or select a Cloooner Control. Picking a Control Null from another tab reports a mismatch.\n\n" +
+                            "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -466,12 +471,15 @@
                         alert(
                             "💡 CIRCULAR CLONE GUIDE\n\n" +
                             "📌 USAGE: Select 1 Pivot Null and 1 Layer to duplicate (Null must be FIRST or LAST in selection).\n" +
+                            "📌 Or just select the layer on its own - Cloooner drops a Null in the middle of the comp for you, with its anchor point in the centre of the Null. Works for Cloooner and for Rig to Circular.\n" +
                             "👉 The tool uses the Layer's coordinates as the starting point and calculates offsets to create a perfect circle.\n\n" +
+                            "\ud83d\udd38 SYNC ORDER WITH LOOK: Offset Look moves clones around the trajectory, but their Timeline stacking stays put, so the overlaps can look wrong. Select the Control Null and press this to re-stack the layers to match Offset Look. It only changes layer order - nothing moves.\n\n" +
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
                             "   \u2022 Select the Control Null and the mode buttons light up showing what that system already uses.\n" +
                             "   \u2022 Click a mode and it applies to that Control Null straight away.\n" +
-                            "   \u2022 With nothing selected the buttons go dim; clicking one then tells you to create or select a Cloooner Control. Picking a Control Null from another tab reports a mismatch.\n\n" +
+                            "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -486,14 +494,17 @@
                         alert(
                             "💡 PATH CLONE GUIDE\n\n" +
                             "📌 USAGE: Select 1 Shape Layer (Path) and 1 Layer to duplicate.\n" +
+                            "📌 Or just select the layer on its own - Cloooner draws a straight Path across the middle of the comp for you, running the full width (or the full height if the comp is portrait), anchored at its centre. Works for Cloooner and for Rig to Path.\n" +
                             "👉 Tool converts shapes to Bezier Paths and links them to a Control Null.\n\n" +
                             "🔸 ADVANCED MODES:\n" +
                             "   • Auto Orient / Taper / TrimPath / Twisted / Delay Offset.\n\n" +
+                            "\ud83d\udd38 SYNC ORDER WITH LOOK: Offset Look moves clones around the trajectory, but their Timeline stacking stays put, so the overlaps can look wrong. Select the Control Null and press this to re-stack the layers to match Offset Look. It only changes layer order - nothing moves.\n\n" +
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
                             "   \u2022 Select the Control Null and the mode buttons light up showing what that system already uses.\n" +
                             "   \u2022 Click a mode and it applies to that Control Null straight away.\n" +
-                            "   \u2022 With nothing selected the buttons go dim; clicking one then tells you to create or select a Cloooner Control. Picking a Control Null from another tab reports a mismatch.\n\n" +
+                            "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -518,7 +529,10 @@
                             "\ud83d\udd38 CONTROL NULL (\"Sphere Control\"):\n" +
                             "   \u2022 Radius: size of the sphere.\n" +
                             "   \u2022 Offset Look: reshuffles which clone sits where on the sphere. Keyframeable, and 0 keeps the original order. Replaces the old Random Shuffle button.\n" +
-                            "   \u2022 Rings: how many latitude bands the sphere is split into. It drives the Row / Col value on every Helper Null.\n\n" +
+                            "   \u2022 Offset Sphere: the denominator of the spread (the old Total Count). Set it ABOVE the real clone count and they cover only part of the ball; set it BELOW and the leftovers fade out.\n" +
+                            "   \u2022 Rings: how many latitude rings stay VISIBLE, counted outward from the equator. 1 shows only the middle ring, 2 adds the ring above it, 3 adds the one below, and so on. It cannot go below 0 (0 hides everything). The default shows the whole ball.\n" +
+                            "   \u2022 From Polar: flips Rings around so the rings appear from the NORTH POLE downwards instead of spreading out from the equator.\n" +
+                            "   \u2022 The sphere works out its own number of rings from the clone count - that is what the Row / Col sliders on each Helper Null report.\n\n" +
                             "\ud83d\udd38 ALTERNATING PUSH:\n" +
                             "   \u2022 Virus Offset: pushes clones alternately nearer and further from the centre - a lumpy, virus-like ball.\n" +
                             "   \u2022 Vertical Loop Offset: neighbouring latitude RINGS spin in opposite directions, like twisting the horizontal layers of a Rubik's cube.\n" +
@@ -530,7 +544,8 @@
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
                             "   \u2022 Select the Control Null and the mode buttons light up showing what that system already uses.\n" +
                             "   \u2022 Click a mode and it applies to that Control Null straight away.\n" +
-                            "   \u2022 With nothing selected the buttons go dim; clicking one then tells you to create or select a Cloooner Control. Picking a Control Null from another tab reports a mismatch.\n\n" +
+                            "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -550,7 +565,7 @@
                             "🔸 RIG TO CIRCULAR / PATH:\n" +
                             "   • Create New: Select Null/Shape at FIRST or LAST, other layers in between.\n" +
                             "   • Add to Existing: Select old Control Null at FIRST/LAST, new layers in between.\n\n" +
-                            "🔸 HELPER TOOLS:\n" +
+                            "🔸 HELPER TOOLS (bottom section):\n" +
                             "   • Reverse Layers Order: reverses the Z-index display order on the Timeline.\n" +
                             "   • Toggle Hide Helper Nulls: show or hide the helper nulls of the selected system.\n" +
                             "   • The Random Shuffle button is gone - use OFFSET LOOK on the Control Null instead. Same reshuffle, but as a keyframeable slider.\n\n" +
@@ -560,8 +575,9 @@
                             "   • Amp is a 2D point, or 3D when the system is 3D; Rotation uses an angle.\n" +
                             "   • Your keyframes keep working - the wiggle moves around them, it does not replace them.\n" +
                             "   • It never overwrites an existing Cloooner expression: it takes a free slot when there is one, otherwise it adds itself onto the end and stores the original so switching off restores it exactly.\n\n" +
-                            "🔸 FOLDING SECTIONS: every block here has a \u25BC header - click it to fold that block away. Use it when the panel is short and the buttons below are cut off. The \u25B2 button next to this Guide folds or unfolds everything in the current tab at once, and Cloooner remembers what you folded next time you open it.\n\n" +
+                            "🔸 FOLDING SECTIONS: the three blocks here each have a \u25BC header - click it to fold that block away when the panel is short. The \u25B2 button next to this Guide folds or unfolds all of them at once, and Cloooner remembers what you folded next time you open it. Only this tab folds - the clone tabs always show everything.\n\n" +
                             "🔸 RESET CONTROLLER PARAMS: select the Control Null to put every ADJUSTMENT back to default - staggers, offsets, randomize, wiggle, orients, taper / trim / delay. Layout and structure are left alone (Grid size, Total Clones, Radius, Gaps, Angle, Distance, Path link, mode checkboxes).\n\n" +
+                            "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
                             "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
@@ -589,33 +605,51 @@
         // ==========================================
         
 
-        // --- NHÀ MÁY 1: SẢN XUẤT CHECKBOX V3 (CHỈ CÓ ICON, CÓ TOOLTIP) ---
+        // --- NHÀ MÁY 1: CHECKBOX ICON (TU VE DE CO THE LAM MO) ---
+        // Truoc day dung 2 element "image" chong len nhau, nhung ScriptUI khong co
+        // thuoc tinh opacity cho image va enabled=false cung khong lam no mo di.
+        // Nen o day tu ve bang onDraw: ve icon roi phu mot lop toi BAN TRONG SUOT len tren
+        // (brush co kenh alpha) -> dung la "mo di" that su.
         function createCustomCheckbox(parentGrp, labelText, defaultVal, imgOnData, imgOffData) {
-            // Chỉ cần dùng 1 Stack Group duy nhất để chứa ảnh, bỏ Group Row đi
             var wrap = parentGrp.add("group");
-            wrap.orientation = "stack"; 
-            
-            var imgOff = wrap.add("image", undefined, imgOffData);
-            var imgOn = wrap.add("image", undefined, imgOnData);
 
-            // Gắn Label vào dạng Tooltip với tiền tố "Kích hoạt"
-            imgOff.helpTip = "Toggle " + labelText;
-            imgOn.helpTip = "Toggle " + labelText;
+            var imgOn = null, imgOff = null;
+            try { if (imgOnData) imgOn = ScriptUI.newImage(imgOnData); } catch (e) {}
+            try { if (imgOffData) imgOff = ScriptUI.newImage(imgOffData); } catch (e) {}
 
-            wrap.value = defaultVal !== undefined ? defaultVal : false;
-            imgOn.visible = wrap.value;
+            var bw = 80, bh = 95;
+            try {
+                var ref = imgOff || imgOn;
+                if (ref) { bw = ref.size[0]; bh = ref.size[1]; }
+            } catch (e) {}
+            wrap.preferredSize = [bw, bh];
+            wrap.minimumSize = [bw, bh];
 
-            function toggle() {
+            wrap.value = (defaultVal !== undefined) ? (defaultVal ? true : false) : false;
+            wrap.helpTip = "Toggle " + labelText;
+
+            wrap.onDraw = function () {
+                var g = this.graphics;
+                var im = this.value ? imgOn : imgOff;
+                if (im) {
+                    try {
+                        g.drawImage(im,
+                            Math.round((this.size[0] - im.size[0]) / 2),
+                            Math.round((this.size[1] - im.size[1]) / 2));
+                    } catch (e) {}
+                }
+            };
+
+            wrap.repaint = function () { try { this.notify("onDraw"); } catch (e) {} };
+            wrap.setValue = function (v) { this.value = v ? true : false; this.repaint(); };
+
+            wrap.addEventListener("mousedown", function () {
                 wrap.value = !wrap.value;
-                imgOn.visible = wrap.value;
-                if (typeof wrap.onClick === 'function') wrap.onClick(); // Bắn tín hiệu ra ngoài
-            }
+                wrap.repaint();
+                if (typeof wrap.onClick === "function") wrap.onClick();
+            });
 
-            // Gắn sự kiện click
-            imgOff.addEventListener("mousedown", toggle);
-            imgOn.addEventListener("mousedown", toggle);
-
-            return wrap; 
+            return wrap;
         }
 
         // --- NHÀ MÁY 2: SẢN XUẤT CỤM TRỤC XOAY 3D ---
@@ -739,7 +773,11 @@
         // ==========================================
         // KHỐI 2: MODES
         // ==========================================
-        var gridModeSection = addSection(tabGrid, "Mode", "secGridMode", true).body;
+        var gridModeSection = tabGrid.add("group");
+        gridModeSection.orientation = "column";
+        gridModeSection.alignChildren = ["center", "top"];
+        gridModeSection.spacing = 8;
+        gridModeSection.add("statictext", undefined, "Mode");
 
         // --- HÀNG ICON MODE LỚN (80x95) ---
         var gridModeRow = gridModeSection.add("group");
@@ -886,7 +924,11 @@
         // ==========================================
         // Tạo một Group nằm ngang để chứa 3 icon
 
-        var tronModeSection = addSection(tabTron, "Modes", "secTronMode", true).body;
+        var tronModeSection = tabTron.add("group");
+        tronModeSection.orientation = "column";
+        tronModeSection.alignChildren = ["center", "top"];
+        tronModeSection.spacing = 8;
+        tronModeSection.add("statictext", undefined, "Modes");
 
         var featureRowGroup = tronModeSection.add("group");
         featureRowGroup.orientation = "row";
@@ -981,7 +1023,11 @@
 
         
         
-        var pathModeSection = addSection(tabPath, "Modes", "secPathMode", true).body;
+        var pathModeSection = tabPath.add("group");
+        pathModeSection.orientation = "column";
+        pathModeSection.alignChildren = ["center", "top"];
+        pathModeSection.spacing = 8;
+        pathModeSection.add("statictext", undefined, "Modes");
         // ==========================================
         // UI MỚI: CHECKBOX BINARY TAB PATH (CHIA 2 ROW)
         // ==========================================
@@ -1006,6 +1052,11 @@
         var pathTrimCheckbox = createCustomCheckbox(pathRow2, "Trim Path FX", false, pathTrim_ON_Bin, pathTrim_OFF_Bin);
         var pathDelayCheckbox = createCustomCheckbox(pathRow2, "Delayed Offset", false, pathDelay_ON_Bin, pathDelay_OFF_Bin);
 
+
+        var btnSyncLookTron = tabTron.add("button", undefined, "Sync order with look");
+        btnSyncLookTron.alignment = ["center", "top"];
+        btnSyncLookTron.preferredSize = [250, 26];
+        btnSyncLookTron.helpTip = "Re-stack the layers on the Timeline so their top-to-bottom order matches Offset Look.\nShape and position are untouched - only the layer order changes.";
 
         // --- HÀM LÕI UPDATE MODE TRÒN ---
         function forceUpdateCircular(pivot, comp) {
@@ -1037,7 +1088,7 @@
             }
             
             ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
-            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
             // Co de giao dien doc lai duoc mode "No Rotation" (mode nay khong de lai dau vet khac)
             ensureControl(pivot, "Mode No Rotation", "ADBE Checkbox Control", normalize ? 1 : 0);
             setFxValue(pivot, "Mode No Rotation", normalize ? 1 : 0);
@@ -1067,7 +1118,7 @@
             }
             for (var r = 0; r < rotators.length; r++) {
                 var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
-                setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name);
+                setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name); applyScaleAll(kid, pivot.name);
                 rot.threeDLayer = kid.threeDLayer = make3D;
                 for(var pr=0; pr<pProps.length; pr++) {
                     var rProp = getSafeProp(rot, pProps[pr]); var kProp = getSafeProp(kid, pProps[pr]);
@@ -1117,6 +1168,11 @@
             }
         }
 
+        var btnSyncLookPath = tabPath.add("button", undefined, "Sync order with look");
+        btnSyncLookPath.alignment = ["center", "top"];
+        btnSyncLookPath.preferredSize = [250, 26];
+        btnSyncLookPath.helpTip = "Re-stack the layers on the Timeline so their top-to-bottom order matches Offset Look.\nShape and position are untouched - only the layer order changes.";
+
         // --- HÀM LÕI UPDATE MODE PATH ---
         function forceUpdatePath(pivot, comp) {
             var useOrient = pathOrientCheckbox.value; var useTaper = pathTaperCheckbox.value; var useTrim = pathTrimCheckbox.value; 
@@ -1140,7 +1196,7 @@
             if (make3D) { ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); } 
             else { removeFx(pivot, "Orient X (3D only)"); removeFx(pivot, "Orient Y (3D only)"); }
             ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
-            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
             // Co de giao dien doc lai duoc mode "Auto Orient"
             ensureControl(pivot, "Mode Auto Orient", "ADBE Checkbox Control", useOrient ? 1 : 0);
             setFxValue(pivot, "Mode Auto Orient", useOrient ? 1 : 0);
@@ -1149,7 +1205,7 @@
             for (var i = 1; i <= comp.numLayers; i++) { var l = comp.layer(i); if (l.parent === pivot) { rotators.push(l); for (var j = 1; j <= comp.numLayers; j++) { var kid = comp.layer(j); if (kid.parent === l) { children.push(kid); break; } } } }
             for (var r = 0; r < rotators.length; r++) {
                 var rot = rotators[r]; var kid = children[r]; if(!kid) continue;
-                setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name);
+                setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name); applyScaleAll(kid, pivot.name);
                 rot.threeDLayer = kid.threeDLayer = make3D;
                 var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")(1);\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")(1).valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                 rot.property("ADBE Effect Parade").property("Path Position").property(1).expression = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")(1);\nidx = effect("Look Index")(1);\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
@@ -1324,7 +1380,7 @@
         // Dung moveTo nen he thong cu doi duoc thu tu ma KHONG mat gia tri / keyframe.
         function reorderGridControls(pivot) {
             var order = ["isClooonerGrid", "Total Clones", "Grid", "Wide Gap", "Height Gap",
-                         "Offset Look", "Zigzag Mode", "Pivot Center",
+                         "Offset Look", "Scale All", "Zigzag Mode", "Pivot Center",
                          "Gap Stagger", "Index Stagger", "Rotation Stagger", "Depth Stagger", "One Direction Depth",
                          "Row Offset", "Col Offset",
                          "Random Offset", "Random Offset Z", "Random Seed",
@@ -1420,7 +1476,7 @@
             ensureControl(pivot, "Wide Gap", "ADBE Slider Control", defW);
             ensureControl(pivot, "Height Gap", "ADBE Slider Control", defH);
             // Offset Look: xao lai thu tu nhin thay cua cac clone (thay cho nut Shuffle cu)
-            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
 
             // --- 2. CHE DO ---
             // Zigzag: hang le dem nguoc tu phai sang trai
@@ -1482,6 +1538,7 @@
             setLockedIndex(kid, idx);
             setLookIndex(rot, pivot.name);
             setLookIndex(kid, pivot.name);
+            applyScaleAll(kid, pivot.name);
             ensureControl(kid, "Clone Index", "ADBE Slider Control", idx);
 
             // Row / Col tự tính ra từ Clone Index + ô Grid của Controller
@@ -1584,7 +1641,11 @@
         spherePlus.preferredSize = [25, 25];
 
         // --- MODES (gap / mo duoc) ---
-        var sphereModeSection = addSection(tabSphere, "Mode", "secSphereMode", true).body;
+        var sphereModeSection = tabSphere.add("group");
+        sphereModeSection.orientation = "column";
+        sphereModeSection.alignChildren = ["center", "top"];
+        sphereModeSection.spacing = 8;
+        sphereModeSection.add("statictext", undefined, "Mode");
 
         var sphereModeRow = sphereModeSection.add("group");
         sphereModeRow.orientation = "row";
@@ -1609,34 +1670,43 @@
             return ''
                 + '  ctrl = thisComp.layer("' + pivotName + '");\n'
                 + '  cnt = Math.max(1, Math.round(ctrl.effect("Total Clones")(1)));\n'
+                // Offset Sphere = "Total Count" cua ban goc: mau so cua phep phan bo.
+                // To hon so clone -> clone chi phu mot phan mat cau; nho hon -> cat bot.
+                + '  try { cnt = Math.max(1, Math.round(ctrl.effect("Offset Sphere")(1))); } catch(e1) {}\n'
                 + '  idx = effect("Look Index")(1);\n'
                 + '  i = idx;\n'
+                // Cuon chi so ve trong [0, cnt) de phep phan bo luon hop le
+                + '  iw = ((i % cnt) + cnt) % cnt;\n'
                 + '  ga = Math.PI * (3 - Math.sqrt(5));\n'
-                + '  t = (i + 0.5) / cnt;\n'
-                + '  inc = Math.acos(1 - 2 * t);\n'
-                + '  azi = ga * i;\n';
+                + '  t = (iw + 0.5) / cnt;\n'
+                // Chan doi so cua acos trong [-1, 1], tuyet doi khong de ra NaN
+                + '  ac = 1 - 2 * t;\n'
+                + '  if (ac > 1) ac = 1;\n'
+                + '  if (ac < -1) ac = -1;\n'
+                + '  inc = Math.acos(ac);\n'
+                + '  azi = ga * iw;\n'
+                // So vanh vi tuyen suy ra tu so clone (khong con lay tu slider nua)
+                + '  bands = Math.max(1, Math.round(Math.sqrt(cnt)));\n'
+                + '  row = Math.min(bands - 1, Math.floor(inc / Math.PI * bands));\n';
         }
 
         // Hang (vi tuyen): chia mat cau thanh N vanh theo goc nghieng
         function buildSphereRowExpr(pivotName) {
-            return 'try {\n'
-                + sphereHeadExpr(pivotName)
-                + '  rings = Math.max(1, Math.round(ctrl.effect("Rings")(1)));\n'
-                + '  Math.min(rings - 1, Math.floor(inc / Math.PI * rings)) + 1;\n'
-                + '} catch(e) { value; }';
+            return 'try {\n' + sphereHeadExpr(pivotName) + '  row + 1;\n} catch(e) { value; }';
         }
 
         // Thu tu trong hang: dem xem co bao nhieu clone cung vanh dung truoc minh
         function buildSphereColExpr(pivotName) {
             return 'try {\n'
                 + sphereHeadExpr(pivotName)
-                + '  rings = Math.max(1, Math.round(ctrl.effect("Rings")(1)));\n'
-                + '  myRow = Math.min(rings - 1, Math.floor(inc / Math.PI * rings));\n'
                 + '  col = 0;\n'
-                + '  for (k = 0; k < i; k++) {\n'
+                + '  for (k = 0; k < iw; k++) {\n'
                 + '    tk = (k + 0.5) / cnt;\n'
-                + '    rk = Math.min(rings - 1, Math.floor(Math.acos(1 - 2 * tk) / Math.PI * rings));\n'
-                + '    if (rk == myRow) col++;\n'
+                + '    ak = 1 - 2 * tk;\n'
+                + '    if (ak > 1) ak = 1;\n'
+                + '    if (ak < -1) ak = -1;\n'
+                + '    rk = Math.min(bands - 1, Math.floor(Math.acos(ak) / Math.PI * bands));\n'
+                + '    if (rk == row) col++;\n'
                 + '  }\n'
                 + '  col + 1;\n'
                 + '} catch(e) { value; }';
@@ -1657,7 +1727,7 @@
                 + '  inc = inc + ((col % 2 == 0) ? hOff : -hOff);\n'
                 // Virus Offset: so le gan / xa tam -> mat cau go ghe
                 + '  vir = ctrl.effect("Virus Offset")(1);\n'
-                + '  rr = rad + ((idx % 2 == 0) ? vir : -vir);\n'
+                + '  rr = rad + ((iw % 2 == 0) ? vir : -vir);\n'
                 + '  x = Math.sin(inc) * Math.cos(azi);\n'
                 + '  y = Math.cos(inc);\n'
                 + '  z = Math.sin(inc) * Math.sin(azi);\n'
@@ -1699,6 +1769,32 @@
                 + '    s = linear(boost, 0, 100, 100, s);\n'
                 + '  }\n'
                 + '  [s, s, s];\n'
+                + '} catch(e) { value; }';
+        }
+
+        // Cat hien thi: clone co chi so vuot qua Offset Sphere thi tat Opacity ve 0
+        function buildSphereOpacityExpr(pivotName) {
+            return 'try {\n'
+                + sphereHeadExpr(pivotName)
+                + '  rings = Math.round(ctrl.effect("Rings")(1));\n'
+                + '  if (rings < 0) rings = 0;\n'
+                + '  fromPolar = 0;\n'
+                + '  try { fromPolar = ctrl.effect("From Polar")(1); } catch(e2) { fromPolar = 0; }\n'
+                + '  if (fromPolar > 0) {\n'
+                // Hien dan tu vanh cuc BAC xuong cuc NAM
+                + '    rank = row;\n'
+                + '  } else {\n'
+                // Hien dan tu XICH DAO lan ra hai phia, hoa thi uu tien phia tren
+                + '    eq = (bands - 1) / 2;\n'
+                + '    d = Math.abs(row - eq);\n'
+                + '    rank = 0;\n'
+                + '    for (q = 0; q < bands; q++) {\n'
+                + '      dq = Math.abs(q - eq);\n'
+                + '      if (dq < d) rank++;\n'
+                + '      else if (dq == d && q < row) rank++;\n'
+                + '    }\n'
+                + '  }\n'
+                + '  ((i < cnt) && (rank < rings)) ? value : 0;\n'
                 + '} catch(e) { value; }';
         }
 
@@ -1757,7 +1853,7 @@
 
         // Thu tu chuan cua bo control tren Sphere Control
         function reorderSphereControls(pivot) {
-            var order = ["isClooonerSphere", "Total Clones", "Radius", "Offset Look", "Rings",
+            var order = ["isClooonerSphere", "Total Clones", "Radius", "Offset Look", "Scale All", "Offset Sphere", "Rings", "From Polar",
                          "Virus Offset", "Vertical Loop Offset", "Horizontal Loop Offset",
                          "Sphere Rot X", "Sphere Rot Y", "Sphere Rot Z",
                          "Min Scale", "Max Scale", "Perspective Boost",
@@ -1788,9 +1884,13 @@
 
             ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones);
             ensureControl(pivot, "Radius", "ADBE Slider Control", defRadius);
-            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
-            // So vanh vi tuyen - quyet dinh Row / Col cua tung Null phu
-            ensureControl(pivot, "Rings", "ADBE Slider Control", Math.max(2, Math.round(Math.sqrt(totalClones))));
+            ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
+            // Giong "Total Count" ban goc: mac dinh bang dung so clone dang co
+            ensureControl(pivot, "Offset Sphere", "ADBE Slider Control", totalClones);
+            // Rings = SO VANH DUOC HIEN, dem tu xich dao lan ra (hoac tu cuc neu bat From Polar).
+            // Mac dinh bang dung so vanh tu nhien cua qua cau -> ban dau hien het.
+            ensureControl(pivot, "Rings", "ADBE Slider Control", Math.max(1, Math.round(Math.sqrt(totalClones))));
+            ensureControl(pivot, "From Polar", "ADBE Checkbox Control", 0);
 
             // Nhom day so le
             ensureControl(pivot, "Virus Offset", "ADBE Slider Control", 0);
@@ -1838,6 +1938,7 @@
             setLockedIndex(kid, idx);
             setLookIndex(rot, pivot.name);
             setLookIndex(kid, pivot.name);
+            applyScaleAll(kid, pivot.name);
             ensureControl(kid, "Clone Index", "ADBE Slider Control", idx);
 
             // Row / Col nam tren Null phu, tu tinh ra tu Clone Index
@@ -1855,6 +1956,9 @@
             // Huong dat tren Orientation, con X/Y/Z Rotation de danh cho Orient offset
             var oriProp = getSafeProp(kid, "Orientation");
             if (oriProp && oriProp.canSetExpression) oriProp.expression = buildSphereOrientExpr(pivot.name);
+
+            var opaProp = getSafeProp(kid, "Opacity");
+            if (opaProp && opaProp.canSetExpression) opaProp.expression = buildSphereOpacityExpr(pivot.name);
 
             getSafeProp(kid, "X Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient X (3D only)")(1);';
             getSafeProp(kid, "Y Rotation").expression = 'value + thisComp.layer("' + pivot.name + '").effect("Orient Y (3D only)")(1);';
@@ -1899,8 +2003,16 @@
         // ==========================================
 
         // Tạo Panel bao quanh có viền và tiêu đề tích hợp sẵn
+        // Tao san 3 muc theo dung thu tu hien thi: Add More Clones -> Wiggle -> Helper Tools
         var toolCloneMoreMaster = addSection(tabTools, "Add More Clones", "secAddClones", true).body;
+        var toolWigglePanel = addSection(tabTools, "Wiggle", "secWiggle", true).body;
+        var toolHelperPanel = addSection(tabTools, "Helper Tools", "secHelper", true).body;
+
         toolCloneMoreMaster.spacing = 15;
+        toolWigglePanel.alignChildren = ["fill", "center"];
+        toolWigglePanel.spacing = 10;
+        toolHelperPanel.alignChildren = ["fill", "center"];
+        toolHelperPanel.spacing = 15;
 
         var toolCloneMoreGroup = toolCloneMoreMaster.add("group");
         toolCloneMoreGroup.orientation = "row";
@@ -1922,9 +2034,6 @@
         // ==========================================
         // 5. PANEL: HELPER (TAB TOOLS)
         // ==========================================
-        var toolHelperPanel = addSection(tabTools, "Helper Tools", "secHelper", true).body;
-        toolHelperPanel.alignChildren = ["fill", "center"];
-        toolHelperPanel.spacing = 15;
 
         var btnReverseOrder = toolHelperPanel.add("button", undefined, "🔄 Reverse Layers Order");
         btnReverseOrder.preferredSize.height = 30;
@@ -1942,10 +2051,10 @@
             if (sel.length === 1) {
                 var pivot = sel[0];
                 var pivotFx = pivot.property("ADBE Effect Parade");
-                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("Path Cloooner Control") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
-                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("Circular Cloooner Control") !== -1 || pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
-                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("Grid Cloooner Control") !== -1 || pivot.name.indexOf("Grid Control") !== -1;
-                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || pivot.name.indexOf("Sphere Cloooner Control") !== -1 || pivot.name.indexOf("Sphere Control") !== -1;
+                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("CL-Controller Path") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
+                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("CL-Controller Circular") !== -1 || pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("CL-Controller Grid") !== -1 || pivot.name.indexOf("Grid Control") !== -1;
+                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || pivot.name.indexOf("CL-Controller Sphere") !== -1 || pivot.name.indexOf("Sphere Control") !== -1;
                 
                 if (isPathControl || isCircularControl || isGridControl || isSphereControl) {
                     // Thu thập toàn bộ Null phụ và Clone Layer thuộc hệ thống này
@@ -2008,7 +2117,7 @@
                 var fx = l.property("ADBE Effect Parade");
                 if (fx && (fx.property("isClooonerPath") !== null || fx.property("isClooonerCircular") !== null || fx.property("isClooonerGrid") !== null || fx.property("isClooonerSphere") !== null)) {
                     pivot = l; break;
-                } else if (l.name.indexOf("Circular Cloooner Control") !== -1 || l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("Path Cloooner Control") !== -1 || l.name.indexOf("Clone on Path Control") !== -1 || l.name.indexOf("Grid Cloooner Control") !== -1 || l.name.indexOf("Grid Control") !== -1 || l.name.indexOf("Sphere Cloooner Control") !== -1 || l.name.indexOf("Sphere Control") !== -1) {
+                } else if (l.name.indexOf("CL-Controller Circular") !== -1 || l.name.indexOf("Pivot Null") !== -1 || l.name.indexOf("CL-Controller Path") !== -1 || l.name.indexOf("Clone on Path Control") !== -1 || l.name.indexOf("CL-Controller Grid") !== -1 || l.name.indexOf("Grid Control") !== -1 || l.name.indexOf("CL-Controller Sphere") !== -1 || l.name.indexOf("Sphere Control") !== -1) {
                     pivot = l; break;
                 }
             }
@@ -2043,9 +2152,6 @@
         // ==========================================
         // 6. PANEL: WIGGLE (TAB TOOLS) - dung chung cho Grid / Circular / Path
         // ==========================================
-        var toolWigglePanel = addSection(tabTools, "Wiggle", "secWiggle", true).body;
-        toolWigglePanel.alignChildren = ["fill", "center"];
-        toolWigglePanel.spacing = 10;
 
         var wiggleRow = toolWigglePanel.add("group");
         wiggleRow.orientation = "row";
@@ -2289,6 +2395,7 @@
         // Chi dung cho cac thong so DIEU CHINH - khong dung cho bo khung / bo cuc.
         var GRID_PARAM_DEFAULTS = {
             "Offset Look": 0,
+            "Scale All": 100,
             "Offset": 0,
             "Angle": 30,
             "Distance": 5,
@@ -2520,7 +2627,7 @@
         creditGroup.orientation = "row";
         creditGroup.alignment = ["right", "center"];
         creditGroup.spacing = 5;
-        creditGroup.add("statictext", undefined, "v3.15");
+        creditGroup.add("statictext", undefined, "v3.18");
        
         
 
@@ -2694,7 +2801,100 @@
                 + '    k++; g++;\n'
                 + '  }\n'
                 + '  ((idx * k + o) % cnt + cnt) % cnt;\n'
-                + '} catch(e) { effect("Clone Index")(1); }';
+                + '} catch(e) { value; }';
+        }
+
+        // Go sach cac slider phu tro cua Cloooner khoi 1 layer duoc nha ra khoi he thong.
+        // Phai go CA Look Index, neu khong Expression cua no se tro toi Clone Index da bi xoa
+        // va AE bao "effect named 'Clone Index' is missing".
+        function stripClonerSliders(layer) {
+            var names = ["Clone Index", "Look Index", "Path Position", "Row", "Col"];
+            for (var i = 0; i < names.length; i++) {
+                try {
+                    var pr = layer.property("ADBE Effect Parade").property(names[i]);
+                    if (pr) pr.remove();
+                } catch (e) {}
+            }
+        }
+
+        // Tu tao Null lam tam khi nguoi dung chi chon layer ma khong chon Null.
+        // Null dat giua comp, anchor point o CHINH GIUA o vuong Null (khong phai goc tren trai).
+        function makeCenterPivotNull(comp, make3D) {
+            var nl = comp.layers.addNull();
+            nl.name = uniqueName(comp, "CL-Pivot");
+            nl.label = 10;
+            nl.threeDLayer = make3D ? true : false;
+            var w = 100, h = 100;
+            try { w = nl.width; h = nl.height; } catch (e) {}
+            var ap = getSafeProp(nl, "Anchor Point");
+            if (ap) ap.setValue(make3D ? [w / 2, h / 2, 0] : [w / 2, h / 2]);
+            nl.transform.position.setValue(make3D
+                ? [comp.width / 2, comp.height / 2, 0]
+                : [comp.width / 2, comp.height / 2]);
+            nl.__autoMade = true;
+            return nl;
+        }
+
+        // Tu tao Shape Layer chua mot duong thang khi nguoi dung khong chon san Path.
+        // Duong keo het be ngang (comp ngang) hoac het be doc (comp doc), tam duong
+        // trung voi tam comp, anchor point cua layer nam ngay giua duong.
+        function makeCenterPathLayer(comp) {
+            var sl = comp.layers.addShape();
+            sl.name = uniqueName(comp, "CL-Path");
+            sl.label = 11;
+
+            var root = sl.property("ADBE Root Vectors Group");
+            var grp = root.addProperty("ADBE Vector Group");
+            var inner = grp.property("ADBE Vectors Group");
+
+            var pathProp = inner.addProperty("ADBE Vector Shape - Group");
+            var horizontal = (comp.width >= comp.height);
+            var halfW = comp.width / 2;
+            var halfH = comp.height / 2;
+
+            var sh = new Shape();
+            sh.vertices = horizontal ? [[-halfW, 0], [halfW, 0]] : [[0, -halfH], [0, halfH]];
+            sh.inTangents = [[0, 0], [0, 0]];
+            sh.outTangents = [[0, 0], [0, 0]];
+            sh.closed = false;
+            pathProp.property("ADBE Vector Shape").setValue(sh);
+
+            // Them net ve mong cho nhin thay duong tren khung hinh
+            try {
+                var stroke = inner.addProperty("ADBE Vector Graphic - Stroke");
+                stroke.property("ADBE Vector Stroke Color").setValue([0.4, 0.8, 1, 1]);
+                stroke.property("ADBE Vector Stroke Width").setValue(2);
+            } catch (e) {}
+
+            // Anchor [0,0] la goc toa do cua Shape Layer, ma duong lai doi xung quanh goc do
+            // -> anchor roi dung giua duong. Dua layer ve giua comp.
+            var ap = getSafeProp(sl, "Anchor Point");
+            if (ap) ap.setValue([0, 0]);
+            sl.transform.position.setValue([halfW, halfH]);
+            sl.__autoMade = true;
+            return sl;
+        }
+
+        // SCALE ALL: phong to / thu nho dong loat moi clone.
+        // Lay "value" lam goc -> scale von co cua layer chinh la moc 100%,
+        // va keyframe scale tren tung clone van hoat dong binh thuong.
+        // Ket thuc bang ";" de nut Wiggle Scale con noi them vao duoc.
+        function buildScaleAllExpr(pivotName) {
+            return 'sAll = 100;\n'
+                 + 'try { sAll = thisComp.layer("' + pivotName + '").effect("Scale All")(1); } catch(e) { sAll = 100; }\n'
+                 + 'sf = sAll / 100;\n'
+                 + '(value.length == 3) ? [value[0] * sf, value[1] * sf, value[2] * sf] : [value[0] * sf, value[1] * sf];';
+        }
+
+        // Gan Scale All cho clone, chi khi o Scale cua no chua bi chiem
+        function applyScaleAll(kid, pivotName) {
+            var sp = getSafeProp(kid, "Scale");
+            if (!sp || !sp.canSetExpression) return;
+            var cur = "";
+            try { cur = sp.expression; } catch (e) { cur = ""; }
+            if (cur && cur.indexOf("sAll") !== -1) return;   // da gan roi
+            if (cur && cur !== "") return;                    // dang co cong thuc khac, khong de len
+            sp.expression = buildScaleAllExpr(pivotName);
         }
 
         // Gan Look Index cho 1 layer (ca Null phu lan Clone deu can)
@@ -2928,10 +3128,10 @@
                 if (!pivot) { app.endUndoGroup(); return alert("Cloooner system not found. Please select a Control Null (Pivot/Path)."); }
 
                 var pivotFx = pivot.property("ADBE Effect Parade");
-                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("Path Cloooner Control") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
-                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("Circular Cloooner Control") !== -1 || pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
-                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("Grid Cloooner Control") !== -1 || pivot.name.indexOf("Grid Control") !== -1;
-                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || pivot.name.indexOf("Sphere Cloooner Control") !== -1 || pivot.name.indexOf("Sphere Control") !== -1;
+                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("CL-Controller Path") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
+                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (pivot.name.indexOf("CL-Controller Circular") !== -1 || pivot.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || pivot.name.indexOf("CL-Controller Grid") !== -1 || pivot.name.indexOf("Grid Control") !== -1;
+                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || pivot.name.indexOf("CL-Controller Sphere") !== -1 || pivot.name.indexOf("Sphere Control") !== -1;
                 
                 if (isPathControl || isCircularControl || isGridControl || isSphereControl) {
                     
@@ -2949,8 +3149,7 @@
                                 var saved = {};
                                 for(var p=0; p<pProps.length; p++) { var pr = getSafeProp(kid, pProps[p]); if(pr) saved[pProps[p]] = pr.value; }
                                 for(var p=0; p<pProps.length; p++) { var pr = getSafeProp(kid, pProps[p]); if(pr && pr.canSetExpression) { pr.expression = ""; pr.setValue(saved[pProps[p]]); } }
-                                try{ kid.property("ADBE Effect Parade").property("Clone Index").remove(); } catch(e){}
-                                try{ kid.property("ADBE Effect Parade").property("Path Position").remove(); } catch(e){}
+                                stripClonerSliders(kid);
                                 kid.parent = null;
                             }
                         }
@@ -3004,8 +3203,7 @@
                             var saved = {};
                             for(var p=0; p<pProps.length; p++) { var pr = getSafeProp(kid, pProps[p]); if(pr) saved[pProps[p]] = pr.value; }
                             for(var p=0; p<pProps.length; p++) { var pr = getSafeProp(kid, pProps[p]); if(pr && pr.canSetExpression) { pr.expression = ""; pr.setValue(saved[pProps[p]]); } }
-                            try{ kid.property("ADBE Effect Parade").property("Clone Index").remove(); } catch(e){}
-                            try{ kid.property("ADBE Effect Parade").property("Path Position").remove(); } catch(e){}
+                            stripClonerSliders(kid);
                             kid.parent = null;
                             kid.name = kid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
                         }
@@ -3102,10 +3300,10 @@
             try {
                 var firstSel = sel[0];
                 var pivotFx = firstSel.property("ADBE Effect Parade");
-                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || firstSel.name.indexOf("Path Cloooner Control") !== -1 || firstSel.name.indexOf("Clone on Path Control") !== -1;
-                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (firstSel.name.indexOf("Circular Cloooner Control") !== -1 || firstSel.name.indexOf("Pivot Null") !== -1 && !isPathControl);
-                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || firstSel.name.indexOf("Grid Cloooner Control") !== -1 || firstSel.name.indexOf("Grid Control") !== -1;
-                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || firstSel.name.indexOf("Sphere Cloooner Control") !== -1 || firstSel.name.indexOf("Sphere Control") !== -1;
+                var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || firstSel.name.indexOf("CL-Controller Path") !== -1 || firstSel.name.indexOf("Clone on Path Control") !== -1;
+                var isCircularControl = (pivotFx && pivotFx.property("isClooonerCircular") !== null) || (firstSel.name.indexOf("CL-Controller Circular") !== -1 || firstSel.name.indexOf("Pivot Null") !== -1 && !isPathControl);
+                var isGridControl = (pivotFx && pivotFx.property("isClooonerGrid") !== null) || firstSel.name.indexOf("CL-Controller Grid") !== -1 || firstSel.name.indexOf("Grid Control") !== -1;
+                var isSphereControl = (pivotFx && pivotFx.property("isClooonerSphere") !== null) || firstSel.name.indexOf("CL-Controller Sphere") !== -1 || firstSel.name.indexOf("Sphere Control") !== -1;
                 
                 var sourcesToClean = []; // Mảng gom các Source rác để chuẩn bị huỷ diệt
                 
@@ -3159,8 +3357,7 @@
                             var prop = getSafeProp(originalKid, propsToClear[p]);
                             if (prop && prop.canSetExpression) prop.expression = "";
                         }
-                        try { originalKid.property("ADBE Effect Parade").property("Clone Index").remove(); } catch(e){}
-                        try { originalKid.property("ADBE Effect Parade").property("Path Position").remove(); } catch(e){}
+                        stripClonerSliders(originalKid);
                         originalKid.name = originalKid.name.replace(/^\d+\s*[\.\-]\s*(Null\s)?/i, "").replace(/\s-\s(Clone|Rig)$/i, "");
                     }
 
@@ -3232,10 +3429,10 @@
                            fx.property("isClooonerCircular") !== null ||
                            fx.property("isClooonerPath") !== null ||
                            fx.property("isClooonerSphere") !== null)) return true;
-                return layer.name && (layer.name.indexOf("Grid Cloooner Control") !== -1 || layer.name.indexOf("Grid Control") !== -1 ||
-                                      layer.name.indexOf("Circular Cloooner Control") !== -1 || layer.name.indexOf("Pivot Null") !== -1 ||
-                                      layer.name.indexOf("Path Cloooner Control") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1 ||
-                                      layer.name.indexOf("Sphere Cloooner Control") !== -1 || layer.name.indexOf("Sphere Control") !== -1);
+                return layer.name && (layer.name.indexOf("CL-Controller Grid") !== -1 || layer.name.indexOf("Grid Control") !== -1 ||
+                                      layer.name.indexOf("CL-Controller Circular") !== -1 || layer.name.indexOf("Pivot Null") !== -1 ||
+                                      layer.name.indexOf("CL-Controller Path") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1 ||
+                                      layer.name.indexOf("CL-Controller Sphere") !== -1 || layer.name.indexOf("Sphere Control") !== -1);
             } catch (e) { return false; }
         }
 
@@ -3323,7 +3520,7 @@
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
             var sel = comp.selectedLayers;
-            if (sel.length < 2) return alert("ERROR: Please select the layers to rig, plus 1 Pivot Null (Circular) / 1 Shape Layer (Path) / an existing Control Null.\nFor Grid: just select 2 or more layers.");
+            if (sel.length < 1) return alert("ERROR: Select the layers you want to rig.\n\nCircular / Path: add your own Pivot Null or Shape Layer FIRST or LAST, or leave it out and Cloooner makes one at the centre of the comp.\nGrid / Sphere: just select the layers.");
             // ==========================================
             // LOGIC RIG TO SPHERE
             // ==========================================
@@ -3335,7 +3532,7 @@
                 function checkAppendSphere(layer) {
                     try {
                         var fx = layer.property("ADBE Effect Parade");
-                        return (fx && fx.property("isClooonerSphere") !== null) || layer.name.indexOf("Sphere Cloooner Control") !== -1 || layer.name.indexOf("Sphere Control") !== -1;
+                        return (fx && fx.property("isClooonerSphere") !== null) || layer.name.indexOf("CL-Controller Sphere") !== -1 || layer.name.indexOf("Sphere Control") !== -1;
                     } catch (e) { return false; }
                 }
 
@@ -3359,13 +3556,13 @@
                                 isFacing = (fFx.property(1).value > 0);
                                 if (sphereFaceCheckbox.value !== isFacing) {
                                     sphereFaceCheckbox.value = isFacing;
-                                    sphereFaceCheckbox.children[1].visible = isFacing;
+                                    sphereFaceCheckbox.setValue(isFacing);
                                 }
                             }
                             var hasRnd = (pivot.property("ADBE Effect Parade").property("Random Offset") !== null);
                             if (sphereRandomCheckbox.value !== hasRnd) {
                                 sphereRandomCheckbox.value = hasRnd;
-                                sphereRandomCheckbox.children[1].visible = hasRnd;
+                                sphereRandomCheckbox.setValue(hasRnd);
                             }
                             isRandom = hasRnd;
                         } catch (e) {}
@@ -3392,7 +3589,7 @@
                         var defRadius = Math.round(Math.min(comp.width, comp.height) * 0.35);
 
                         pivot = comp.layers.addNull();
-                        pivot.name = uniqueName(comp, "Sphere Cloooner Control");
+                        pivot.name = uniqueName(comp, "CL-Controller Sphere");
                         pivot.label = 10;
                         pivot.moveBefore(firstLayer);
                         pivot.threeDLayer = true;
@@ -3475,7 +3672,7 @@
                 function checkAppendGrid(layer) {
                     try {
                         var fx = layer.property("ADBE Effect Parade");
-                        return (fx && fx.property("isClooonerGrid") !== null) || layer.name.indexOf("Grid Cloooner Control") !== -1 || layer.name.indexOf("Grid Control") !== -1;
+                        return (fx && fx.property("isClooonerGrid") !== null) || layer.name.indexOf("CL-Controller Grid") !== -1 || layer.name.indexOf("Grid Control") !== -1;
                     } catch (e) { return false; }
                 }
 
@@ -3501,7 +3698,7 @@
                         var has3D = pivot.threeDLayer;
                         if (grid3DCheckbox.value !== has3D) {
                             grid3DCheckbox.value = has3D;
-                            grid3DCheckbox.children[1].visible = has3D;
+                            grid3DCheckbox.setValue(has3D);
                         }
                         make3D = has3D;
 
@@ -3520,7 +3717,7 @@
                             var hasRnd = (pivot.property("ADBE Effect Parade").property("Random Offset") !== null);
                             if (gridRandomCheckbox.value !== hasRnd) {
                                 gridRandomCheckbox.value = hasRnd;
-                                gridRandomCheckbox.children[1].visible = hasRnd;
+                                gridRandomCheckbox.setValue(hasRnd);
                             }
                             isRandom = hasRnd;
                         } catch (e) {}
@@ -3564,7 +3761,7 @@
                         defH = Math.round(defH * 100) / 100;
 
                         pivot = comp.layers.addNull();
-                        pivot.name = uniqueName(comp, "Grid Cloooner Control");
+                        pivot.name = uniqueName(comp, "CL-Controller Grid");
                         pivot.label = 10;
                         pivot.moveBefore(firstLayer);
                         if (getSafeProp(pivot, "Anchor Point")) getSafeProp(pivot, "Anchor Point").setValue([0, 0]);
@@ -3647,7 +3844,12 @@
                 else {
                     if (sel[0].nullLayer && sel[0].name.indexOf("Clone on Path Control") === -1) { pivot = sel[0]; for (var i = 1; i < sel.length; i++) targetLayers.push(sel[i]); } 
                     else if (sel[sel.length - 1].nullLayer && sel[sel.length - 1].name.indexOf("Clone on Path Control") === -1) { pivot = sel[sel.length - 1]; for (var i = 0; i < sel.length - 1; i++) targetLayers.push(sel[i]); } 
-                    else return alert("ERROR: The Pivot Null OR existing Control Null must be selected FIRST or LAST!");
+                    else {
+                        // Chi chon layer -> tu tao Null tam o giua comp
+                        pivot = makeCenterPivotNull(comp, mode3DCheckbox.value);
+                        targetLayers = [];
+                        for (var i = 0; i < sel.length; i++) targetLayers.push(sel[i]);
+                    }
                 }
 
                 app.beginUndoGroup("Rig to Circular");
@@ -3657,7 +3859,7 @@
                         var pFx = pivot.property("ADBE Effect Parade");
                         if (pFx) {
                             var has3D = pivot.threeDLayer;
-                            if (mode3DCheckbox.value !== has3D) { mode3DCheckbox.value = has3D; mode3DCheckbox.children[1].visible = has3D; axisGroup.visible = has3D; }
+                            if (mode3DCheckbox.value !== has3D) { mode3DCheckbox.value = has3D; mode3DCheckbox.setValue(has3D); axisGroup.visible = has3D; }
                             
                             // ĐỌC BIẾN AXIS ROTATE VÀ PHÒNG THỦ LỖI NGÔN NGỮ
                             var axisVal = 1; // Dự phòng mặc định trục Y (1) theo yêu cầu
@@ -3673,7 +3875,7 @@
                             }
 
                             var hasTwist = pFx.property("Twisted Angle") !== null;
-                            if (tronTwistedCheckbox.value !== hasTwist) { tronTwistedCheckbox.value = hasTwist; tronTwistedCheckbox.children[1].visible = hasTwist; }
+                            if (tronTwistedCheckbox.value !== hasTwist) { tronTwistedCheckbox.value = hasTwist; tronTwistedCheckbox.setValue(hasTwist); }
                         }
                     }
 
@@ -3717,7 +3919,7 @@
                         var avgRadius = totalDist / totalClones;
 
                         ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones); pivot.property("ADBE Effect Parade").property("Total Clones").property(1).expression = totalClones.toString();
-                        ensureControl(pivot, "Angle", "ADBE Angle Control", 30); ensureControl(pivot, "Offset", "ADBE Angle Control", 0); ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Radius", "ADBE Slider Control", avgRadius); ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100);
+                        ensureControl(pivot, "Angle", "ADBE Angle Control", 30); ensureControl(pivot, "Offset", "ADBE Angle Control", 0); ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100); ensureControl(pivot, "Radius", "ADBE Slider Control", avgRadius); ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100);
                         if (make3D) { ensureControl(pivot, "Depth Stagger", "ADBE Slider Control", 0); ensureControl(pivot, "Orient X (3D only)", "ADBE Angle Control", 0); ensureControl(pivot, "Orient Y (3D only)", "ADBE Angle Control", 0); }
                         ensureControl(pivot, "Orient Z", "ADBE Angle Control", 0);
                         if (isTwisted) { ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5); ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1); }
@@ -3726,7 +3928,7 @@
                     
                     // ĐƯA ANCHOR POINT CỦA PIVOT VỀ [0,0] NHƯ YÊU CẦU
                     if (getSafeProp(pivot, "Anchor Point")) {
-                        getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
+                        if (!pivot.__autoMade) getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
                     }
 
                     for (var i = 0; i < targetLayers.length; i++) {
@@ -3742,7 +3944,7 @@
                         rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.transform.position.setValue(make3D ? [0, 0, 0] : [0, 0]);
                         if (make3D) { kid.transform.orientation.setValue([0, 0, 0]); kid.transform.xRotation.setValue(0); kid.transform.yRotation.setValue(0); kid.transform.zRotation.setValue(0); } else { kid.transform.rotation.setValue(0); }
 
-                        ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex); setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name);
+                        ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex); setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name); applyScaleAll(kid, pivot.name);
 
                         var rotPropName = make3D ? (axis + " Rotation") : "Rotation";
                         getSafeProp(rot, rotPropName).expression = 'ctrl = thisComp.layer("' + pivot.name + '").effect("Angle")(1);\nos = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\nidx = effect("Look Index")(1);\nvalue + (ctrl * idx) + os;';
@@ -3773,7 +3975,12 @@
                 else {
                     if (sel[0] instanceof ShapeLayer) { shapeLayer = sel[0]; for (var i = 1; i < sel.length; i++) targetLayers.push(sel[i]); } 
                     else if (sel[sel.length - 1] instanceof ShapeLayer) { shapeLayer = sel[sel.length - 1]; for (var i = 0; i < sel.length - 1; i++) targetLayers.push(sel[i]); } 
-                    else return alert("ERROR: The Shape Layer (Path) OR existing Control Null must be selected FIRST or LAST!");
+                    else {
+                        // Chi chon layer -> tu ve Path giua comp
+                        shapeLayer = makeCenterPathLayer(comp);
+                        targetLayers = [];
+                        for (var i = 0; i < sel.length; i++) targetLayers.push(sel[i]);
+                    }
                 }
 
                 app.beginUndoGroup("Rig to Path");
@@ -3783,15 +3990,15 @@
                         var pFx = pivot.property("ADBE Effect Parade");
                         if (pFx) {
                             var has3D = pivot.threeDLayer;
-                            if (path3DCheckbox.value !== has3D) { path3DCheckbox.value = has3D; path3DCheckbox.children[1].visible = has3D; }
+                            if (path3DCheckbox.value !== has3D) { path3DCheckbox.value = has3D; path3DCheckbox.setValue(has3D); }
                             var hasTaper = pFx.property("Start Scale") !== null;
-                            if (pathTaperCheckbox.value !== hasTaper) { pathTaperCheckbox.value = hasTaper; pathTaperCheckbox.children[1].visible = hasTaper; }
+                            if (pathTaperCheckbox.value !== hasTaper) { pathTaperCheckbox.value = hasTaper; pathTaperCheckbox.setValue(hasTaper); }
                             var hasTrim = pFx.property("Limit Start") !== null;
-                            if (pathTrimCheckbox.value !== hasTrim) { pathTrimCheckbox.value = hasTrim; pathTrimCheckbox.children[1].visible = hasTrim; }
+                            if (pathTrimCheckbox.value !== hasTrim) { pathTrimCheckbox.value = hasTrim; pathTrimCheckbox.setValue(hasTrim); }
                             var hasTwist = pFx.property("Twisted Angle") !== null;
-                            if (pathTwistedCheckbox.value !== hasTwist) { pathTwistedCheckbox.value = hasTwist; pathTwistedCheckbox.children[1].visible = hasTwist; }
+                            if (pathTwistedCheckbox.value !== hasTwist) { pathTwistedCheckbox.value = hasTwist; pathTwistedCheckbox.setValue(hasTwist); }
                             var hasDelay = pFx.property("Delay Frames") !== null;
-                            if (pathDelayCheckbox.value !== hasDelay) { pathDelayCheckbox.value = hasDelay; pathDelayCheckbox.children[1].visible = hasDelay; }
+                            if (pathDelayCheckbox.value !== hasDelay) { pathDelayCheckbox.value = hasDelay; pathDelayCheckbox.setValue(hasDelay); }
                         }
                     }
 
@@ -3809,10 +4016,10 @@
                     } else {
                         forceConvertToBezier(comp, shapeLayer);
                         var totalClones = targetLayers.length;
-                        pivot = comp.layers.addNull(); pivot.name = uniqueName(comp, "Path Cloooner Control"); pivot.label = 10; pivot.moveBefore(shapeLayer);
+                        pivot = comp.layers.addNull(); pivot.name = uniqueName(comp, "CL-Controller Path"); pivot.label = 10; pivot.moveBefore(shapeLayer);
                         if (!pivot.property("ADBE Effect Parade").property("isClooonerPath")) pivot.property("ADBE Effect Parade").addProperty("ADBE Checkbox Control").name = "isClooonerPath";
                         var pathLayerCtrl = pivot.property("ADBE Effect Parade").addProperty("ADBE Layer Control"); pathLayerCtrl.name = "Path"; pathLayerCtrl.property(1).setValue(shapeLayer.index); 
-                        ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones); pivot.property("ADBE Effect Parade").property("Total Clones").property(1).expression = totalClones.toString(); ensureControl(pivot, "Distance", "ADBE Slider Control", 5); ensureControl(pivot, "Offset", "ADBE Slider Control", 0); ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+                        ensureControl(pivot, "Total Clones", "ADBE Slider Control", totalClones); pivot.property("ADBE Effect Parade").property("Total Clones").property(1).expression = totalClones.toString(); ensureControl(pivot, "Distance", "ADBE Slider Control", 5); ensureControl(pivot, "Offset", "ADBE Slider Control", 0); ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
                         if (useTaper) { ensureControl(pivot, "Start Range", "ADBE Slider Control", 20); ensureControl(pivot, "Start Scale", "ADBE Slider Control", 0); ensureControl(pivot, "End Range", "ADBE Slider Control", 80); ensureControl(pivot, "End Scale", "ADBE Slider Control", 0); }
                         if (useTrim) { ensureControl(pivot, "Trim Start", "ADBE Slider Control", 0); ensureControl(pivot, "Trim End", "ADBE Slider Control", 100); ensureControl(pivot, "Limit Start", "ADBE Slider Control", 0); ensureControl(pivot, "Limit End", "ADBE Slider Control", 100); }
                         if (isTwisted) { ensureControl(pivot, "Twisted Angle", "ADBE Angle Control", 5); ensureControl(pivot, "Twisted Rate", "ADBE Slider Control", 1); }
@@ -3843,7 +4050,7 @@
 
                         rot.autoOrient = AutoOrientType.NO_AUTO_ORIENT; kid.autoOrient = AutoOrientType.NO_AUTO_ORIENT;
                         if (make3D) { kid.transform.orientation.setValue([0, 0, 0]); kid.transform.xRotation.setValue(0); kid.transform.yRotation.setValue(0); kid.transform.zRotation.setValue(0); } else { kid.transform.rotation.setValue(0); }
-                        ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(rot, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex); setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name);
+                        ensureControl(rot, "isHelperNull", "ADBE Checkbox Control", 1); setLockedIndex(rot, currentIndex); setLockedIndex(kid, currentIndex); ensureControl(rot, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Path Position", "ADBE Slider Control", 0); ensureControl(kid, "Clone Index", "ADBE Slider Control", currentIndex); setLookIndex(rot, pivot.name); setLookIndex(kid, pivot.name); applyScaleAll(kid, pivot.name);
                         var delayBlock = isDelayed ? 'dFrames = thisComp.layer("' + pivot.name + '").effect("Delay Frames")(1);\ndTime = framesToTime(idx * dFrames);\ndOffset = thisComp.layer("' + pivot.name + '").effect("Delay Offset")(1).valueAtTime(time - dTime);\n' : 'dOffset = 0;\n';
                         var posExpr = 'offset = thisComp.layer("' + pivot.name + '").effect("Offset")(1);\ndist = thisComp.layer("' + pivot.name + '").effect("Distance")(1);\nidx = effect("Look Index")(1);\n' + delayBlock + 'val = offset + (idx * dist) + dOffset;\nmod = val % 100;\nif (mod < 0) mod += 100;\nmod;';
                         rot.property("ADBE Effect Parade").property("Path Position").property(1).expression = posExpr; kid.property("ADBE Effect Parade").property("Path Position").property(1).expression = 'parent.effect("Path Position")(1);';
@@ -3940,7 +4147,7 @@
                     var defRadius = Math.round(Math.min(comp.width, comp.height) * 0.35);
 
                     var pivot = comp.layers.addNull();
-                    pivot.name = uniqueName(comp, "Sphere Cloooner Control");
+                    pivot.name = uniqueName(comp, "CL-Controller Sphere");
                     pivot.label = 10;
                     pivot.moveBefore(child);
                     pivot.threeDLayer = true;
@@ -4062,7 +4269,7 @@
                     // Pivot = First: đặt Controller ngay vị trí layer gốc để clone đầu tiên
                     // nằm đúng chỗ cũ, các clone sau trải sang phải và xuống dưới.
                     var pivot = comp.layers.addNull();
-                    pivot.name = uniqueName(comp, "Grid Cloooner Control");
+                    pivot.name = uniqueName(comp, "CL-Controller Grid");
                     pivot.label = 10;
                     pivot.moveBefore(child);
                     if (getSafeProp(pivot, "Anchor Point")) getSafeProp(pivot, "Anchor Point").setValue([0, 0]);
@@ -4150,20 +4357,24 @@
                 }
 
                 var sel = comp.selectedLayers;
-                if (sel.length !== 2) {
-                    alert("Please select exactly 2 layers: 1 Pivot Null and 1 Layer to duplicate.");
+                if (sel.length < 1 || sel.length > 2) {
+                    alert("Select 1 layer (a pivot Null is created for you at the centre of the comp),\nor 2 layers: your own Pivot Null plus the layer to duplicate.");
                     return;
                 }
 
                 var parent = null;
                 var child = null;
 
-                if (sel[0].nullLayer) {
+                if (sel.length === 2 && sel[0].nullLayer) {
                     parent = sel[0];
                     child = sel[1];
-                } else if (sel[1].nullLayer) {
+                } else if (sel.length === 2 && sel[1].nullLayer) {
                     parent = sel[1];
                     child = sel[0];
+                } else if (sel.length === 1) {
+                    // Khong co Null -> tu dung mot cai o giua comp roi chay tiep
+                    child = sel[0];
+                    parent = makeCenterPivotNull(comp, make3D);
                 } else {
                     alert("ERROR: Among the 2 selected layers, there must be exactly 1 Null Layer (to act as the pivot).");
                     return;
@@ -4202,13 +4413,13 @@
 
                 // SỬ DỤNG CHÍNH NULL CỦA NGƯỜI DÙNG LÀM PIVOT THAY VÌ TẠO MỚI
                 var pivot = parent;
-                pivot.name = uniqueName(comp, "Circular Cloooner Control");
+                pivot.name = uniqueName(comp, "CL-Controller Circular");
                 pivot.label = 10;
                 pivot.threeDLayer = make3D;
                 
                 // ĐƯA ANCHOR POINT CỦA PIVOT VỀ [0,0] NHƯ YÊU CẦU
                 if (getSafeProp(pivot, "Anchor Point")) {
-                    getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
+                    if (!pivot.__autoMade) getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
                 }
 
                 // --- TÍNH TOÁN BÁN KÍNH MẶT PHẲNG VÀ VECTOR GỐC ĐỂ TÁCH TRỤC 3D ---
@@ -4246,7 +4457,7 @@
                 
                 ensureControl(pivot, "Angle", "ADBE Angle Control", angle);
                 ensureControl(pivot, "Offset", "ADBE Angle Control", 0);
-                ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+                ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
                 ensureControl(pivot, "Radius", "ADBE Slider Control", planeLen); 
                 ensureControl(pivot, "Radius Stagger", "ADBE Slider Control", 100); 
                 
@@ -4323,6 +4534,7 @@
                     setLockedIndex(kid, i);
                     setLookIndex(rot, pivot.name);
                     setLookIndex(kid, pivot.name);
+                    applyScaleAll(kid, pivot.name);
                     
                     rot.shy = true; // BẬT ẨN NULL PHỤ TẠI ĐÂY
 
@@ -4407,8 +4619,8 @@
                 }
 
                 var sel = comp.selectedLayers;
-                if (sel.length !== 2) {
-                    alert("Please SELECT EXACTLY 2 LAYERS: 1 Shape Layer (containing the Path) and 1 Layer to duplicate.");
+                if (sel.length < 1 || sel.length > 2) {
+                    alert("Select 1 layer (a straight Path is drawn for you across the centre of the comp),\nor 2 layers: your own Shape Layer plus the layer to duplicate.");
                     return;
                 }
 
@@ -4416,12 +4628,16 @@
                 var child = null;
 
                 // Tự động nhận diện đâu là Shape Layer để lấy đường dẫn
-                if (sel[0] instanceof ShapeLayer) {
+                if (sel.length === 2 && sel[0] instanceof ShapeLayer) {
                     shapeLayer = sel[0];
                     child = sel[1];
-                } else if (sel[1] instanceof ShapeLayer) {
+                } else if (sel.length === 2 && sel[1] instanceof ShapeLayer) {
                     shapeLayer = sel[1];
                     child = sel[0];
+                } else if (sel.length === 1) {
+                    // Khong co Path -> tu ve mot duong thang ngang / doc giua comp
+                    child = sel[0];
+                    shapeLayer = makeCenterPathLayer(comp);
                 } else {
                     alert("At least 1 of the 2 selected layers must be a Shape Layer (containing a Path).");
                     return;
@@ -4442,7 +4658,7 @@
                     var baseLayerName = child.name;
 
                     var pivot = comp.layers.addNull();
-                    pivot.name = uniqueName(comp, "Path Cloooner Control");
+                    pivot.name = uniqueName(comp, "CL-Controller Path");
                     pivot.label = 10;
                     pivot.moveBefore(shapeLayer);
 
@@ -4458,7 +4674,7 @@
                     pivot.property("ADBE Effect Parade").property("Total Clones").property(1).expression = totalClones.toString();
                     ensureControl(pivot, "Distance", "ADBE Slider Control", distance);
                     ensureControl(pivot, "Offset", "ADBE Slider Control", 0);
-                    ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0);
+                    ensureControl(pivot, "Offset Look", "ADBE Slider Control", 0); ensureControl(pivot, "Scale All", "ADBE Slider Control", 100);
 
                     var useTaper = pathTaperCheckbox.value;
                     var useOrient = pathOrientCheckbox.value; 
@@ -4552,6 +4768,7 @@
                         setLockedIndex(kid, i);
                         setLookIndex(rot, pivot.name);
                         setLookIndex(kid, pivot.name);
+                        applyScaleAll(kid, pivot.name);
 
                         ensureControl(rot, "Path Position", "ADBE Slider Control", 0);
                         ensureControl(kid, "Path Position", "ADBE Slider Control", 0);
@@ -4725,10 +4942,10 @@
                     if (fx.property("isClooonerPath") !== null) return "Path";
                 }
                 var nm = layer.name || "";
-                if (nm.indexOf("Grid Cloooner Control") !== -1 || nm.indexOf("Grid Control") !== -1) return "Grid";
-                if (nm.indexOf("Sphere Cloooner Control") !== -1 || nm.indexOf("Sphere Control") !== -1) return "Sphere";
-                if (nm.indexOf("Circular Cloooner Control") !== -1 || nm.indexOf("Pivot Null") !== -1) return "Circular";
-                if (nm.indexOf("Path Cloooner Control") !== -1 || nm.indexOf("Clone on Path Control") !== -1) return "Path";
+                if (nm.indexOf("CL-Controller Grid") !== -1 || nm.indexOf("Grid Control") !== -1) return "Grid";
+                if (nm.indexOf("CL-Controller Sphere") !== -1 || nm.indexOf("Sphere Control") !== -1) return "Sphere";
+                if (nm.indexOf("CL-Controller Circular") !== -1 || nm.indexOf("Pivot Null") !== -1) return "Circular";
+                if (nm.indexOf("CL-Controller Path") !== -1 || nm.indexOf("Clone on Path Control") !== -1) return "Path";
             } catch (e) {}
             return null;
         }
@@ -4748,7 +4965,7 @@
 
         // Dat trang thai hien thi cho 1 checkbox icon do createCustomCheckbox tao ra
         function setCb(cb, v) {
-            try { cb.value = v ? true : false; cb.children[1].visible = cb.value; } catch (e) {}
+            try { cb.value = v ? true : false; cb.setValue(cb.value); } catch (e) {}
         }
 
         // Danh sach mode theo tung he thong, de lam mo / sang va bat su kien
@@ -4805,6 +5022,16 @@
 
         var KIND_LABEL = { "Grid": "Grid", "Sphere": "Sphere", "Circular": "Circular", "Path": "Path" };
 
+        // Mo tab tuong ung voi loai controller dang chon (khong nhan ra thi giu nguyen tab)
+        function gotoKindTab(kind) {
+            try {
+                if (kind === "Grid") switchTab(tabGrid);
+                else if (kind === "Sphere") switchTab(tabSphere);
+                else if (kind === "Circular") switchTab(tabTron);
+                else if (kind === "Path") switchTab(tabPath);
+            } catch (e) {}
+        }
+
         function modeError(wantKind, info) {
             if (!info) {
                 alert("No Cloooner Control selected.\n\n"
@@ -4816,6 +5043,9 @@
                     + "but this button belongs to the " + KIND_LABEL[wantKind] + " tab.\n\n"
                     + "Open the " + KIND_LABEL[info.kind] + " tab, or select a "
                     + KIND_LABEL[wantKind] + " Cloooner Control instead.");
+                // Dua thang nguoi dung sang dung tab cua controller ho dang chon.
+                // Neu khong nhan dien duoc (layer thuong) thi o nguyen tab hien tai.
+                gotoKindTab(info.kind);
             }
         }
 
@@ -4837,12 +5067,6 @@
                 catch (e) { alert("Error applying mode: " + e.toString()); }
                 app.endUndoGroup();
             };
-            // Khi bi lam mo, anh bi tat nen khong bat duoc click -> nghe o group bao ngoai
-            try {
-                cb.addEventListener("mousedown", function () {
-                    if (cb.__dim) modeError(kind, getSelectedController());
-                });
-            } catch (e) {}
         }
 
         for (var mk in MODE_GROUPS) {
@@ -4860,20 +5084,93 @@
             app.endUndoGroup();
         };
 
-        // Lam mo / sang cum mode theo viec dang chon dung Controller hay chua
-        function setModesDim(kind, dim) {
-            var arr = MODE_GROUPS[kind];
-            if (!arr) return;
-            for (var i = 0; i < arr.length; i++) {
-                var cb = arr[i];
-                if (cb.__dim === dim) continue;   // khong doi thi thoi, tranh ve lai moi nhip
-                cb.__dim = dim;
-                try {
-                    cb.children[0].enabled = !dim;
-                    cb.children[1].enabled = !dim;
-                } catch (e) {}
+
+        // ==========================================
+        // SYNC ORDER WITH LOOK
+        // ==========================================
+        // Offset Look doi cho cac clone tren quy dao nhung thu tu TREN TIMELINE giu nguyen,
+        // nen lop tren lop duoi trong lon xon. Nut nay xep lai thu tu layer cho khop voi
+        // Look Index. KHONG dong vao Clone Index -> Radius / Depth Stagger van chuan.
+
+        // Ban JS cua dung phep hoan vi ma Expression Look Index dang dung
+        function lookIndexOf(idx, cnt, o) {
+            if (cnt < 1) return idx;
+            var base = ((o % cnt) + cnt) % cnt;
+            var k = base + 1, g = 0;
+            while (g < cnt) {
+                var a = k, b = cnt;
+                while (b !== 0) { var t = b; b = a % b; a = t; }
+                if (a === 1) break;
+                k++; g++;
             }
+            return ((idx * k + o) % cnt + cnt) % cnt;
         }
+
+        function syncOrderWithLook() {
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
+
+            var info = getSelectedController();
+            if (!info) return alert("Select the Cloooner Control Null of the system you want to re-stack.");
+            var pivot = info.layer;
+            var pFx = pivot.property("ADBE Effect Parade");
+
+            var total = 0, offLook = 0;
+            try { total = Math.round(pFx.property("Total Clones").property(1).value); } catch (e) {}
+            try { offLook = Math.round(pFx.property("Offset Look").property(1).value); } catch (e) {}
+
+            app.beginUndoGroup("Sync Order With Look");
+            try {
+                // Gom tat ca cap Null phu + Clone cua he thong nay
+                var pairs = [];
+                for (var i = 1; i <= comp.numLayers; i++) {
+                    var h = comp.layer(i);
+                    if (h.parent !== pivot) continue;
+                    var hFx = h.property("ADBE Effect Parade");
+                    if (!hFx || hFx.property("Clone Index") === null) continue;
+                    var kid = null;
+                    for (var j = 1; j <= comp.numLayers; j++) {
+                        if (comp.layer(j).parent === h) { kid = comp.layer(j); break; }
+                    }
+                    if (!kid) continue;
+                    var ci = 0;
+                    try { ci = Math.round(hFx.property("Clone Index").property(1).value); } catch (e) {}
+                    // Doc thang Look Index da tinh san neu co, khong thi tu tinh lai
+                    var lk = null;
+                    try {
+                        var lp = hFx.property("Look Index");
+                        if (lp) lk = Math.round(lp.property(1).value);
+                    } catch (e) { lk = null; }
+                    if (lk === null || isNaN(lk)) lk = lookIndexOf(ci, Math.max(1, total), offLook);
+                    pairs.push({ helper: h, clone: kid, look: lk });
+                }
+
+                if (pairs.length < 2) {
+                    app.endUndoGroup();
+                    return alert("Nothing to re-stack - this system needs at least 2 clones.\n\nMake sure you selected the Control Null itself.");
+                }
+
+                pairs.sort(function (a, b) { return a.look - b.look; });
+
+                // Khoi Null phu xep ngay duoi Controller, khoi Clone xep tiep phia duoi
+                var lastRot = pivot;
+                for (var a1 = 0; a1 < pairs.length; a1++) {
+                    pairs[a1].helper.moveAfter(lastRot);
+                    lastRot = pairs[a1].helper;
+                }
+                var lastKid = lastRot;
+                for (var a2 = 0; a2 < pairs.length; a2++) {
+                    pairs[a2].clone.moveAfter(lastKid);
+                    lastKid = pairs[a2].clone;
+                }
+            } catch (e) {
+                alert("Error syncing order: " + e.toString());
+            }
+            app.endUndoGroup();
+        }
+
+        btnSyncLookTron.onClick = syncOrderWithLook;
+        btnSyncLookPath.onClick = syncOrderWithLook;
 
         var lastSyncKey = "";
         function syncModesFromSelection() {
@@ -4882,8 +5179,6 @@
             var tabKind = null;
             var t = tpanel.selection.text;
             if (t === "Grid" || t === "Sphere" || t === "Circular" || t === "Path") tabKind = t;
-
-            if (tabKind) setModesDim(tabKind, !(info && info.kind === tabKind));
 
             if (key === lastSyncKey) return;
             lastSyncKey = key;
@@ -4929,7 +5224,7 @@
                     if (!layer) return false;
                     var fx = layer.property("ADBE Effect Parade");
                     var hasFx = fx && (fx.property("isClooonerCircular") !== null || fx.property("isClooonerPath") !== null || fx.property("isClooonerGrid") !== null || fx.property("isClooonerSphere") !== null);
-                    var hasName = layer.name && (layer.name.indexOf("Circular Cloooner Control") !== -1 || layer.name.indexOf("Pivot Null") !== -1 || layer.name.indexOf("Path Cloooner Control") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1 || layer.name.indexOf("Grid Cloooner Control") !== -1 || layer.name.indexOf("Grid Control") !== -1 || layer.name.indexOf("Sphere Cloooner Control") !== -1 || layer.name.indexOf("Sphere Control") !== -1);
+                    var hasName = layer.name && (layer.name.indexOf("CL-Controller Circular") !== -1 || layer.name.indexOf("Pivot Null") !== -1 || layer.name.indexOf("CL-Controller Path") !== -1 || layer.name.indexOf("Clone on Path Control") !== -1 || layer.name.indexOf("CL-Controller Grid") !== -1 || layer.name.indexOf("Grid Control") !== -1 || layer.name.indexOf("CL-Controller Sphere") !== -1 || layer.name.indexOf("Sphere Control") !== -1);
                     return hasFx || hasName;
                 } catch(e) {
                     return false;
@@ -4947,7 +5242,7 @@
             }
 
             var pivotFx = pivot.property("ADBE Effect Parade");
-            var isPathMode = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("Path Cloooner Control") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
+            var isPathMode = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("CL-Controller Path") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
             var pivotFx = pivot.property("ADBE Effect Parade");
             var totalClonesCtrl = pivotFx ? pivotFx.property("Total Clones") : null;
 
