@@ -1,5 +1,34 @@
 (function (thisObj) {
     function buildUI(thisObj) {
+
+        // ==========================================
+        // GOP UNDO: ca mot lan bam nut chi la MOT buoc Undo duy nhat
+        // ==========================================
+        // Truoc day moi nhanh tu mo app.beginUndoGroup rieng, con nhung viec lam
+        // TRUOC do (tu tao Null tam, tu ve Path, ep convert Bezier bang menu command)
+        // lai nam ngoai nhom -> Undo phai bam nhieu lan moi ve lai duoc trang thai cu.
+        // Gio moi nhom long nhau deu bi gop lai thanh nhom NGOAI CUNG, va nhom ngoai
+        // cung luon duoc dong lai o "finally" nen khong bao gio bi bo ngo.
+        var __clUndoDepth = 0;
+        function clBeginUndo(name) {
+            if (__clUndoDepth === 0) { try { app.beginUndoGroup(name); } catch (e) {} }
+            __clUndoDepth++;
+        }
+        function clEndUndo() {
+            __clUndoDepth--;
+            if (__clUndoDepth <= 0) { __clUndoDepth = 0; try { app.endUndoGroup(); } catch (e) {} }
+        }
+        function clRunUndo(name, fn) {
+            clBeginUndo(name);
+            try {
+                fn();
+            } catch (err) {
+                try { alert("Cloooner error: " + err.toString()); } catch (e2) {}
+            } finally {
+                __clUndoDepth = 1;
+                clEndUndo();
+            }
+        }
         var panel = (thisObj instanceof Panel) ? thisObj : new Window("palette", "Cloooner", undefined, {resizeable: true});
         panel.orientation = "column";
         panel.alignChildren = ["fill", "top"];
@@ -408,8 +437,9 @@
                             "🔸 CLOOONER BUTTON: Click to start duplicating.\n" +
                             "🔸 🛅 TRUE CLONE (Submarine): Duplicates deeply into pre-comps, creating independent copies.\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
@@ -458,8 +488,9 @@
                             "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
@@ -471,7 +502,7 @@
                         alert(
                             "💡 CIRCULAR CLONE GUIDE\n\n" +
                             "📌 USAGE: Select 1 Pivot Null and 1 Layer to duplicate (Null must be FIRST or LAST in selection).\n" +
-                            "📌 Or just select the layer on its own - Cloooner drops a Null in the middle of the comp for you, with its anchor point in the centre of the Null. Works for Cloooner and for Rig to Circular.\n" +
+                            "📌 Or just select the layer on its own - Cloooner drops a Null in the middle of the comp for you. Its anchor point stays at [0,0] (top-left) like any normal AE Null, and the Null's POSITION is what sits dead centre - so that is the point the clones orbit. Works for Cloooner and for Rig to Circular.\n" +
                             "👉 The tool uses the Layer's coordinates as the starting point and calculates offsets to create a perfect circle.\n\n" +
                             "\ud83d\udd38 SYNC ORDER WITH LOOK: Offset Look moves clones around the trajectory, but their Timeline stacking stays put, so the overlaps can look wrong. Select the Control Null and press this to re-stack the layers to match Offset Look. It only changes layer order - nothing moves.\n\n" +
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
@@ -480,8 +511,9 @@
                             "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
@@ -505,8 +537,9 @@
                             "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 OFFSET LOOK: reshuffles which clone sits where, without touching the layers themselves. It is a plain slider so you can keyframe it, and 0 always means the original order. This replaces the old Random Shuffle button.\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
@@ -538,7 +571,8 @@
                             "   \u2022 Vertical Loop Offset: neighbouring latitude RINGS spin in opposite directions, like twisting the horizontal layers of a Rubik's cube.\n" +
                             "   \u2022 Horizontal Loop Offset: alternating members inside each ring slide up and down the meridian in opposite directions.\n\n" +
                             "\ud83d\udd38 SPHERE ROT X / Y / Z: rotate the distribution itself. With Auto-Facing on, clones slide across the ball while staying face-on to the camera. (Rotating the Control Null instead rotates everything bodily.)\n\n" +
-                            "\ud83d\udd38 DEPTH SCALING: Min Scale / Max Scale / Perspective Boost shrink the clones that sit further from the camera. Boost 100 switches the effect off.\n\n" +
+                            "\ud83d\udd38 DEPTH SCALING: Scale Front / Scale Back / Perspective Boost shrink the clones that sit further from the camera. Scale Front is the size of a clone right in front of the lens, Scale Back the size of one at the far side of the ball. (These two were called Max Scale / Min Scale before; an older sphere gets them renamed automatically, keeping your values.) Boost 100 switches the effect off.\n\n" +
+                            "\ud83d\udd38 SCALE ALL sits just above them on the Control Null, so the whole depth-scaling block stays together.\n\n" +
                             "\ud83d\udd38 ORIENT X / Y / Z: extra rotation added on top of whichever facing mode is active.\n\n" +
                             "\ud83d\udd38 HELPER NULLS carry Clone Index plus Row (which ring) and Col (position inside that ring), all computed live from the Grid of the sphere.\n\n" +
                             "\ud83d\udd38 MODE BUTTONS ARE LIVE: there is no Update Modes button any more.\n" +
@@ -546,8 +580,9 @@
                             "   \u2022 Click a mode and it applies to that Control Null straight away.\n" +
                             "   \u2022 Click a mode with nothing selected and it tells you to create or select a Cloooner Control. Pick a Control Null from another tab and it says so, then jumps you to that tab.\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first).\n\n" +
@@ -575,11 +610,22 @@
                             "   • Amp is a 2D point, or 3D when the system is 3D; Rotation uses an angle.\n" +
                             "   • Your keyframes keep working - the wiggle moves around them, it does not replace them.\n" +
                             "   • It never overwrites an existing Cloooner expression: it takes a free slot when there is one, otherwise it adds itself onto the end and stores the original so switching off restores it exactly.\n\n" +
-                            "🔸 FOLDING SECTIONS: the three blocks here each have a \u25BC header - click it to fold that block away when the panel is short. The \u25B2 button next to this Guide folds or unfolds all of them at once, and Cloooner remembers what you folded next time you open it. Only this tab folds - the clone tabs always show everything.\n\n" +
-                            "🔸 RESET CONTROLLER PARAMS: select the Control Null to put every ADJUSTMENT back to default - staggers, offsets, randomize, wiggle, orients, taper / trim / delay. Layout and structure are left alone (Grid size, Total Clones, Radius, Gaps, Angle, Distance, Path link, mode checkboxes).\n\n" +
+                            "\ud83d\udd38 REACTIVE (Area Sense built into Cloooner) - works on any clone system, or on loose layers:\n" +
+                            "   \u2022 Select the CONTROL NULL and click Position / Scale / Rotation / Opacity / Color -> every clone of that system reacts to a CURSOR layer. Select only a few layers instead and only those react, with their own cursor.\n" +
+                            "   \u2022 Click the same button again to switch that reaction off. A dot on the button means it is currently on for whatever you have selected.\n" +
+                            "   \u2022 One cursor stacks several reactions at once - Position + Scale + Rotation + Opacity + Color together.\n" +
+                            "   \u2022 It creates CL-Cursor NN (all the sliders live there, NOT on the Control Null) and CL-Fields NN, a dashed guide circle you can hide with Visual Fields. Reactive layers get an R in the name: 1 - R - Photo - Clone.\n" +
+                            "   \u2022 Area Field = full-strength radius, Area Falloff = how far it fades out, Area Sequence = react by TIMELINE distance as well as screen distance.\n" +
+                            "   \u2022 Scale Far / Scale Near multiply (100% = untouched), so Scale All and your own keyframes survive. Min Opacity is the opacity OUTSIDE the field.\n" +
+                            "   \u2022 Switch a system to 3D and Reactive follows: Z Offset, Rot X / Rot Y and a second guide ring appear by themselves.\n" +
+                            "   \u2022 Like Wiggle, it is appended to the clone expression already there and keeps a verbatim copy of it, so switching off restores the rig exactly. If you use both, switch Reactive off BEFORE Wiggle.\n" +
+                            "   \u2022 Press the ? next to the Reactive buttons for the full breakdown.\n\n" +
+                            "🔸 FOLDING SECTIONS: the four blocks here each have a \u25BC header - click it to fold that block away when the panel is short. The \u25B2 button next to this Guide folds or unfolds all of them at once, and Cloooner remembers what you folded next time you open it. Only this tab folds - the clone tabs always show everything.\n\n" +
+                            "🔸 RESET CONTROLLER PARAMS: select the Control Null to put every ADJUSTMENT back to default - staggers, offsets, randomize, wiggle, orients, taper / trim / delay. It also removes the Reactive set of that system. Layout and structure are left alone (Grid size, Total Clones, Radius, Gaps, Angle, Distance, Path link, mode checkboxes).\n\n" +
                             "\ud83d\udd38 SCALE ALL: one slider that resizes every clone at once. 100% means \"whatever size the layer already was\" - so your own scale, and any Scale keyframes on an individual clone, keep working underneath it.\n\n" +
+                            "\ud83d\udd38 ONE UNDO STEP: everything a button does - including the Null or Path that Cloooner draws for you - is now a single Undo. One Ctrl/Cmd+Z puts the comp back the way it was.\n\n" +
                             "\ud83e\uddf9 THE BROOM BUTTON (one button, adapts to your selection):\n" +
-                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig) or DELETE all (keep only the original).\n" +
+                            "   \u2022 Control Null -> asks you: RELEASE all clones (keep every layer, just unrig, and keep any Reactive set) or DELETE all (keep only the original, and wipe the Reactive set too).\n" +
                             "   \u2022 Clone layer(s) -> delete just those. The rest re-index and close the gap.\n" +
                             "   \u2022 Helper Null(s) -> detach that clone and bake its position, then re-index.\n" +
                             "   \u2022 Normal layer(s) -> permanently delete the layers AND their source comps (asks first)."
@@ -1758,8 +1804,9 @@
             return 'try {\n'
                 + '  ctrl = thisComp.layer("' + pivotName + '");\n'
                 + '  cam = thisComp.activeCamera;\n'
-                + '  minS = ctrl.effect("Min Scale")(1);\n'
-                + '  maxS = ctrl.effect("Max Scale")(1);\n'
+                + '  minS = 10; maxS = 20;\n'
+                + '  try { minS = ctrl.effect("Scale Back")(1); } catch(e1) { try { minS = ctrl.effect("Min Scale")(1); } catch(e2) {} }\n'
+                + '  try { maxS = ctrl.effect("Scale Front")(1); } catch(e3) { try { maxS = ctrl.effect("Max Scale")(1); } catch(e4) {} }\n'
                 + '  boost = ctrl.effect("Perspective Boost")(1);\n'
                 + '  if (!cam) { s = 100; }\n'
                 + '  else {\n'
@@ -1852,11 +1899,21 @@
         }
 
         // Thu tu chuan cua bo control tren Sphere Control
+        // Doi ten mot effect cua Controller Sphere ma giu nguyen gia tri da chinh
+        function renameSphereFx(pivot, oldName, newName) {
+            try {
+                var fx = pivot.property("ADBE Effect Parade");
+                if (fx.property(newName)) return;
+                var pr = fx.property(oldName);
+                if (pr) pr.name = newName;
+            } catch (e) {}
+        }
+
         function reorderSphereControls(pivot) {
-            var order = ["isClooonerSphere", "Total Clones", "Radius", "Offset Look", "Scale All", "Offset Sphere", "Rings", "From Polar",
+            var order = ["isClooonerSphere", "Total Clones", "Radius", "Offset Look", "Offset Sphere", "Rings", "From Polar",
                          "Virus Offset", "Vertical Loop Offset", "Horizontal Loop Offset",
                          "Sphere Rot X", "Sphere Rot Y", "Sphere Rot Z",
-                         "Min Scale", "Max Scale", "Perspective Boost",
+                         "Scale All", "Scale Front", "Scale Back", "Perspective Boost",
                          "Auto Facing",
                          "Random Offset", "Random Offset Z", "Random Seed",
                          "Orient X (3D only)", "Orient Y (3D only)", "Orient Z"];
@@ -1902,9 +1959,13 @@
             ensureControl(pivot, "Sphere Rot Y", "ADBE Angle Control", 0);
             ensureControl(pivot, "Sphere Rot Z", "ADBE Angle Control", 0);
 
-            // Scale theo chieu sau
-            ensureControl(pivot, "Min Scale", "ADBE Slider Control", 10);
-            ensureControl(pivot, "Max Scale", "ADBE Slider Control", 20);
+            // Scale theo chieu sau.
+            // "Min Scale" / "Max Scale" cua ban cu duoc DOI TEN sang "Scale Back" /
+            // "Scale Front" de giu nguyen gia tri nguoi dung da chinh, khong tao lai.
+            renameSphereFx(pivot, "Min Scale", "Scale Back");
+            renameSphereFx(pivot, "Max Scale", "Scale Front");
+            ensureControl(pivot, "Scale Front", "ADBE Slider Control", 20);
+            ensureControl(pivot, "Scale Back", "ADBE Slider Control", 10);
             ensureControl(pivot, "Perspective Boost", "ADBE Slider Control", 100);
 
             // Mode
@@ -2006,11 +2067,14 @@
         // Tao san 3 muc theo dung thu tu hien thi: Add More Clones -> Wiggle -> Helper Tools
         var toolCloneMoreMaster = addSection(tabTools, "Add More Clones", "secAddClones", true).body;
         var toolWigglePanel = addSection(tabTools, "Wiggle", "secWiggle", true).body;
+        var toolReactivePanel = addSection(tabTools, "Reactive", "secReactive", true).body;
         var toolHelperPanel = addSection(tabTools, "Helper Tools", "secHelper", true).body;
 
         toolCloneMoreMaster.spacing = 15;
         toolWigglePanel.alignChildren = ["fill", "center"];
         toolWigglePanel.spacing = 10;
+        toolReactivePanel.alignChildren = ["fill", "center"];
+        toolReactivePanel.spacing = 8;
         toolHelperPanel.alignChildren = ["fill", "center"];
         toolHelperPanel.spacing = 15;
 
@@ -2079,7 +2143,7 @@
 
             // 2. THUẬT TOÁN ĐẢO NGƯỢC (REVERSE ORDER)
             if (targetLayers.length > 1) {
-                app.beginUndoGroup("Reverse Layers Order");
+                clBeginUndo("Reverse Layers Order");
                 try {
                     // Sắp xếp mảng layer theo thứ tự từ trên xuống dưới (index tăng dần) để đảm bảo không bị lỗi sai lệch vị trí
                     targetLayers.sort(function(a, b) { return a.index - b.index; });
@@ -2095,7 +2159,7 @@
                 } catch (e) {
                     alert("Error reversing Order: " + e.toString());
                 }
-                app.endUndoGroup();
+                clEndUndo();
             } else {
                 alert("Please select multiple layers, or select 1 Control Null (Circular/Path) to automatically reverse all clones.");
             }
@@ -2124,7 +2188,7 @@
 
             if (!pivot) return alert("Cloooner system not found. Please select a Control Null (Pivot/Path).");
 
-            app.beginUndoGroup("Toggle Hide Helper Nulls");
+            clBeginUndo("Toggle Hide Helper Nulls");
             try {
                 var targetState = null;
                 var helpers = [];
@@ -2145,7 +2209,7 @@
             } catch(e) {
                 alert("Error Toggling Nulls: " + e.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         };
     
 
@@ -2170,6 +2234,793 @@
             + "Default 30 / 5. Keyframes on the clones keep working - wiggle moves around them.\n"
             + "Click again to switch the wiggle OFF.";
         btnWigglePos.helpTip = btnWiggleScale.helpTip = btnWiggleRot.helpTip = wiggleTip;
+
+        // ==========================================
+        // 7. REACTIVE (TAB TOOLS) - Area Sense ga chat vao Cloooner
+        // ==========================================
+        // Y tuong goc tu Area.Sense cua Masd.Lab: mot layer "con tro" phat ra mot vung
+        // anh huong hinh cau, layer nao nam trong vung thi doi mau / mo / to / lech / xoay.
+        // Khi ghep vao Cloooner co 4 khac biet quan trong:
+        //  - Moi tien to AS_ cua ban goc doi thanh CL (CL-Cursor, CL-Fields, CL-Dynamic Fill).
+        //  - Con tro la MOT layer rieng, khong nhoi them effect vao Null dieu khien
+        //    (Null dieu khien da qua nhieu thong so roi). Null dieu khien chi giu dung
+        //    mot slider "Reactive Group" de biet no gan voi con tro nao.
+        //  - KHONG BAO GIO ghi de Expression cua Cloooner: Reactive noi them vao cuoi
+        //    cong thuc cu va cat nguyen van ban cu vao comment /*CLRB ... CLRB*/ de khi
+        //    tat thi tra lai dung y nguyen (dung co che da chay on cua Wiggle).
+        //  - Mot con tro chua nhieu Reactive mot luc: stack ca Position + Scale + Rotation.
+
+        var REACTIVE_KINDS = ["Position", "Scale", "Rotation", "Opacity", "Color"];
+
+        // Effect dai dien cho tung loai -> co mat la dang BAT, khong co la dang TAT
+        var REACTIVE_PROBE = {
+            "Position": "X Offset",
+            "Scale":    "Scale Near",
+            "Rotation": "Rot Z Amount",
+            "Opacity":  "Min Opacity",
+            "Color":    "Select Color"
+        };
+
+        var RTAG_OPEN = "/*CLRB\n";
+        var RTAG_CLOSE = "\nCLRB*/";
+
+        // --- Tien ich effect ---
+        function rvFx(layer) {
+            try { return layer.property("ADBE Effect Parade"); } catch (e) { return null; }
+        }
+        function rvHasFx(layer, name) {
+            var fx = rvFx(layer);
+            if (!fx) return false;
+            try { return fx.property(name) !== null; } catch (e) { return false; }
+        }
+        function rvFxValue(layer, name) {
+            try { return rvFx(layer).property(name).property(1).value; } catch (e) { return null; }
+        }
+        function rvRemoveFx(layer, name) {
+            try { var pr = rvFx(layer).property(name); if (pr) pr.remove(); } catch (e) {}
+        }
+        // Color Control: AE doi value 4 chieu, nhung co ban cu chi nhan 3 -> thu ca hai
+        function rvEnsureColor(layer, name, rgb) {
+            var fx = rvFx(layer);
+            if (!fx) return;
+            try { if (fx.property(name) !== null) return; } catch (e) {}
+            try {
+                var c = fx.addProperty("ADBE Color Control");
+                c.name = name;
+                try { c.property(1).setValue([rgb[0], rgb[1], rgb[2], 1]); }
+                catch (e1) { try { c.property(1).setValue([rgb[0], rgb[1], rgb[2]]); } catch (e2) {} }
+            } catch (e3) {}
+        }
+        // Tim o mau cua mot effect ma khong phu thuoc ten tieng Anh
+        function rvFindColorParam(fxProp) {
+            try {
+                for (var i = 1; i <= fxProp.numProperties; i++) {
+                    var p = fxProp.property(i);
+                    try { if (p.propertyValueType === PropertyValueType.COLOR) return p; } catch (e) {}
+                }
+            } catch (e2) {}
+            return null;
+        }
+
+        function rvPad2(n) { return (n < 10 ? "0" : "") + n; }
+        function rvCursorName(gid) { return "CL-Cursor " + rvPad2(gid); }
+        function rvFieldsName(gid) { return "CL-Fields " + rvPad2(gid); }
+
+        function rvIsRigLayer(layer) {
+            try {
+                var n = layer.name || "";
+                return (n.indexOf("CL-Cursor") === 0 || n.indexOf("CL-Fields") === 0);
+            } catch (e) { return false; }
+        }
+
+        function rvNextGid(comp) {
+            var mx = 0;
+            for (var i = 1; i <= comp.numLayers; i++) {
+                var m = comp.layer(i).name.match(/^CL-Cursor\s+(\d+)/);
+                if (m) { var v = parseInt(m[1], 10); if (!isNaN(v) && v > mx) mx = v; }
+            }
+            return mx + 1;
+        }
+        function rvFindCursor(comp, gid) {
+            var nm = rvCursorName(gid);
+            for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).name === nm) return comp.layer(i);
+            return null;
+        }
+        function rvGidOf(layer) {
+            var v = rvFxValue(layer, "Reactive Group");
+            if (v === null) return 0;
+            var n = Math.round(v);
+            return (isNaN(n) || n < 1) ? 0 : n;
+        }
+
+        // Moi layer dang chiu anh huong cua mot nhom (bo Null dieu khien va bo rig)
+        function rvMembers(comp, gid) {
+            var out = [];
+            if (!gid) return out;
+            for (var i = 1; i <= comp.numLayers; i++) {
+                var l = comp.layer(i);
+                if (rvIsRigLayer(l)) continue;
+                if (isAnyControlNull(l)) continue;
+                if (rvGidOf(l) === gid) out.push(l);
+            }
+            return out;
+        }
+
+        // Toan bo Clone that su (khong tinh Null phu) cua mot Null dieu khien
+        function rvClonesOf(comp, pivot) {
+            var out = [];
+            for (var i = 1; i <= comp.numLayers; i++) {
+                var l = comp.layer(i);
+                if (!rvHasFx(l, "Clone Index") || rvHasFx(l, "isHelperNull")) continue;
+                var p = l.parent;
+                if (!p) continue;
+                if (p.index === pivot.index) out.push(l);
+                else if (p.parent && p.parent.index === pivot.index) out.push(l);
+            }
+            return out;
+        }
+
+        // Doc lua chon hien tai ra { pivot, layers, gid, cursor }. Khong tao gi ca.
+        function rvResolve(comp) {
+            var sel = comp.selectedLayers;
+            var res = { pivot: null, layers: [], gid: 0, cursor: null };
+            if (!sel || !sel.length) return res;
+
+            // Chon dung con tro / vong guide -> lay luon ca nhom cua no
+            if (sel.length === 1 && rvIsRigLayer(sel[0])) {
+                var m = sel[0].name.match(/(\d+)/);
+                res.gid = m ? parseInt(m[1], 10) : 0;
+                res.layers = rvMembers(comp, res.gid);
+                if (res.gid) res.cursor = rvFindCursor(comp, res.gid);
+                return res;
+            }
+
+            var pivot = null;
+            for (var i = 0; i < sel.length; i++) if (isAnyControlNull(sel[i])) { pivot = sel[i]; break; }
+
+            if (pivot && sel.length === 1) {
+                res.pivot = pivot;
+                res.layers = rvClonesOf(comp, pivot);
+                res.gid = rvGidOf(pivot);
+                if (!res.gid) {
+                    for (var k = 0; k < res.layers.length; k++) {
+                        var g = rvGidOf(res.layers[k]);
+                        if (g) { res.gid = g; break; }
+                    }
+                }
+            } else {
+                for (var j = 0; j < sel.length; j++) {
+                    var l = sel[j];
+                    if (isAnyControlNull(l) || rvIsRigLayer(l)) continue;
+                    res.layers.push(l);
+                }
+                for (var j2 = 0; j2 < res.layers.length; j2++) {
+                    var g2 = rvGidOf(res.layers[j2]);
+                    if (g2) { res.gid = g2; break; }
+                }
+            }
+            if (res.gid) res.cursor = rvFindCursor(comp, res.gid);
+            return res;
+        }
+
+        // --- Con tro va vong guide ---
+        function rvCreateCursor(comp, gid, is3D) {
+            var c = comp.layers.addNull();
+            c.name = rvCursorName(gid);
+            c.label = 9;
+            c.threeDLayer = is3D ? true : false;
+            try {
+                var ap = getSafeProp(c, "Anchor Point");
+                if (ap) ap.setValue(is3D ? [0, 0, 0] : [0, 0]);
+            } catch (e) {}
+            try {
+                c.transform.position.setValue(is3D
+                    ? [comp.width / 2, comp.height / 2, 0]
+                    : [comp.width / 2, comp.height / 2]);
+            } catch (e) {}
+            try { c.moveToBeginning(); } catch (e) {}
+            ensureControl(c, "Reactive Group", "ADBE Slider Control", gid);
+            // Khoa cung so nhom lai de khong ai keo lech mat lien ket
+            try { rvFx(c).property("Reactive Group").property(1).expression = gid.toString(); } catch (e) {}
+            ensureControl(c, "Area Field", "ADBE Slider Control", 200);
+            ensureControl(c, "Area Falloff", "ADBE Slider Control", 50);
+            ensureControl(c, "Area Sequence", "ADBE Slider Control", 0);
+            ensureControl(c, "Visual Fields", "ADBE Checkbox Control", 1);
+            rvEnsureColor(c, "Visual Field Color", [1, 1, 1]);
+            return c;
+        }
+
+        function rvFindLayerByName(comp, nm) {
+            for (var i = 1; i <= comp.numLayers; i++) if (comp.layer(i).name === nm) return comp.layer(i);
+            return null;
+        }
+
+        function rvEnsureFields(comp, cursor, gid, is3D) {
+            var nm = rvFieldsName(gid);
+            var sh = rvFindLayerByName(comp, nm);
+            if (sh) { try { sh.locked = false; } catch (e) {} }
+            if (!sh) {
+                sh = comp.layers.addShape();
+                sh.name = nm;
+                sh.label = 12;
+                sh.guideLayer = true;
+                try {
+                    var root = sh.property("ADBE Root Vectors Group");
+                    var grp = root.addProperty("ADBE Vector Group");
+                    grp.name = "Field Ring";
+                    var inner = grp.property("ADBE Vectors Group");
+                    var el = inner.addProperty("ADBE Vector Shape - Ellipse");
+                    var st = inner.addProperty("ADBE Vector Graphic - Stroke");
+                    try { st.property("ADBE Vector Stroke Width").setValue(2); } catch (e) {}
+                    try {
+                        var ds = st.property("ADBE Vector Stroke Dashes");
+                        if (ds) {
+                            ds.addProperty("ADBE Vector Stroke Dash 1").setValue(10);
+                            ds.addProperty("ADBE Vector Stroke Gap 1").setValue(5);
+                        }
+                    } catch (e) {}
+                    try {
+                        st.property("ADBE Vector Stroke Color").expression =
+                            'try { thisComp.layer("' + cursor.name + '").effect("Visual Field Color")(1); } catch(e) { value; }';
+                    } catch (e) {}
+                    try {
+                        el.property("ADBE Vector Ellipse Size").expression =
+                            'try {\n'
+                          + '  rc = thisComp.layer("' + cursor.name + '");\n'
+                          + '  a = Math.max(0, rc.effect("Area Field")(1));\n'
+                          + '  f = Math.max(0, rc.effect("Area Falloff")(1));\n'
+                          + '  r = a + f;\n'
+                          + '  [r * 2, r * 2];\n'
+                          + '} catch(e) { value; }';
+                    } catch (e) {}
+                } catch (eBuild) {}
+                try {
+                    sh.transform.opacity.expression =
+                        'try { (thisComp.layer("' + cursor.name + '").effect("Visual Fields")(1) == 1) ? 100 : 0; } catch(e) { value; }';
+                } catch (e) {}
+                try { sh.parent = cursor; } catch (e) {}
+                try { sh.moveAfter(cursor); } catch (e) {}
+            }
+            sh.threeDLayer = is3D ? true : false;
+            // Dat toa do SAU khi parent xong, vi AE giu nguyen vi tri the gioi khi doi parent
+            try { sh.transform.position.setValue(is3D ? [0, 0, 0] : [0, 0]); } catch (e) {}
+            sh.shy = true;
+            try { sh.locked = true; } catch (e) {}
+
+            // 3D: them mot vong thu hai quay 90 do cho de uoc luong khoi cau
+            var nm2 = nm + " B";
+            var sh2 = rvFindLayerByName(comp, nm2);
+            if (is3D) {
+                if (!sh2) {
+                    try {
+                        sh.locked = false;
+                        sh2 = sh.duplicate();
+                        sh2.name = nm2;
+                        sh2.threeDLayer = true;
+                        sh2.guideLayer = true;
+                        sh2.transform.yRotation.setValue(90);
+                        sh2.shy = true;
+                        sh2.locked = true;
+                        sh.locked = true;
+                    } catch (e) {}
+                }
+            } else if (sh2) {
+                try { sh2.locked = false; sh2.remove(); } catch (e) {}
+            }
+            return sh;
+        }
+
+        // --- Expression ---
+        // Bo khoang trang o hai dau (ExtendScript khong co String.trim)
+        function rvTrim(s) {
+            var a = 0, b = s.length;
+            while (a < b) { var c1 = s.charAt(a); if (c1 === " " || c1 === "\n" || c1 === "\r" || c1 === "\t") a++; else break; }
+            while (b > a) { var c2 = s.charAt(b - 1); if (c2 === " " || c2 === "\n" || c2 === "\r" || c2 === "\t") b--; else break; }
+            return s.substring(a, b);
+        }
+
+        // Vi tri bat dau cua CAU LENH CUOI CUNG o cap ngoai cung.
+        // Quet xuoi va dem do sau ngoac: dau ';' o do sau 0 ket thuc mot cau lenh,
+        // dau '}' dong lai mot khoi o do sau 0 cung vay (if / for / else ...).
+        function rvLastStmtStart(text) {
+            var depth = 0, start = 0;
+            for (var i = 0; i < text.length; i++) {
+                var ch = text.charAt(i);
+                if (ch === "(" || ch === "[" || ch === "{") depth++;
+                else if (ch === ")" || ch === "]" || ch === "}") {
+                    depth--;
+                    if (depth === 0 && ch === "}") start = i + 1;
+                } else if (ch === ";" && depth === 0) start = i + 1;
+            }
+            return start;
+        }
+
+        function rvMatchBrace(s, i) {
+            var d = 0;
+            for (var k = i; k < s.length; k++) {
+                var ch = s.charAt(k);
+                if (ch === "{") d++;
+                else if (ch === "}") { d--; if (d === 0) return k; }
+            }
+            return -1;
+        }
+
+        // Bien mot Expression bat ky thanh cac cau lenh de lai KET QUA trong bien rBase.
+        // Tra ve null neu khong doc hieu duoc -> luc do Reactive khong gan vao va bao nguoi dung.
+        // Gan het Expression cua Cloooner co dang "try { ... } catch(e) { value; }" - khong
+        // ket thuc bang ';' nen phai di vao trong tung khoi, day la ly do co ham nay.
+        function rvBaseLines(text) {
+            var t = rvTrim(text || "");
+            if (t === "") return "rBase = value;\n";
+
+            if (t.charAt(t.length - 1) === "}" && t.indexOf("try") === 0) {
+                var o1 = t.indexOf("{");
+                if (o1 === -1) return null;
+                var c1 = rvMatchBrace(t, o1);
+                if (c1 === -1) return null;
+                var inner = t.substring(o1 + 1, c1);
+                var rest = t.substring(c1 + 1);
+                var o2 = rest.indexOf("{");
+                if (o2 === -1) return null;
+                var c2 = rvMatchBrace(rest, o2);
+                if (c2 === -1) return null;
+                if (rvTrim(rest.substring(c2 + 1)) !== "") return null;
+                var catchHead = rvTrim(rest.substring(0, o2));     // giu nguyen "catch(e)"
+                var handler = rest.substring(o2 + 1, c2);
+                var a = rvBaseLines(inner);
+                var b = rvBaseLines(handler);
+                if (a === null || b === null) return null;
+                return "rBase = value;\ntry {\n" + a + "} " + catchHead + " {\n" + b + "}\n";
+            }
+
+            if (t.charAt(t.length - 1) !== ";") return null;
+            var body = t.substring(0, t.length - 1);
+            var st = rvLastStmtStart(body);
+            var prefix = body.substring(0, st);
+            var last = rvTrim(body.substring(st));
+            if (last === "") return null;
+            prefix = (rvTrim(prefix) === "") ? "" : (prefix + "\n");
+            return prefix + "rBase = (" + last + ");\n";
+        }
+
+        // KHONG dung toWorld(anchorPoint) nhu ban Area.Sense goc: toWorld phu thuoc vao
+        // chinh Position / Scale / Rotation cua layer, nen dat trong Expression cua nhung
+        // thuoc tinh do la tu tao circular reference. Thay vao do lay toa do the gioi tu
+        // Position (qua parent.toWorld) - va rieng Expression cua Position thi lay tu
+        // KET QUA cua chinh cong thuc Cloooner ben tren (bien rBase), nen luon dung cho
+        // moi kieu rig: tron, path, grid hay sphere.
+        function rvHead(cursorName) {
+            return 'rW3 = (rWp.length > 2) ? rWp : [rWp[0], rWp[1], 0];\n'
+                 + 'rc = thisComp.layer("' + cursorName + '");\n'
+                 + 'rA = Math.max(0, rc.effect("Area Field")(1));\n'
+                 + 'rF = Math.max(0, rc.effect("Area Falloff")(1));\n'
+                 + 'rQ = Math.max(0, rc.effect("Area Sequence")(1));\n'
+                 + 'rD = length(rc.toWorld([0,0,0]), rW3);\n'
+                 + 'rFd = (rD <= rA) ? 1 : ((rD >= (rA + rF)) ? 0 : 1 - (rD - rA) / rF);\n'
+                 + 'rDi = Math.abs(index - rc.index);\n'
+                 + 'rFi = (rQ > 0 && rDi <= rQ) ? 1 - rDi / rQ : 0;\n'
+                 + 'rFall = Math.max(0, Math.min(1, Math.max(rFd, rFi)));\n';
+        }
+
+        // Cau lenh cuoi: tron he so rFall vao gia tri goc rBase
+        function rvTail(kind, axis) {
+            if (kind === "Position") {
+                return 'rOx = rc.effect("X Offset")(1) * rFall;\n'
+                     + 'rOy = rc.effect("Y Offset")(1) * rFall;\n'
+                     + 'rOz = 0; try { rOz = rc.effect("Z Offset")(1) * rFall; } catch(eZ) { rOz = 0; }\n'
+                     + '(rBase.length > 2) ? [rBase[0] + rOx, rBase[1] + rOy, rBase[2] + rOz] : [rBase[0] + rOx, rBase[1] + rOy];';
+            }
+            if (kind === "Scale") {
+                return 'rSf = linear(rFall, 0, 1, rc.effect("Scale Far")(1), rc.effect("Scale Near")(1)) / 100;\n'
+                     + '(rBase.length > 2) ? [rBase[0] * rSf, rBase[1] * rSf, rBase[2] * rSf] : [rBase[0] * rSf, rBase[1] * rSf];';
+            }
+            if (kind === "Opacity") {
+                return 'rOp = linear(rFall, 0, 1, rc.effect("Min Opacity")(1), 100) / 100;\n'
+                     + 'rBase * rOp;';
+            }
+            if (kind === "Rotation") {
+                return 'rRot = rc.effect("Rot ' + axis + ' Amount")(1) * rFall;\n'
+                     + 'rBase + rRot;';
+            }
+            if (kind === "Color") {
+                return 'rCb = rc.effect("Base Color")(1);\n'
+                     + 'rCs = rc.effect("Select Color")(1);\n'
+                     + 'rCb + rFall * (rCs - rCb);';
+            }
+            return 'rBase;';
+        }
+
+        function rvHasExpr(pr) {
+            try { return pr && pr.expression && pr.expression.indexOf("rFall") !== -1; }
+            catch (e) { return false; }
+        }
+
+        // Noi Reactive vao SAU Expression dang co: cong thuc cu chay truoc, ket qua cua no
+        // vao bien rBase, roi Reactive moi tron tiep. Van ban cu con duoc cat nguyen van
+        // vao comment /*CLRB ... CLRB*/ de khi tat tra lai dung ban cu, khong doan bang regex.
+        function rvAppend(pr, kind, cursorName, axis) {
+            if (!pr || !pr.canSetExpression) return false;
+            if (rvHasExpr(pr)) return true;
+
+            var old = "";
+            try { old = pr.expression; } catch (e) { old = ""; }
+
+            var baseLines = rvBaseLines(old);
+            if (baseLines === null) return false;      // khong doc hieu duoc -> khong dam gan
+
+            var trimmed = rvTrim(old || "");
+            var tag = (trimmed === "") ? "" : (RTAG_OPEN + trimmed + RTAG_CLOSE + "\n");
+
+            // Position lay toa do tu chinh ket qua cua minh, cac thuoc tinh khac doc
+            // Position (thuoc tinh khac -> khong bao gio circular reference)
+            var posSrc = (kind === "Position") ? "rBase" : "transform.position";
+
+            pr.expression = tag + baseLines
+                + 'rLp = ' + posSrc + ';\n'
+                + 'rWp = rLp;\n'
+                + 'try { rWp = parent.toWorld(rLp); } catch(ePar) { rWp = rLp; }\n'
+                + rvHead(cursorName)
+                + rvTail(kind, axis);
+            return true;
+        }
+
+        function rvStrip(pr) {
+            if (!rvHasExpr(pr)) return false;
+            try {
+                var old = pr.expression;
+                var a = old.indexOf(RTAG_OPEN);
+                var b = old.indexOf(RTAG_CLOSE);
+                if (a !== -1 && b !== -1 && b > a) pr.expression = old.substring(a + RTAG_OPEN.length, b);
+                else pr.expression = "";
+            } catch (e) { return false; }
+            return true;
+        }
+
+        // Nhung o Transform ma mot loai Reactive se chiem
+        function rvKindProps(layer, kind) {
+            if (kind === "Position") return [getSafeProp(layer, "Position")];
+            if (kind === "Scale") return [getSafeProp(layer, "Scale")];
+            if (kind === "Opacity") return [getSafeProp(layer, "Opacity")];
+            if (kind === "Rotation") {
+                if (layer.threeDLayer) {
+                    return [getSafeProp(layer, "X Rotation"), getSafeProp(layer, "Y Rotation"), getSafeProp(layer, "Z Rotation")];
+                }
+                return [getSafeProp(layer, "Rotation")];
+            }
+            return [];
+        }
+        function rvKindAxes(layer, kind) {
+            if (kind !== "Rotation") return [null];
+            return layer.threeDLayer ? ["X", "Y", "Z"] : ["Z"];
+        }
+
+        function rvEnsureKindControls(cursor, kind, is3D) {
+            if (kind === "Position") {
+                ensureControl(cursor, "X Offset", "ADBE Slider Control", 0);
+                ensureControl(cursor, "Y Offset", "ADBE Slider Control", 0);
+                if (is3D) ensureControl(cursor, "Z Offset", "ADBE Slider Control", 0);
+            } else if (kind === "Scale") {
+                ensureControl(cursor, "Scale Far", "ADBE Slider Control", 100);
+                ensureControl(cursor, "Scale Near", "ADBE Slider Control", 150);
+            } else if (kind === "Rotation") {
+                ensureControl(cursor, "Rot Z Amount", "ADBE Angle Control", 45);
+                if (is3D) {
+                    ensureControl(cursor, "Rot X Amount", "ADBE Angle Control", 0);
+                    ensureControl(cursor, "Rot Y Amount", "ADBE Angle Control", 0);
+                }
+            } else if (kind === "Opacity") {
+                ensureControl(cursor, "Min Opacity", "ADBE Slider Control", 0);
+            } else if (kind === "Color") {
+                rvEnsureColor(cursor, "Base Color", [1, 1, 1]);
+                rvEnsureColor(cursor, "Select Color", [1, 0, 0]);
+            }
+        }
+        function rvRemoveKindControls(cursor, kind) {
+            var names = [];
+            if (kind === "Position") names = ["X Offset", "Y Offset", "Z Offset"];
+            else if (kind === "Scale") names = ["Scale Far", "Scale Near"];
+            else if (kind === "Rotation") names = ["Rot X Amount", "Rot Y Amount", "Rot Z Amount"];
+            else if (kind === "Opacity") names = ["Min Opacity"];
+            else if (kind === "Color") names = ["Base Color", "Select Color"];
+            for (var i = 0; i < names.length; i++) rvRemoveFx(cursor, names[i]);
+        }
+
+        // Color khong dung o Transform: no di qua mot effect Fill rieng tren tung layer
+        function rvApplyColor(layer, cursorName) {
+            var fx = rvFx(layer);
+            if (!fx) return false;
+            var f = null;
+            try { f = fx.property("CL-Dynamic Fill"); } catch (e) { f = null; }
+            if (!f) {
+                try { f = fx.addProperty("ADBE Fill"); f.name = "CL-Dynamic Fill"; }
+                catch (e) { return false; }
+            }
+            var cp = rvFindColorParam(f);
+            if (!cp) return false;
+            return rvAppend(cp, "Color", cursorName, null);
+        }
+
+        function rvApplyToLayer(layer, cursorName, kind) {
+            if (kind === "Color") return rvApplyColor(layer, cursorName);
+            var props = rvKindProps(layer, kind);
+            var axes = rvKindAxes(layer, kind);
+            var ok = false;
+            for (var i = 0; i < props.length; i++) {
+                if (rvAppend(props[i], kind, cursorName, axes[i])) ok = true;
+            }
+            return ok;
+        }
+
+        function rvStripFromLayer(layer, kind) {
+            if (kind === "Color") { rvRemoveFx(layer, "CL-Dynamic Fill"); return; }
+            if (kind === "Rotation") {
+                // Go het ca 2D va 3D de doi che do 3D khong con sot lai
+                var all = [getSafeProp(layer, "Rotation"), getSafeProp(layer, "X Rotation"),
+                           getSafeProp(layer, "Y Rotation"), getSafeProp(layer, "Z Rotation")];
+                for (var i = 0; i < all.length; i++) rvStrip(all[i]);
+                return;
+            }
+            var props = rvKindProps(layer, kind);
+            for (var j = 0; j < props.length; j++) rvStrip(props[j]);
+        }
+
+        // Them / bo tien to R ngay sau chi so: "1 - Photo - Clone" -> "1 - R - Photo - Clone"
+        function rvTagName(layer, on) {
+            try {
+                var n = layer.name;
+                if (on) {
+                    if (/^\d+\s*-\s*R\s*-\s*/.test(n) || /^R\s*-\s*/.test(n)) return;
+                    var m = n.match(/^(\d+)\s*-\s*/);
+                    if (m) layer.name = m[1] + " - R - " + n.substring(m[0].length);
+                    else layer.name = "R - " + n;
+                } else {
+                    if (/^\d+\s*-\s*R\s*-\s*/.test(n)) layer.name = n.replace(/^(\d+)\s*-\s*R\s*-\s*/, "$1 - ");
+                    else if (/^R\s*-\s*/.test(n)) layer.name = n.replace(/^R\s*-\s*/, "");
+                }
+            } catch (e) {}
+        }
+
+        function rvActiveKinds(cursor) {
+            var out = [];
+            if (!cursor) return out;
+            for (var i = 0; i < REACTIVE_KINDS.length; i++) {
+                if (rvHasFx(cursor, REACTIVE_PROBE[REACTIVE_KINDS[i]])) out.push(REACTIVE_KINDS[i]);
+            }
+            return out;
+        }
+
+        // Xoa sach ca bo Reactive cua mot nhom: expression, slider, ten, con tro, vong guide
+        function rvDestroyGroup(comp, gid) {
+            if (!gid) return;
+            var members = rvMembers(comp, gid);
+            for (var i = 0; i < members.length; i++) {
+                var L = members[i];
+                for (var k = 0; k < REACTIVE_KINDS.length; k++) rvStripFromLayer(L, REACTIVE_KINDS[k]);
+                rvRemoveFx(L, "Reactive Group");
+                rvTagName(L, false);
+            }
+            for (var n = comp.numLayers; n >= 1; n--) {
+                var l = comp.layer(n);
+                if (!rvIsRigLayer(l) && rvGidOf(l) === gid) rvRemoveFx(l, "Reactive Group");
+            }
+            var doomed = [rvCursorName(gid), rvFieldsName(gid), rvFieldsName(gid) + " B"];
+            for (var m = comp.numLayers; m >= 1; m--) {
+                var lay = comp.layer(m);
+                for (var d = 0; d < doomed.length; d++) {
+                    if (lay.name === doomed[d]) { try { lay.locked = false; lay.remove(); } catch (e) {} break; }
+                }
+            }
+        }
+
+        // Tim so nhom Reactive gan voi mot Null dieu khien
+        function rvGidOfSystem(comp, pivot) {
+            var gid = rvGidOf(pivot);
+            if (gid) return gid;
+            try {
+                var kids = rvClonesOf(comp, pivot);
+                for (var i = 0; i < kids.length; i++) {
+                    var g = rvGidOf(kids[i]);
+                    if (g) return g;
+                }
+            } catch (e) {}
+            return 0;
+        }
+
+        // Dung cho nut Broom (DELETE) va Reset Controller Params
+        function rvPurgeSystem(comp, pivot) {
+            try { rvDestroyGroup(comp, rvGidOfSystem(comp, pivot)); } catch (e) {}
+        }
+
+        // Moi lan forceUpdate* viet lai Expression cua clone la Reactive bi xoa theo,
+        // nen phai gan lai. Dong thoi cap nhat so chieu: he clone bat 3D thi Reactive
+        // cung len 3D (them Z Offset, Rot X / Rot Y, vong guide thu hai).
+        function rvRefreshSystem(comp, pivot) {
+            try {
+                var gid = rvGidOfSystem(comp, pivot);
+                if (!gid) return;
+                var cursor = rvFindCursor(comp, gid);
+                if (!cursor) return;
+                var members = rvMembers(comp, gid);
+                if (!members.length) return;
+
+                var is3D = pivot && pivot.threeDLayer ? true : false;
+                for (var m = 0; m < members.length; m++) if (members[m].threeDLayer) { is3D = true; break; }
+                if (is3D) cursor.threeDLayer = true;
+                rvEnsureFields(comp, cursor, gid, is3D);
+
+                var kinds = rvActiveKinds(cursor);
+                for (var k = 0; k < kinds.length; k++) {
+                    rvEnsureKindControls(cursor, kinds[k], is3D);
+                    for (var i = 0; i < members.length; i++) {
+                        rvStripFromLayer(members[i], kinds[k]);
+                        rvApplyToLayer(members[i], cursor.name, kinds[k]);
+                        rvTagName(members[i], true);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // --- Nut bam: dang tat thi bat, dang bat thi go ra ---
+        function runReactive(kind) {
+            ensureJavaScriptEngine();
+            var comp = app.project.activeItem;
+            if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
+
+            var info = rvResolve(comp);
+            if (!info.layers.length) {
+                return alert("Reactive needs a target.\n\n"
+                    + "• Select the CONTROL NULL -> every clone of that system becomes reactive.\n"
+                    + "• Select just a few layers -> only those become reactive.\n"
+                    + "• Click the same button again to switch that reactive back off.");
+            }
+
+            var is3D = false;
+            for (var i = 0; i < info.layers.length; i++) if (info.layers[i].threeDLayer) { is3D = true; break; }
+
+            // Dang bat -> tat
+            if (info.cursor && rvHasFx(info.cursor, REACTIVE_PROBE[kind])) {
+                var gid0 = info.gid;
+                var members = rvMembers(comp, gid0);
+                for (var m = 0; m < members.length; m++) rvStripFromLayer(members[m], kind);
+                rvRemoveKindControls(info.cursor, kind);
+                if (rvActiveKinds(info.cursor).length === 0) rvDestroyGroup(comp, gid0);
+                return;
+            }
+
+            // Dang tat -> bat
+            var gid = info.gid;
+            var cursor = info.cursor;
+            if (!cursor) {
+                gid = rvNextGid(comp);
+                cursor = rvCreateCursor(comp, gid, is3D);
+            }
+            if (is3D) cursor.threeDLayer = true;
+            rvEnsureFields(comp, cursor, gid, is3D);
+            rvEnsureKindControls(cursor, kind, is3D);
+            if (info.pivot) ensureControl(info.pivot, "Reactive Group", "ADBE Slider Control", gid);
+
+            var applied = 0, skipped = 0, failed = 0;
+            for (var k = 0; k < info.layers.length; k++) {
+                var L = info.layers[k];
+                var g = rvGidOf(L);
+                if (g && g !== gid) { skipped++; continue; }
+                ensureControl(L, "Reactive Group", "ADBE Slider Control", gid);
+                if (rvApplyToLayer(L, cursor.name, kind)) applied++; else failed++;
+                rvTagName(L, true);
+            }
+
+            if (applied === 0) {
+                // Khong gan duoc vao dau ca -> don lai cho sach, khong de rac
+                try {
+                    rvRemoveKindControls(cursor, kind);
+                    if (rvActiveKinds(cursor).length === 0) rvDestroyGroup(comp, gid);
+                } catch (eClean) {}
+            }
+
+            var msg = "";
+            if (skipped) msg += skipped + " layer(s) already belong to another Reactive cursor and were left alone.\n";
+            if (failed) msg += failed + " layer(s) had an expression Reactive could not attach to.\n";
+            if (applied === 0) msg += "Nothing was applied.\n";
+            if (msg !== "") alert("Reactive " + kind + "\n\n" + msg);
+        }
+
+        // --- UI cum Reactive ---
+        var reactiveRow1 = toolReactivePanel.add("group");
+        reactiveRow1.orientation = "row";
+        reactiveRow1.alignChildren = ["fill", "center"];
+        reactiveRow1.spacing = 5;
+        var btnRvPos = reactiveRow1.add("button", undefined, "Position");
+        btnRvPos.preferredSize.height = 28;
+        var btnRvScale = reactiveRow1.add("button", undefined, "Scale");
+        btnRvScale.preferredSize.height = 28;
+        var btnRvRot = reactiveRow1.add("button", undefined, "Rotation");
+        btnRvRot.preferredSize.height = 28;
+
+        var reactiveRow2 = toolReactivePanel.add("group");
+        reactiveRow2.orientation = "row";
+        reactiveRow2.alignChildren = ["fill", "center"];
+        reactiveRow2.spacing = 5;
+        var btnRvOpa = reactiveRow2.add("button", undefined, "Opacity");
+        btnRvOpa.preferredSize.height = 28;
+        var btnRvCol = reactiveRow2.add("button", undefined, "Color");
+        btnRvCol.preferredSize.height = 28;
+        var btnRvHelp = reactiveRow2.add("button", undefined, "?");
+        btnRvHelp.preferredSize = [28, 28];
+        btnRvHelp.helpTip = "How Reactive works";
+
+        var reactiveTip = "REACTIVE - a cursor layer with a field of influence.\n"
+            + "Select the CONTROL NULL to make every clone of that system react,\n"
+            + "or select just a few layers to make only those react.\n"
+            + "Click the same button again to switch that one off.\n"
+            + "One cursor stacks several reactions at once (Position + Scale + Rotation...).";
+        btnRvPos.helpTip = btnRvScale.helpTip = btnRvRot.helpTip = btnRvOpa.helpTip = btnRvCol.helpTip = reactiveTip;
+
+        var RV_BTNS = { "Position": btnRvPos, "Scale": btnRvScale, "Rotation": btnRvRot, "Opacity": btnRvOpa, "Color": btnRvCol };
+        var RV_DOT = String.fromCharCode(0x25CF) + " ";
+
+        // Nut sang len theo dung lua chon hien tai, de biet cai nao dang bat.
+        // Ham nay bi goi 2 lan / giay nen phai bo qua khi lua chon khong doi.
+        var lastRvKey = "";
+        function syncReactiveButtons(force) {
+            var key = "none";
+            try {
+                var c0 = app.project.activeItem;
+                if (c0 instanceof CompItem) {
+                    var s0 = c0.selectedLayers;
+                    key = c0.id + "|" + s0.length;
+                    for (var q = 0; q < s0.length; q++) key += "," + s0[q].index;
+                }
+            } catch (eK) { key = "none"; }
+            if (!force && key === lastRvKey) return;
+            lastRvKey = key;
+
+            var cursor = null;
+            try {
+                var comp = app.project.activeItem;
+                if (comp instanceof CompItem) cursor = rvResolve(comp).cursor;
+            } catch (e) { cursor = null; }
+            for (var i = 0; i < REACTIVE_KINDS.length; i++) {
+                var kind = REACTIVE_KINDS[i];
+                var on = cursor ? rvHasFx(cursor, REACTIVE_PROBE[kind]) : false;
+                var want = (on ? RV_DOT : "") + kind;
+                try { if (RV_BTNS[kind].text !== want) RV_BTNS[kind].text = want; } catch (e2) {}
+            }
+        }
+
+        btnRvPos.onClick   = function () { clRunUndo("Reactive Position", function () { runReactive("Position"); }); syncReactiveButtons(true); };
+        btnRvScale.onClick = function () { clRunUndo("Reactive Scale",    function () { runReactive("Scale"); });    syncReactiveButtons(true); };
+        btnRvRot.onClick   = function () { clRunUndo("Reactive Rotation", function () { runReactive("Rotation"); }); syncReactiveButtons(true); };
+        btnRvOpa.onClick   = function () { clRunUndo("Reactive Opacity",  function () { runReactive("Opacity"); });  syncReactiveButtons(true); };
+        btnRvCol.onClick   = function () { clRunUndo("Reactive Color",    function () { runReactive("Color"); });    syncReactiveButtons(true); };
+
+        btnRvHelp.onClick = function () {
+            alert(
+                "💡 REACTIVE GUIDE\n\n"
+              + "Reactive gives Cloooner a CURSOR with a field of influence around it. Any layer inside that field reacts; outside it nothing happens. Animate the cursor and the reaction travels through your clones.\n\n"
+              + "🔸 HOW TO TURN IT ON:\n"
+              + "   • Select the CONTROL NULL -> every clone of that system becomes reactive.\n"
+              + "   • Select only a few layers -> only those become reactive, with their own cursor.\n"
+              + "   • Click the same button again to switch that reaction off. The button shows a dot while it is on.\n"
+              + "   • One cursor holds several reactions at once - stack Position + Scale + Rotation + Opacity + Color.\n\n"
+              + "🔸 WHAT GETS CREATED:\n"
+              + "   • CL-Cursor NN - the cursor. All the sliders live here, NOT on the Control Null.\n"
+              + "   • CL-Fields NN - a dashed guide circle showing the field. Turn it off with Visual Fields.\n"
+              + "   • Every reactive layer gets an R in its name (1 - R - Photo - Clone) and a Reactive Group slider holding the cursor number.\n\n"
+              + "🔸 CURSOR SLIDERS:\n"
+              + "   • Area Field: radius where the reaction is at full strength.\n"
+              + "   • Area Falloff: how far past that it fades out to nothing.\n"
+              + "   • Area Sequence: reacts by TIMELINE DISTANCE too - neighbouring layers of the cursor react even when they are far away on screen.\n"
+              + "   • Position: X / Y / Z Offset - how far a layer is pushed.\n"
+              + "   • Scale: Scale Far (outside, normally 100%) and Scale Near (inside, 150%). These multiply, so your own scale and Scale All stay intact.\n"
+              + "   • Rotation: Rot Z Amount, plus Rot X / Rot Y when the system is 3D.\n"
+              + "   • Opacity: Min Opacity is the opacity OUTSIDE the field. 0 means only the layers under the cursor are visible.\n"
+              + "   • Color: Base Color outside, Select Color inside - driven through a CL-Dynamic Fill effect on each layer.\n\n"
+              + "🔸 IT NEVER BREAKS THE RIG: Reactive is appended to the end of whatever expression the clone already has, and the original is stored inside the expression so switching off restores it exactly. Your keyframes keep working.\n\n"
+              + "🔸 3D: switch a clone system to 3D and Reactive follows - Z Offset, Rot X / Rot Y and a second guide ring appear automatically.\n\n"
+              + "🔸 CLEAN / RESET: the broom's DELETE and Reset Controller Params also wipe the Reactive set of that system. RELEASE keeps it.\n\n"
+              + "🔸 TIP: if you use Wiggle as well, switch Reactive off BEFORE switching Wiggle off - they are stacked on the same expression."
+            );
+        };
 
         // --- Co san Expression wiggle chua? (nhan dien bang bien danh dau wNoise) ---
         function hasWiggleExpr(prop) {
@@ -2361,7 +3212,7 @@
                 if (already) break;
             }
 
-            app.beginUndoGroup(already ? ("Wiggle " + kind + " OFF") : ("Wiggle " + kind + " ON"));
+            clBeginUndo(already ? ("Wiggle " + kind + " OFF") : ("Wiggle " + kind + " ON"));
             try {
                 if (already) {
                     for (var k2 = 0; k2 < pairs.length; k2++) removeWiggleFromPair(kind, pairs[k2][0], pairs[k2][1]);
@@ -2377,7 +3228,7 @@
             } catch (e) {
                 alert("Error applying Wiggle " + kind + ": " + e.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         }
 
         // ==========================================
@@ -2425,6 +3276,8 @@
             "Sphere Rot X": 0,
             "Sphere Rot Y": 0,
             "Sphere Rot Z": 0,
+            "Scale Back": 10,
+            "Scale Front": 20,
             "Min Scale": 10,
             "Max Scale": 20,
             "Perspective Boost": 100,
@@ -2446,10 +3299,13 @@
             }
             var pivot = sel[0];
 
-            app.beginUndoGroup("Reset Controller Params");
+            clBeginUndo("Reset Controller Params");
             try {
                 var fx = pivot.property("ADBE Effect Parade");
                 var changed = 0;
+
+                // Reset dua he thong ve mac dinh -> go luon ca bo Reactive
+                try { rvPurgeSystem(comp, pivot); } catch (eRv) {}
 
                 for (var name in GRID_PARAM_DEFAULTS) {
                     var pr = null;
@@ -2495,7 +3351,7 @@
             } catch (error) {
                 alert("Error resetting params: " + error.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         };
 
         btnWigglePos.onClick = function () { runWiggle("Position"); };
@@ -2627,7 +3483,7 @@
         creditGroup.orientation = "row";
         creditGroup.alignment = ["right", "center"];
         creditGroup.spacing = 5;
-        creditGroup.add("statictext", undefined, "v3.18");
+        creditGroup.add("statictext", undefined, "v3.19");
        
         
 
@@ -2818,16 +3674,15 @@
         }
 
         // Tu tao Null lam tam khi nguoi dung chi chon layer ma khong chon Null.
-        // Null dat giua comp, anchor point o CHINH GIUA o vuong Null (khong phai goc tren trai).
+        // Null dat giua comp, anchor point de o [0,0] (goc tren trai) dung nhu Null
+        // thong thuong cua AE - diem xoay chinh la Position nen van nam giua comp.
         function makeCenterPivotNull(comp, make3D) {
             var nl = comp.layers.addNull();
             nl.name = uniqueName(comp, "CL-Pivot");
             nl.label = 10;
             nl.threeDLayer = make3D ? true : false;
-            var w = 100, h = 100;
-            try { w = nl.width; h = nl.height; } catch (e) {}
             var ap = getSafeProp(nl, "Anchor Point");
-            if (ap) ap.setValue(make3D ? [w / 2, h / 2, 0] : [w / 2, h / 2]);
+            if (ap) ap.setValue(make3D ? [0, 0, 0] : [0, 0]);
             nl.transform.position.setValue(make3D
                 ? [comp.width / 2, comp.height / 2, 0]
                 : [comp.width / 2, comp.height / 2]);
@@ -3088,7 +3943,7 @@
             var sel = comp.selectedLayers;
             if (sel.length === 0) return alert("Please select the Main Null (for Clean All) OR Clones/Helper Nulls (for Safe Clean).");
 
-            app.beginUndoGroup("Safe Clean Cloooner");
+            clBeginUndo("Safe Clean Cloooner");
             try {
                 var isSpecificClean = false;
                 var pivot = null;
@@ -3125,7 +3980,7 @@
                 }
 
                 if (!isSpecificClean) pivot = sel[0]; 
-                if (!pivot) { app.endUndoGroup(); return alert("Cloooner system not found. Please select a Control Null (Pivot/Path)."); }
+                if (!pivot) { clEndUndo(); return alert("Cloooner system not found. Please select a Control Null (Pivot/Path)."); }
 
                 var pivotFx = pivot.property("ADBE Effect Parade");
                 var isPathControl = (pivotFx && pivotFx.property("isClooonerPath") !== null) || pivot.name.indexOf("CL-Controller Path") !== -1 || pivot.name.indexOf("Clone on Path Control") !== -1;
@@ -3136,7 +3991,16 @@
                 if (isPathControl || isCircularControl || isGridControl || isSphereControl) {
                     
                     if (!isSpecificClean) {
-                        // ================= CLEAN ALL =================
+                        // ================= CLEAN ALL (RELEASE) =================
+                        // RELEASE thi GIU bo Reactive. Nhung Expression cua clone bi xoa
+                        // trang khi nha parent, nen phai nho lai de gan lai sau khi bake.
+                        var rvRelGid = 0, rvRelCursor = null, rvRelKinds = [], rvRelLayers = [];
+                        try {
+                            rvRelGid = rvGidOfSystem(comp, pivot);
+                            rvRelCursor = rvRelGid ? rvFindCursor(comp, rvRelGid) : null;
+                            rvRelKinds = rvActiveKinds(rvRelCursor);
+                            rvRelLayers = rvMembers(comp, rvRelGid);
+                        } catch (eRv) {}
                         // Nhả Shape Path an toàn trước khi xoá Pivot
                         if (isPathControl && pivotFx.property("Path")) {
                             var pathIdx = Math.round(pivotFx.property("Path").property(1).value);
@@ -3167,6 +4031,20 @@
                             if (pivotFx) { for (var e = pivotFx.numProperties; e > 0; e--) pivotFx.property(e).remove(); }
                             var pProps = ["Rotation", "X Rotation", "Y Rotation", "Z Rotation"];
                             for(var p=0; p<pProps.length; p++) { var pr = getSafeProp(pivot, pProps[p]); if(pr && pr.canSetExpression) pr.expression = ""; }
+                            // Giu lai lien ket toi con tro Reactive tren Pivot vua bi don sach
+                            if (rvRelGid) { try { ensureControl(pivot, "Reactive Group", "ADBE Slider Control", rvRelGid); } catch (eRv) {} }
+                        }
+
+                        // Gan lai Reactive len gia tri da bake, de RELEASE khong lam mat no
+                        if (rvRelCursor && rvRelKinds.length) {
+                            for (var rr = 0; rr < rvRelLayers.length; rr++) {
+                                var rvL = rvRelLayers[rr];
+                                try { if (!rvL.isValid) continue; } catch (eRv) { continue; }
+                                for (var rk = 0; rk < rvRelKinds.length; rk++) {
+                                    try { rvApplyToLayer(rvL, rvRelCursor.name, rvRelKinds[rk]); } catch (eRv) {}
+                                }
+                                rvTagName(rvL, true);
+                            }
                         }
 
                     } else {
@@ -3256,6 +4134,8 @@
                             r.name = (i + 1) + " - Null " + baseName;
                             var isRig = k.name.indexOf(" - Rig") !== -1;
                             k.name = (i + 1) + " - " + baseName + (isRig ? " - Rig" : " - Clone");
+                            // Danh so lai lam mat tien to R -> dap lai neu clone van dang Reactive
+                            try { rvTagName(k, rvGidOf(k) > 0); } catch (eRv) {}
 
                             if (isPathControl) {
                                 try { k.property("ADBE Effect Parade").property("Path Position").property(1).expression = 'parent.effect("Path Position")(1);'; } catch(e){}
@@ -3269,6 +4149,7 @@
                         // GRID: viet lai toan bo Expression de luoi don lai khong bi vo cau truc
                         if (isGridControl) { try { forceUpdateGrid(pivot, comp); } catch(e) {} }
                         if (isSphereControl) { try { forceUpdateSphere(pivot, comp); } catch(e) {} }
+                        if (isGridControl || isSphereControl) { try { rvRefreshSystem(comp, pivot); } catch(e) {} }
                     }
 
                     // *** XOÁ SOURCE RÁC TRONG PROJECT PANEL NẾU KHÔNG CÒN AI DÙNG ***
@@ -3286,7 +4167,7 @@
             } catch (error) {
                 alert("Error during Safe Clean: " + error.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         }
 
 // --- 🗑️ RESET BUTTON LOGIC (XOÁ SẠCH SẼ HỆ THỐNG VÀ SOURCE RÁC) ---
@@ -3296,7 +4177,7 @@
             var sel = comp.selectedLayers;
             if (sel.length === 0) return alert("Please select layers to Reset/Delete.");
 
-            app.beginUndoGroup("Reset Cloooner");
+            clBeginUndo("Reset Cloooner");
             try {
                 var firstSel = sel[0];
                 var pivotFx = firstSel.property("ADBE Effect Parade");
@@ -3317,6 +4198,10 @@
 
                 if (isPathControl || isCircularControl || isGridControl || isSphereControl) {
                     var pivot = firstSel;
+
+                    // DELETE he thong -> xoa luon ca bo Reactive gan voi no
+                    // (chi RELEASE moi giu lai, xem phan Safe Clean ben duoi)
+                    try { rvPurgeSystem(comp, pivot); } catch (eRv) {}
                     
                     // Nhả Shape Path an toàn trước khi dọn dẹp
                     if (isPathControl && pivotFx && pivotFx.property("Path")) {
@@ -3400,7 +4285,7 @@
 
                 } else {
                     var proceed = confirm("⚠️ CAUTION: REGULAR LAYERS / COMPS SELECTED\n\nIf you click OK, the tool will PERMANENTLY DELETE these layers from the Timeline AND their SOURCE COMPOSITIONS from the Project!\n\nAre you sure you want to continue?");
-                    if (!proceed) { app.endUndoGroup(); return; }
+                    if (!proceed) { clEndUndo(); return; }
 
                     for (var s = 0; s < sel.length; s++) {
                         var l = sel[s];
@@ -3414,7 +4299,7 @@
             } catch (error) {
                 alert("Error during Reset: " + error.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         }
         // ==========================================
         // NUT CHOI GOP: TU NHAN DIEN SELECTION DE CHON DUNG HANH VI
@@ -3471,7 +4356,7 @@
             return result;
         }
 
-        cleanBtn.onClick = function () {
+        function clooonerCleanAction() {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) return alert("Please select a Composition.");
             var sel = comp.selectedLayers;
@@ -3509,12 +4394,13 @@
 
             // 3. Layer thuong -> nhanh xoa han kem Source (van hoi xac nhan)
             doResetSystem();
-        };
+        }
+        cleanBtn.onClick = function () { clRunUndo("Cloooner Clean", clooonerCleanAction); };
 
 // ==========================================
         // SỨC MẠNH CỦA NÚT RIG DƯỚI ĐÁY (RIG TO CIRCULAR & PATH GỘP LẠI)
         // ==========================================
-        rigBtn.onClick = function() {
+        function clooonerRigAction() {
             ensureJavaScriptEngine();
             var activeTab = tpanel.selection.text;
             var comp = app.project.activeItem;
@@ -3542,7 +4428,7 @@
 
                 if (targetLayers.length === 0) return alert("ERROR: Please select the layers you want to rig onto the Sphere.");
 
-                app.beginUndoGroup("Rig to Sphere");
+                clBeginUndo("Rig to Sphere");
                 try {
                     var startIndex = 0;
                     var lastRot = pivot;
@@ -3651,7 +4537,7 @@
                     pivot.selected = true;
 
                 } catch (e) { alert("Error Rigging Sphere: " + e.toString()); }
-                app.endUndoGroup();
+                clEndUndo();
                 return;
             }
 
@@ -3682,7 +4568,7 @@
 
                 if (targetLayers.length === 0) return alert("ERROR: Please select the layers you want to rig into the Grid.");
 
-                app.beginUndoGroup("Rig to Grid");
+                clBeginUndo("Rig to Grid");
                 try {
                     var startIndex = 0;
                     var lastRot = pivot;
@@ -3830,7 +4716,7 @@
                     pivot.selected = true;
 
                 } catch (e) { alert("Error Rigging Grid: " + e.toString()); }
-                app.endUndoGroup();
+                clEndUndo();
                 return;
             }
             
@@ -3852,7 +4738,7 @@
                     }
                 }
 
-                app.beginUndoGroup("Rig to Circular");
+                clBeginUndo("Rig to Circular");
                 try {
                     // --- ĐỒNG BỘ UI TỪ NULL CONTROL SẴN CÓ ĐỂ KẾT NẠP ĐÚNG SETTING ---
                     if (isAppending && pivot) {
@@ -3886,7 +4772,7 @@
                     var origVecStr = "[0, -1, 0]"; // Biến toàn cục hứng giá trị Vector cho cả hệ thống
 
                     if (isAppending) {
-                        forceUpdateCircular(pivot, comp); 
+                        forceUpdateCircular(pivot, comp); try { rvRefreshSystem(comp, pivot); } catch (eRv) {} 
                         var totalClonesCtrl = pivot.property("ADBE Effect Parade").property("Total Clones");
                         startIndex = parseInt(totalClonesCtrl.property(1).value);
                         totalClonesCtrl.property(1).expression = (startIndex + targetLayers.length).toString(); 
@@ -3928,7 +4814,7 @@
                     
                     // ĐƯA ANCHOR POINT CỦA PIVOT VỀ [0,0] NHƯ YÊU CẦU
                     if (getSafeProp(pivot, "Anchor Point")) {
-                        if (!pivot.__autoMade) getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
+                        getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
                     }
 
                     for (var i = 0; i < targetLayers.length; i++) {
@@ -3962,7 +4848,7 @@
                     pivot.shy = false; comp.hideShyLayers = false; comp.hideShyLayers = true;
                     for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false; pivot.selected = true;
                 } catch(e) { alert("Error Rigging Circular: " + e.toString()); }
-                app.endUndoGroup();
+                clEndUndo();
             }
 
             // LOGIC RIG TO PATH (ĐỌC TỪ UI TAB PATH)
@@ -3983,7 +4869,7 @@
                     }
                 }
 
-                app.beginUndoGroup("Rig to Path");
+                clBeginUndo("Rig to Path");
                 try {
                     // --- ĐỒNG BỘ UI TỪ NULL CONTROL SẴN CÓ ĐỂ KẾT NẠP ĐÚNG SETTING ---
                     if (isAppending && pivot) {
@@ -4006,7 +4892,7 @@
                     var startIndex = 0; var lastRot = pivot; var lastKid = null;
 
                     if (isAppending) {
-                        forceUpdatePath(pivot, comp); // UPDATE TOÀN BỘ THEO MODE MỚI TRƯỚC KHI ADD
+                        forceUpdatePath(pivot, comp); try { rvRefreshSystem(comp, pivot); } catch (eRv) {} // UPDATE TOÀN BỘ THEO MODE MỚI TRƯỚC KHI ADD
                         var totalClonesCtrl = pivot.property("ADBE Effect Parade").property("Total Clones");
                         startIndex = parseInt(totalClonesCtrl.property(1).value);
                         totalClonesCtrl.property(1).expression = (startIndex + targetLayers.length).toString(); 
@@ -4068,13 +4954,14 @@
                     pivot.shy = false; comp.hideShyLayers = false; comp.hideShyLayers = true;
                     for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false; pivot.selected = true;
                 } catch(e) { /* alert("Error Rigging Path: " + e.toString()); */ }
-                app.endUndoGroup();
+                clEndUndo();
             }
-        };
+        }
+        rigBtn.onClick = function () { clRunUndo("Cloooner Rig", clooonerRigAction); };
 
         // --- CLONE BUTTON LOGIC ---
 
-        cloneBtn.onClick = function () {
+        function clooonerCloneAction() {
             ensureJavaScriptEngine(); // Ép JS Engine trước khi đẻ Expression
 
             var activeTab = tpanel.selection.text;
@@ -4103,7 +4990,7 @@
                     if (!proceed) return;
                 }
 
-                app.beginUndoGroup("Static Cloooner");
+                clBeginUndo("Static Cloooner");
                 try {
                     for (var s = 0; s < sel.length; s++) {
                         var targetLayer = sel[s];
@@ -4114,7 +5001,7 @@
                         }
                     }
                 } catch(e) { alert(e); }
-                app.endUndoGroup();
+                clEndUndo();
                 return;
             }
             // ==========================================
@@ -4138,7 +5025,7 @@
                     if (!confirm("You are about to True Clone " + totalClones + " times on a sphere.\n\nAre you sure you want to continue?")) return;
                 }
 
-                app.beginUndoGroup("Sphere Cloooner");
+                clBeginUndo("Sphere Cloooner");
                 try {
                     var baseLayerName = child.name;
                     var childPos = child.transform.position.value;
@@ -4208,7 +5095,7 @@
                     alert("Error creating Sphere Cloooner: " + e.toString());
                 }
 
-                app.endUndoGroup();
+                clEndUndo();
                 return;
             }
 
@@ -4242,7 +5129,7 @@
                     if (!proceedG) return;
                 }
 
-                app.beginUndoGroup("Grid Cloooner");
+                clBeginUndo("Grid Cloooner");
                 try {
                     var baseLayerName = child.name;
                     var childPos = child.transform.position.value;
@@ -4337,7 +5224,7 @@
                     alert("Error creating Grid Cloooner: " + e.toString());
                 }
 
-                app.endUndoGroup();
+                clEndUndo();
                 return;
             }
 
@@ -4409,7 +5296,7 @@
                     if (!proceed) return;
                 }
 
-                app.beginUndoGroup("Clone With Rotation");
+                clBeginUndo("Clone With Rotation");
 
                 // SỬ DỤNG CHÍNH NULL CỦA NGƯỜI DÙNG LÀM PIVOT THAY VÌ TẠO MỚI
                 var pivot = parent;
@@ -4419,7 +5306,7 @@
                 
                 // ĐƯA ANCHOR POINT CỦA PIVOT VỀ [0,0] NHƯ YÊU CẦU
                 if (getSafeProp(pivot, "Anchor Point")) {
-                    if (!pivot.__autoMade) getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
+                    getSafeProp(pivot, "Anchor Point").setValue(make3D ? [0, 0, 0] : [0, 0]);
                 }
 
                 // --- TÍNH TOÁN BÁN KÍNH MẶT PHẲNG VÀ VECTOR GỐC ĐỂ TÁCH TRỤC 3D ---
@@ -4602,7 +5489,7 @@
                 }
                 pivot.selected = true; 
 
-                app.endUndoGroup();
+                clEndUndo();
             }
 
 
@@ -4652,7 +5539,7 @@
                     if (!proceed) return;
                 }
 
-                app.beginUndoGroup("Path Cloooner");
+                clBeginUndo("Path Cloooner");
 
                 try {
                     var baseLayerName = child.name;
@@ -4917,10 +5804,11 @@
                     //alert("Lỗi khi tạo Path Cloooner: " + e.toString());
                 }
 
-                app.endUndoGroup();
+                clEndUndo();
             }
 
-        };
+        }
+        cloneBtn.onClick = function () { clRunUndo("Cloooner", clooonerCloneAction); };
 
 
         // ==========================================
@@ -5018,6 +5906,8 @@
             else if (kind === "Sphere") forceUpdateSphere(pivot, comp);
             else if (kind === "Circular") forceUpdateCircular(pivot, comp);
             else if (kind === "Path") forceUpdatePath(pivot, comp);
+            // Expression cua clone vua bi viet lai -> gan lai Reactive cho dung so chieu
+            try { rvRefreshSystem(comp, pivot); } catch (eRv) {}
         }
 
         var KIND_LABEL = { "Grid": "Grid", "Sphere": "Sphere", "Circular": "Circular", "Path": "Path" };
@@ -5062,10 +5952,10 @@
                     return;
                 }
                 ensureJavaScriptEngine();
-                app.beginUndoGroup("Cloooner - " + KIND_LABEL[kind] + " Mode");
+                clBeginUndo("Cloooner - " + KIND_LABEL[kind] + " Mode");
                 try { applyModesToCtrl(kind, info.layer, info.comp); }
                 catch (e) { alert("Error applying mode: " + e.toString()); }
-                app.endUndoGroup();
+                clEndUndo();
             };
         }
 
@@ -5078,10 +5968,10 @@
             var info = getSelectedController();
             if (!info || info.kind !== "Grid") { modeError("Grid", info); return; }
             ensureJavaScriptEngine();
-            app.beginUndoGroup("Cloooner - Grid Pivot");
-            try { forceUpdateGrid(info.layer, info.comp); }
+            clBeginUndo("Cloooner - Grid Pivot");
+            try { forceUpdateGrid(info.layer, info.comp); try { rvRefreshSystem(info.comp, info.layer); } catch (eRv) {} }
             catch (e) { alert("Error applying pivot: " + e.toString()); }
-            app.endUndoGroup();
+            clEndUndo();
         };
 
 
@@ -5119,7 +6009,7 @@
             try { total = Math.round(pFx.property("Total Clones").property(1).value); } catch (e) {}
             try { offLook = Math.round(pFx.property("Offset Look").property(1).value); } catch (e) {}
 
-            app.beginUndoGroup("Sync Order With Look");
+            clBeginUndo("Sync Order With Look");
             try {
                 // Gom tat ca cap Null phu + Clone cua he thong nay
                 var pairs = [];
@@ -5146,7 +6036,7 @@
                 }
 
                 if (pairs.length < 2) {
-                    app.endUndoGroup();
+                    clEndUndo();
                     return alert("Nothing to re-stack - this system needs at least 2 clones.\n\nMake sure you selected the Control Null itself.");
                 }
 
@@ -5166,7 +6056,7 @@
             } catch (e) {
                 alert("Error syncing order: " + e.toString());
             }
-            app.endUndoGroup();
+            clEndUndo();
         }
 
         btnSyncLookTron.onClick = syncOrderWithLook;
@@ -5190,6 +6080,7 @@
         // AE khong bao cho script biet khi doi lua chon layer -> phai tu do nhip
         $.global.__clooonerSyncFn = function () {
             try { syncModesFromSelection(); } catch (e) {}
+            try { syncReactiveButtons(); } catch (e) {}
         };
         try {
             if ($.global.__clooonerSyncTask) app.cancelTask($.global.__clooonerSyncTask);
@@ -5252,7 +6143,7 @@
             var inputCount = parseInt(toolCloneMoreInput.text);
             var loopCount = extraLayers.length > 0 ? extraLayers.length : (isNaN(inputCount) ? 1 : inputCount);
 
-            app.beginUndoGroup("Clone More / Add Layers");
+            clBeginUndo("Clone More / Add Layers");
             try {
                 var currentTotal = parseInt(totalClonesCtrl.property(1).value);
                 var sampleRot = null;
@@ -5279,7 +6170,7 @@
                 }
 
                 if (!sampleRot || !sampleKid) {
-                    app.endUndoGroup(); return alert("Error: Could not find a sample Clone to copy data from.");
+                    clEndUndo(); return alert("Error: Could not find a sample Clone to copy data from.");
                 }
 
                 // Cập nhật lại Total Clones hiện tại nếu bị sai lệch
@@ -5423,7 +6314,7 @@
                 comp.hideShyLayers = false; comp.hideShyLayers = true;
 
             } catch (error) { alert("Error when Adding/Cloning: " + error.toString()); }
-            app.endUndoGroup();
+            clEndUndo();
         };
 
         // ==========================================
@@ -5480,7 +6371,7 @@
         setupMathInput(toolCloneMoreMinus, toolCloneMorePlus, toolCloneMoreInput, 1, 1, true);
 
         // Gán logic Click thông minh cho nút Clooon thêm (Tự nhận diện Null)
-        if (typeof cloneMoreLogic === "function") toolCloneMoreBtn.onClick = cloneMoreLogic;
+        if (typeof cloneMoreLogic === "function") toolCloneMoreBtn.onClick = function () { clRunUndo("Cloooner Add Clones", cloneMoreLogic); };
 
 
         // --- GỌI HÀM CHO TOÀN BỘ 6 Ô INPUT TRONG PLUGIN ---
